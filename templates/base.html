@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mossly{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Red+Hat+Display:wght@500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/global.css' %}">
+
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header class="navbar">
+    <img
+    src="static/img/logo/logo.svg"
+    href="{% url 'main:landing' %}"
+    class="brand"
+    />
+    <nav>
+      {% if user.is_authenticated %}
+        <a href="{% url 'dashboard:index' %}">Me</a>
+        <a href="{% url 'accounts:logout' %}" class="btn btn-outline">Logout</a>
+      {% else %}
+        <a href="{% url 'community:index' %}">Community</a>
+        <a href="{% url 'carbon:index' %}">Carbon</a>
+        <a href="{% url 'habits:index' %}">Habits</a>
+        <a href="{% url 'accounts:login' %}">Login</a>
+        <a href="{% url 'accounts:register' %}" class="btn">Daftar</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 Mossly · Kelompok PBP</p>
+  </footer>
+</body>
+</html>
