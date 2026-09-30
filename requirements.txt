@@ -3,3 +3,4 @@ gunicorn
 psycopg2-binary
 python-dotenv
 whitenoise
+django-tailwind~=4.5.0

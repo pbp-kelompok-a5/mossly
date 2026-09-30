@@ -45,7 +45,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'main', 'accounts', 'carbon', 'habits', 'community', 'dashboard',
+    'tailwind',
+    'theme',
 ]
+
+TAILWIND_APP_NAME = 'theme'
+TAILWIND_USE_STANDALONE_BINARY = True
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
