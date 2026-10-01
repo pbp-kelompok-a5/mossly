@@ -1,24 +1,255 @@
 /* ==========================================================================
    Section: Habit & Goal Tracker (landing page)
-   Tahap 1 - kerangka layout. Styling detail menyusul di tahap berikutnya.
+   Token warna, spasi, dan ukuran diambil dari Figma node 239-3749.
+   Tahap 2 - styling desktop. Responsive & polish menyusul.
    ========================================================================== */
 
 .habit {
+  /* Token lokal section ini, biar nggak bocor ke komponen lain */
+  --habit-moss-600: #45583a;
+  --habit-moss-800: #2f3a25;
+  --habit-moss-50: #f1f4ec;
+  --habit-sand-100: #f6eedc;
+  --habit-sand: #dcccac;
+  --habit-brand: #546b41;
+  --habit-on-brand: #fff8ec;
+  --habit-accent: #b07634;
+  --habit-text: #2f3a25;
+  --habit-text-muted: #5e6852;
+  --habit-surface: #ffffff;
+  --habit-shadow: 0 1px 2px rgba(47, 58, 37, .06), 0 2px 6px rgba(47, 58, 37, .06);
+
+  /* Full-bleed: section menembus lebar .container biar selebar layar */
+  margin-inline: calc(50% - 50vw);
+  padding: 5.5rem 1.5rem;
+  background: var(--habit-moss-50);
+
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
+  grid-template-columns: minmax(0, 610px) minmax(0, 555px);
+  column-gap: 5.75rem;
+  justify-content: center;
   align-items: center;
-  padding: 4rem 0;
+
+  /* global.css menulis var(--font) yang tidak pernah didefinisikan,
+     jadi font di-set eksplisit di sini supaya section ini tetap benar */
+  font-family: var(--font-sans);
+  color: var(--habit-text);
+}
+
+/* --------------------------------------------------------------------------
+   Kolom kiri - panel jurnal
+   -------------------------------------------------------------------------- */
+
+.habit__preview {
+  position: relative;
+  padding: 2.125rem 4.0625rem;
+  border-radius: 24px;
+  background: var(--habit-sand-100);
+}
+
+/* Garis jilid putus-putus di tepi kiri panel */
+.habit__preview::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 32px;
+  border-left: 1.5px dashed var(--habit-sand);
+}
+
+.habit__eyebrow {
+  margin: 0;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--habit-text-muted);
+}
+
+.habit__preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: .5rem;
+}
+
+.habit__preview-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -.01em;
+  color: var(--habit-text);
+}
+
+/* Ikon daun menyusul di tahap 4; ruangnya dipesan dulu */
+.habit__leaf {
+  flex: none;
+  width: 57px;
+  height: 68px;
 }
 
 .habit__list {
-  list-style: none;
   display: grid;
+  gap: 1.375rem;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.habit__note {
+  margin: 1.75rem 0 0;
+  font-size: .875rem;
+  font-style: italic;
+  color: var(--habit-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Kartu habit
+   -------------------------------------------------------------------------- */
+
+.habit-card {
+  padding: 1.5625rem;
+  border-radius: 16px;
+  background: var(--habit-surface);
+  box-shadow: var(--habit-shadow);
+}
+
+.habit-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   gap: 1rem;
 }
 
+.habit-card__name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--habit-text);
+}
+
+.habit-card__metric {
+  flex: none;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--habit-accent);
+}
+
+.habit-card__progress {
+  height: 8px;
+  margin-top: 1rem;
+  border-radius: 999px;
+  background: var(--habit-sand);
+  overflow: hidden;
+}
+
+.habit-card__bar {
+  display: block;
+  width: var(--habit-progress, 0%);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--habit-moss-600);
+}
+
+.habit-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.habit-card__hint {
+  margin: 0;
+  font-size: .875rem;
+  line-height: 1.55;
+  color: var(--habit-text-muted);
+}
+
+.habit-card__check {
+  flex: none;
+  min-height: 41px;
+  padding: 0 1.25rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--habit-brand);
+  color: var(--habit-on-brand);
+  font-family: inherit;
+  font-size: .875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   Kolom kanan - narasi
+   -------------------------------------------------------------------------- */
+
+.habit__label {
+  margin: 0;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--habit-text-muted);
+}
+
+.habit__title {
+  margin: 1.5rem 0 0;
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -.02em;
+  color: var(--habit-text);
+}
+
+.habit__desc {
+  max-width: 505px;
+  margin: 1.5rem 0 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--habit-text-muted);
+}
+
 .habit__points {
-  list-style: none;
   display: grid;
-  gap: .75rem;
+  gap: 1.4375rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.habit__point {
+  display: flex;
+  align-items: baseline;
+  gap: .625rem;
+  font-size: .9375rem;
+  line-height: 1.45;
+  color: var(--habit-text);
+}
+
+.habit__point::before {
+  content: "✓";
+  flex: none;
+  font-weight: 600;
+  color: var(--habit-moss-600);
+}
+
+.habit__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 51px;
+  margin-top: 1.5rem;
+  padding: 0 2rem;
+  border-radius: 999px;
+  background: var(--habit-brand);
+  color: var(--habit-on-brand);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
 }
