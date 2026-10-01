@@ -1,0 +1,24 @@
+/* ==========================================================================
+   Section: Habit & Goal Tracker (landing page)
+   Tahap 1 - kerangka layout. Styling detail menyusul di tahap berikutnya.
+   ========================================================================== */
+
+.habit {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  padding: 4rem 0;
+}
+
+.habit__list {
+  list-style: none;
+  display: grid;
+  gap: 1rem;
+}
+
+.habit__points {
+  list-style: none;
+  display: grid;
+  gap: .75rem;
+}
