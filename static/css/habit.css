@@ -253,3 +253,129 @@
   font-weight: 600;
   text-decoration: none;
 }
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+/* Full-bleed di atas memakai 100vw, yang pada browser dengan scrollbar klasik
+   (umumnya Windows) sedikit lebih lebar dari area tampak dan memunculkan
+   scroll horizontal. `clip` memotongnya tanpa membuat scroll container baru,
+   sehingga navbar sticky tetap berfungsi. */
+html {
+  overflow-x: clip;
+}
+
+/* --- Layar menengah: rapatkan jarak sebelum kolom ditumpuk --------------- */
+@media (max-width: 1180px) {
+  .habit {
+    column-gap: 3rem;
+    padding-block: 4.5rem;
+  }
+
+  .habit__preview {
+    padding: 2rem 2.5rem;
+  }
+
+  .habit__title {
+    font-size: 2.625rem;
+  }
+}
+
+/* --- Tablet & bawah: satu kolom ----------------------------------------- */
+@media (max-width: 1024px) {
+  .habit {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    /* Isi dibatasi 610px dan tetap di tengah, tanpa wrapper tambahan */
+    padding: 4rem max(1.5rem, calc((100vw - 610px) / 2));
+  }
+
+  /* Anak-anak kolom narasi dinaikkan jadi item langsung .habit supaya
+     urutannya bisa diatur: narasi dulu, kartu, lalu CTA paling bawah. */
+  .habit__copy {
+    display: contents;
+  }
+
+  .habit__label   { order: 1; }
+  .habit__title   { order: 2; }
+  .habit__desc    { order: 3; }
+  .habit__points  { order: 4; }
+  .habit__preview { order: 5; }
+  .habit__cta     { order: 6; }
+
+  /* Jarak antar elemen sekarang diurus `gap`, jadi margin lama dinolkan */
+  .habit__title,
+  .habit__desc,
+  .habit__points,
+  .habit__cta {
+    margin-top: 0;
+  }
+
+  .habit__desc {
+    max-width: none;
+  }
+
+  .habit__cta {
+    align-self: flex-start;
+  }
+}
+
+/* --- Ponsel -------------------------------------------------------------- */
+@media (max-width: 640px) {
+  .habit {
+    gap: 1.25rem;
+    padding: 3rem 1.25rem;
+  }
+
+  .habit__title {
+    font-size: 2.125rem;
+  }
+
+  .habit__preview {
+    padding: 1.75rem 1.25rem 1.75rem 2.75rem;
+  }
+
+  .habit__preview::before {
+    left: 20px;
+  }
+
+  .habit__preview-title {
+    font-size: 1.625rem;
+  }
+
+  .habit__leaf {
+    width: 44px;
+    height: 53px;
+  }
+
+  .habit-card {
+    padding: 1.25rem;
+  }
+
+  /* Caption dan tombol tidak lagi muat berdampingan */
+  .habit-card__foot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: .875rem;
+  }
+
+  .habit-card__check {
+    width: 100%;
+  }
+
+  .habit__cta {
+    align-self: stretch;
+    justify-content: center;
+  }
+}
+
+/* --- Ponsel kecil: cegah judul kartu dan angka saling menabrak ----------- */
+@media (max-width: 380px) {
+  .habit-card__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .25rem;
+  }
+}
