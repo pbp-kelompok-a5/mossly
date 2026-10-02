@@ -43,7 +43,7 @@
 .habit__preview {
   position: relative;
   padding: 2.125rem 4.0625rem;
-  border-radius: 24px;
+  border-radius: 32px;
   background: var(--habit-sand-100);
 }
 
@@ -86,8 +86,8 @@
 /* Ikon daun menyusul di tahap 4; ruangnya dipesan dulu */
 .habit__leaf {
   flex: none;
-  width: 57px;
-  height: 68px;
+  width: 70px;
+  height: 54px;
 }
 
 .habit__list {
@@ -346,8 +346,8 @@ html {
   }
 
   .habit__leaf {
-    width: 44px;
-    height: 53px;
+    width: 54px;
+    height: 42px;
   }
 
   .habit-card {
@@ -377,5 +377,71 @@ html {
     flex-direction: column;
     align-items: flex-start;
     gap: .25rem;
+  }
+}
+
+/* ==========================================================================
+   Interaksi & polish
+   ========================================================================== */
+
+.habit-card {
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.habit-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(47, 58, 37, .07), 0 8px 20px rgba(47, 58, 37, .09);
+}
+
+/* Isi progress bar tumbuh saat nilainya berubah */
+.habit-card__bar {
+  transition: width .6s cubic-bezier(.4, 0, .2, 1);
+}
+
+.habit-card__check,
+.habit__cta {
+  transition: background-color .2s ease, transform .12s ease;
+}
+
+.habit-card__check:hover,
+.habit__cta:hover {
+  background: var(--habit-moss-600);
+}
+
+.habit-card__check:active,
+.habit__cta:active {
+  transform: translateY(1px);
+}
+
+/* Panah CTA bergeser sedikit saat disorot */
+.habit__cta > span {
+  transition: transform .2s ease;
+}
+
+.habit__cta:hover > span {
+  transform: translateX(3px);
+}
+
+/* Cincin fokus khusus navigasi keyboard, tidak muncul saat diklik mouse */
+.habit-card__check:focus-visible,
+.habit__cta:focus-visible {
+  outline: 2px solid var(--habit-moss-800);
+  outline-offset: 3px;
+}
+
+/* Hormati pengguna yang mematikan animasi di pengaturan sistemnya */
+@media (prefers-reduced-motion: reduce) {
+  .habit *,
+  .habit *::before,
+  .habit *::after {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+
+  .habit-card:hover,
+  .habit-card__check:active,
+  .habit__cta:active,
+  .habit__cta:hover > span {
+    transform: none;
   }
 }
