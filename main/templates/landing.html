@@ -1,5 +1,10 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Mossly · Gaya Hidup Berkelanjutan{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/habit.css' %}">
+{% endblock %}
 
 {% block content %}
 <section class="py-16 text-center">
@@ -32,5 +37,82 @@
     <h3 class="mb-1 font-semibold">Dashboard</h3>
     <p class="text-sm text-muted">Lihat rekap progres dan raih badge.</p>
   </article>
+</section>
+
+<!-- ===== Habit & Goal Tracker ===== -->
+<section class="habit" id="habit" aria-labelledby="habit-title">
+  <!-- Kolom kiri: preview kartu habit -->
+  <div class="habit__preview">
+    <p class="habit__eyebrow">Catatan kecil hari ini</p>
+
+    <div class="habit__preview-head">
+      <h3 class="habit__preview-title">Rawat yang baik.</h3>
+      <svg class="habit__leaf" viewBox="512 58 72 56" fill="none"
+           aria-hidden="true" focusable="false">
+        <path d="M534 110C528.133 66.3841 560.73 61.6684 579.556 66.2542C574.801 94.4348 561.605 109.246 534 110Z" fill="#7A9160"/>
+        <path d="M534 110L567.105 77.2196" stroke="#45583A" stroke-width="1.9"/>
+        <path d="M535 110C511.433 100.316 518.505 82.6072 526.254 74.4957C539.007 85.0374 542.613 95.9409 535 110Z" fill="#7A9160"/>
+        <path d="M535 110L528.148 83.9125" stroke="#45583A" stroke-width="1.1"/>
+      </svg>
+    </div>
+
+    <ul class="habit__list">
+      <li class="habit-card">
+        <div class="habit-card__head">
+          <h4 class="habit-card__name">Bawa tumbler</h4>
+          <span class="habit-card__metric">12 hari</span>
+        </div>
+        <div class="habit-card__progress"
+             role="progressbar"
+             aria-label="Progres kebiasaan bawa tumbler"
+             aria-valuemin="0" aria-valuemax="14" aria-valuenow="12">
+          <span class="habit-card__bar" style="--habit-progress: 86%"></span>
+        </div>
+        <div class="habit-card__foot">
+          <p class="habit-card__hint">Milestone berikutnya: 14 hari</p>
+          <button type="button" class="habit-card__check">Check-in</button>
+        </div>
+      </li>
+
+      <li class="habit-card">
+        <div class="habit-card__head">
+          <h4 class="habit-card__name">Naik transportasi umum</h4>
+          <span class="habit-card__metric">14/20</span>
+        </div>
+        <div class="habit-card__progress"
+             role="progressbar"
+             aria-label="Progres kebiasaan naik transportasi umum"
+             aria-valuemin="0" aria-valuemax="20" aria-valuenow="14">
+          <span class="habit-card__bar" style="--habit-progress: 70%"></span>
+        </div>
+        <div class="habit-card__foot">
+          <p class="habit-card__hint">Goal: 20 kali bulan ini</p>
+          <button type="button" class="habit-card__check">Check-in</button>
+        </div>
+      </li>
+    </ul>
+
+    <p class="habit__note">Sedikit demi sedikit, jadi kebiasaan.</p>
+  </div>
+
+  <!-- Kolom kanan: narasi & ajakan -->
+  <div class="habit__copy">
+    <p class="habit__label">02 — Habit &amp; Goal Tracker</p>
+    <h2 class="habit__title" id="habit-title">Kebiasaan baik perlu dirawat.</h2>
+    <p class="habit__desc">
+      Bawa tumbler. Pilih transportasi umum. Mulai dari satu kebiasaan
+      yang terasa mungkin, lalu jaga ritmenya setiap hari.
+    </p>
+
+    <ul class="habit__points">
+      <li class="habit__point">Check-in harian untuk menjaga streak</li>
+      <li class="habit__point">Target dengan deadline dan checklist</li>
+      <li class="habit__point">Progress bar untuk setiap langkah kecil</li>
+    </ul>
+
+    <a href="{% url 'accounts:register' %}" class="habit__cta">
+      Mulai kebiasaan baik <span aria-hidden="true">→</span>
+    </a>
+  </div>
 </section>
 {% endblock %}

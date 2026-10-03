@@ -1,0 +1,447 @@
+/* ==========================================================================
+   Section: Habit & Goal Tracker (landing page)
+   Token warna, spasi, dan ukuran diambil dari Figma node 239-3749.
+   Tahap 2 - styling desktop. Responsive & polish menyusul.
+   ========================================================================== */
+
+.habit {
+  /* Token lokal section ini, biar nggak bocor ke komponen lain */
+  --habit-moss-600: #45583a;
+  --habit-moss-800: #2f3a25;
+  --habit-moss-50: #f1f4ec;
+  --habit-sand-100: #f6eedc;
+  --habit-sand: #dcccac;
+  --habit-brand: #546b41;
+  --habit-on-brand: #fff8ec;
+  --habit-accent: #b07634;
+  --habit-text: #2f3a25;
+  --habit-text-muted: #5e6852;
+  --habit-surface: #ffffff;
+  --habit-shadow: 0 1px 2px rgba(47, 58, 37, .06), 0 2px 6px rgba(47, 58, 37, .06);
+
+  /* Full-bleed: section menembus lebar .container biar selebar layar */
+  margin-inline: calc(50% - 50vw);
+  padding: 5.5rem 1.5rem;
+  background: var(--habit-moss-50);
+
+  display: grid;
+  grid-template-columns: minmax(0, 610px) minmax(0, 555px);
+  column-gap: 5.75rem;
+  justify-content: center;
+  align-items: center;
+
+  /* global.css menulis var(--font) yang tidak pernah didefinisikan,
+     jadi font di-set eksplisit di sini supaya section ini tetap benar */
+  font-family: var(--font-sans);
+  color: var(--habit-text);
+}
+
+/* --------------------------------------------------------------------------
+   Kolom kiri - panel jurnal
+   -------------------------------------------------------------------------- */
+
+.habit__preview {
+  position: relative;
+  padding: 2.125rem 4.0625rem;
+  border-radius: 32px;
+  background: var(--habit-sand-100);
+}
+
+/* Garis jilid putus-putus di tepi kiri panel */
+.habit__preview::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 32px;
+  border-left: 1.5px dashed var(--habit-sand);
+}
+
+.habit__eyebrow {
+  margin: 0;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--habit-text-muted);
+}
+
+.habit__preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: .5rem;
+}
+
+.habit__preview-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -.01em;
+  color: var(--habit-text);
+}
+
+/* Ikon daun menyusul di tahap 4; ruangnya dipesan dulu */
+.habit__leaf {
+  flex: none;
+  width: 70px;
+  height: 54px;
+}
+
+.habit__list {
+  display: grid;
+  gap: 1.375rem;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.habit__note {
+  margin: 1.75rem 0 0;
+  font-size: .875rem;
+  font-style: italic;
+  color: var(--habit-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Kartu habit
+   -------------------------------------------------------------------------- */
+
+.habit-card {
+  padding: 1.5625rem;
+  border-radius: 16px;
+  background: var(--habit-surface);
+  box-shadow: var(--habit-shadow);
+}
+
+.habit-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.habit-card__name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--habit-text);
+}
+
+.habit-card__metric {
+  flex: none;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--habit-accent);
+}
+
+.habit-card__progress {
+  height: 8px;
+  margin-top: 1rem;
+  border-radius: 999px;
+  background: var(--habit-sand);
+  overflow: hidden;
+}
+
+.habit-card__bar {
+  display: block;
+  width: var(--habit-progress, 0%);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--habit-moss-600);
+}
+
+.habit-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.habit-card__hint {
+  margin: 0;
+  font-size: .875rem;
+  line-height: 1.55;
+  color: var(--habit-text-muted);
+}
+
+.habit-card__check {
+  flex: none;
+  min-height: 41px;
+  padding: 0 1.25rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--habit-brand);
+  color: var(--habit-on-brand);
+  font-family: inherit;
+  font-size: .875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   Kolom kanan - narasi
+   -------------------------------------------------------------------------- */
+
+.habit__label {
+  margin: 0;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--habit-text-muted);
+}
+
+.habit__title {
+  margin: 1.5rem 0 0;
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -.02em;
+  color: var(--habit-text);
+}
+
+.habit__desc {
+  max-width: 505px;
+  margin: 1.5rem 0 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--habit-text-muted);
+}
+
+.habit__points {
+  display: grid;
+  gap: 1.4375rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.habit__point {
+  display: flex;
+  align-items: baseline;
+  gap: .625rem;
+  font-size: .9375rem;
+  line-height: 1.45;
+  color: var(--habit-text);
+}
+
+.habit__point::before {
+  content: "✓";
+  flex: none;
+  font-weight: 600;
+  color: var(--habit-moss-600);
+}
+
+.habit__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 51px;
+  margin-top: 1.5rem;
+  padding: 0 2rem;
+  border-radius: 999px;
+  background: var(--habit-brand);
+  color: var(--habit-on-brand);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+/* Full-bleed di atas memakai 100vw, yang pada browser dengan scrollbar klasik
+   (umumnya Windows) sedikit lebih lebar dari area tampak dan memunculkan
+   scroll horizontal. `clip` memotongnya tanpa membuat scroll container baru,
+   sehingga navbar sticky tetap berfungsi. */
+html {
+  overflow-x: clip;
+}
+
+/* --- Layar menengah: rapatkan jarak sebelum kolom ditumpuk --------------- */
+@media (max-width: 1180px) {
+  .habit {
+    column-gap: 3rem;
+    padding-block: 4.5rem;
+  }
+
+  .habit__preview {
+    padding: 2rem 2.5rem;
+  }
+
+  .habit__title {
+    font-size: 2.625rem;
+  }
+}
+
+/* --- Tablet & bawah: satu kolom ----------------------------------------- */
+@media (max-width: 1024px) {
+  .habit {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    /* Isi dibatasi 610px dan tetap di tengah, tanpa wrapper tambahan */
+    padding: 4rem max(1.5rem, calc((100vw - 610px) / 2));
+  }
+
+  /* Anak-anak kolom narasi dinaikkan jadi item langsung .habit supaya
+     urutannya bisa diatur: narasi dulu, kartu, lalu CTA paling bawah. */
+  .habit__copy {
+    display: contents;
+  }
+
+  .habit__label   { order: 1; }
+  .habit__title   { order: 2; }
+  .habit__desc    { order: 3; }
+  .habit__points  { order: 4; }
+  .habit__preview { order: 5; }
+  .habit__cta     { order: 6; }
+
+  /* Jarak antar elemen sekarang diurus `gap`, jadi margin lama dinolkan */
+  .habit__title,
+  .habit__desc,
+  .habit__points,
+  .habit__cta {
+    margin-top: 0;
+  }
+
+  .habit__desc {
+    max-width: none;
+  }
+
+  .habit__cta {
+    align-self: flex-start;
+  }
+}
+
+/* --- Ponsel -------------------------------------------------------------- */
+@media (max-width: 640px) {
+  .habit {
+    gap: 1.25rem;
+    padding: 3rem 1.25rem;
+  }
+
+  .habit__title {
+    font-size: 2.125rem;
+  }
+
+  .habit__preview {
+    padding: 1.75rem 1.25rem 1.75rem 2.75rem;
+  }
+
+  .habit__preview::before {
+    left: 20px;
+  }
+
+  .habit__preview-title {
+    font-size: 1.625rem;
+  }
+
+  .habit__leaf {
+    width: 54px;
+    height: 42px;
+  }
+
+  .habit-card {
+    padding: 1.25rem;
+  }
+
+  /* Caption dan tombol tidak lagi muat berdampingan */
+  .habit-card__foot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: .875rem;
+  }
+
+  .habit-card__check {
+    width: 100%;
+  }
+
+  .habit__cta {
+    align-self: stretch;
+    justify-content: center;
+  }
+}
+
+/* --- Ponsel kecil: cegah judul kartu dan angka saling menabrak ----------- */
+@media (max-width: 380px) {
+  .habit-card__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .25rem;
+  }
+}
+
+/* ==========================================================================
+   Interaksi & polish
+   ========================================================================== */
+
+.habit-card {
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.habit-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(47, 58, 37, .07), 0 8px 20px rgba(47, 58, 37, .09);
+}
+
+/* Isi progress bar tumbuh saat nilainya berubah */
+.habit-card__bar {
+  transition: width .6s cubic-bezier(.4, 0, .2, 1);
+}
+
+.habit-card__check,
+.habit__cta {
+  transition: background-color .2s ease, transform .12s ease;
+}
+
+.habit-card__check:hover,
+.habit__cta:hover {
+  background: var(--habit-moss-600);
+}
+
+.habit-card__check:active,
+.habit__cta:active {
+  transform: translateY(1px);
+}
+
+/* Panah CTA bergeser sedikit saat disorot */
+.habit__cta > span {
+  transition: transform .2s ease;
+}
+
+.habit__cta:hover > span {
+  transform: translateX(3px);
+}
+
+/* Cincin fokus khusus navigasi keyboard, tidak muncul saat diklik mouse */
+.habit-card__check:focus-visible,
+.habit__cta:focus-visible {
+  outline: 2px solid var(--habit-moss-800);
+  outline-offset: 3px;
+}
+
+/* Hormati pengguna yang mematikan animasi di pengaturan sistemnya */
+@media (prefers-reduced-motion: reduce) {
+  .habit *,
+  .habit *::before,
+  .habit *::after {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+
+  .habit-card:hover,
+  .habit-card__check:active,
+  .habit__cta:active,
+  .habit__cta:hover > span {
+    transform: none;
+  }
+}
