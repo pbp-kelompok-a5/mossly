@@ -1,0 +1,152 @@
+/* ==========================================================
+   tokens.css — digenerate dari Figma (Light.tokens.json)
+   Layer 1: Primitives  -> nilai mentah (jangan dipakai langsung di komponen)
+   Layer 2: Semantic    -> dipakai di komponen, merujuk ke primitives
+   ========================================================== */
+:root {
+  /* ---------- Primitives ---------- */
+
+  /* moss */
+  --color-moss-50: #f1f4ec;
+  --color-moss-100: #e2e9d8;
+  --color-moss-200: #c6d3b2;
+  --color-moss-300: #99ad7a;
+  --color-moss-400: #7a9160;
+  --color-moss-500: #546b41;
+  --color-moss-600: #45583a;
+  --color-moss-700: #374630;
+  --color-moss-800: #2f3a25;
+  --color-moss-900: #1e2618;
+
+  /* sand */
+  --color-sand-50: #fff8ec;
+  --color-sand-100: #f6eedc;
+  --color-sand-200: #ebdfc6;
+  --color-sand-300: #dcccac;
+  --color-sand-400: #c8b48c;
+
+  /* clay */
+  --color-clay-100: #f3e4d1;
+  --color-clay-300: #d39c5e;
+  --color-clay-500: #b07634;
+  --color-clay-600: #8a6343;
+  --color-clay-700: #7e521f;
+  --color-clay-800: #5b4030;
+  --color-clay-900: #3b2a20;
+
+  /* neutral */
+  --color-neutral-0: #ffffff;
+  --color-neutral-400: #8c937f;
+  --color-neutral-600: #5e6852;
+
+  /* red */
+  --color-red-50: #fbeae8;
+  --color-red-500: #b3261e;
+
+  /* pink */
+  --color-pink-50: #fdf1f4;
+  --color-pink-100: #fbe3ea;
+  --color-pink-200: #f7cbd8;
+  --color-pink-300: #f2b3c6;
+  --color-pink-400: #e89ab1;
+  --color-pink-500: #d97f9c;
+
+  /* ---------- Semantic ---------- */
+
+  /* bg */
+  --color-bg-canvas: var(--color-sand-50);
+  --color-bg-surface: var(--color-neutral-0);
+  --color-bg-subtle: var(--color-sand-100);
+  --color-bg-sand: var(--color-sand-300);
+  --color-bg-muted: var(--color-moss-50);
+  --color-bg-brand: var(--color-moss-500);
+  --color-bg-brand-hover: var(--color-moss-600);
+  --color-bg-brand-soft: var(--color-moss-100);
+  --color-bg-inverse: var(--color-moss-800);
+  --color-bg-inverse-deep: var(--color-moss-900);
+  --color-bg-accent: var(--color-clay-500);
+  --color-bg-accent-soft: var(--color-clay-100);
+  --color-bg-sage: var(--color-moss-300);
+  --color-bg-danger-soft: var(--color-red-50);
+  --color-bg-disabled: var(--color-sand-200);
+  --color-bg-danger: var(--color-red-500);
+
+  /* text */
+  --color-text-primary: var(--color-moss-800);
+  --color-text-secondary: var(--color-neutral-600);
+  --color-text-tertiary: var(--color-neutral-400);
+  --color-text-brand: var(--color-moss-500);
+  --color-text-accent: var(--color-clay-500);
+  --color-text-on-brand: var(--color-sand-50);
+  --color-text-on-inverse-muted: var(--color-sand-300);
+  --color-text-danger: var(--color-red-500);
+  --color-text-disabled: var(--color-neutral-400);
+
+  /* border */
+  --color-border-default: var(--color-sand-300);
+  --color-border-subtle: var(--color-sand-200);
+  --color-border-strong: var(--color-moss-300);
+  --color-border-focus: var(--color-moss-500);
+  --color-border-danger: var(--color-red-500);
+
+  /* icon */
+  --color-icon-brand: var(--color-moss-500);
+  --color-icon-accent: var(--color-clay-500);
+
+  /* ---------- Spacing (kelipatan 4px) ---------- */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-8: 2rem; /* 32px */
+  --space-10: 2.5rem; /* 40px */
+  --space-12: 3rem; /* 48px */
+  --space-16: 4rem; /* 64px */
+  --space-20: 5rem; /* 80px */
+  --space-24: 6rem; /* 96px */
+  --space-30: 7.5rem; /* 120px */
+ 
+  /* ---------- Radius ---------- */
+  --radius-sm: 0.5rem; /* 8px */
+  --radius-md: 0.75rem; /* 12px */
+  --radius-lg: 1rem; /* 16px */
+  --radius-xl: 1.5rem; /* 24px */
+  --radius-2xl: 2rem; /* 32px */
+  --radius-full: 999px;
+ 
+  /* ---------- Elevation ----------*/
+  --shadow-sm: 0 1px 3px rgb(47 58 37 / 0.06), 0 1px 2px rgb(47 58 37 / 0.04);
+  --shadow-md: 0 4px 12px rgb(47 58 37 / 0.08), 0 2px 4px rgb(47 58 37 / 0.04);
+  --shadow-lg: 0 16px 40px rgb(47 58 37 / 0.12), 0 4px 12px rgb(47 58 37 / 0.06);
+ 
+  /* ---------- Font family ---------- */
+  --font-heading: "Red Hat Display", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-logo: "Fraunces", Georgia, serif;
+ 
+  /* ---------- Font weight ---------- */
+  --weight-regular: 400;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+ 
+  /* ---------- Typography styles ----------
+     Format shorthand: weight size/line-height family
+     Dipakai lewat  font: var(--type-xxx)  */
+  --type-display-xl: var(--weight-bold) 5rem/1 var(--font-heading);       /* 80/100% */
+  --type-display-l:  var(--weight-bold) 4rem/1.04 var(--font-heading);    /* 64/104% */
+  --type-h1:         var(--weight-bold) 3rem/1.1 var(--font-heading);     /* 48/110% */
+  --type-h2:         var(--weight-bold) 2.25rem/1.15 var(--font-heading); /* 36/115% */
+  --type-h3:         var(--weight-bold) 1.5rem/1.25 var(--font-heading);  /* 24/125% */
+  --type-h4:         var(--weight-semibold) 1.25rem/1.3 var(--font-heading); /* 20/130% */
+  --type-stat-l:     var(--weight-bold) 2.5rem/1.1 var(--font-heading);   /* 40/110% */
+ 
+  --type-body-l:  var(--weight-regular) 1.125rem/1.6 var(--font-body);    /* 18/160% */
+  --type-body-m:  var(--weight-regular) 1rem/1.6 var(--font-body);        /* 16/160% */
+  --type-body-s:  var(--weight-regular) 0.875rem/1.55 var(--font-body);   /* 14/155% */
+ 
+  --type-label-l: var(--weight-semibold) 1rem/1.2 var(--font-body);       /* 16/120% */
+  --type-label-m: var(--weight-semibold) 0.875rem/1.2 var(--font-body);   /* 14/120% */
+  --type-label-s: var(--weight-semibold) 0.75rem/1.2 var(--font-body);    /* 12/120% */
+}
