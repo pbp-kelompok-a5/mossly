@@ -4,6 +4,9 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/habit.css' %}">
+<link rel="stylesheet" href="{% static 'css/cara-kerja.css' %}">
+<link rel="stylesheet" href="{% static 'css/cta.css' %}">
+<link rel="stylesheet" href="{% static 'css/footer.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -115,4 +118,108 @@
     </a>
   </div>
 </section>
+
+<!-- ===== Cara Kerja ===== -->
+<section class="steps" id="cara-kerja" aria-labelledby="steps-title">
+  <p class="steps__label">05 — Login &amp; Onboarding / Cara Kerja</p>
+  <h2 class="steps__title" id="steps-title">Perjalanan hijau dimulai di sini.</h2>
+
+  <div class="steps__track">
+    <!-- Garis putus-putus penghubung antar langkah -->
+    <svg class="steps__path" viewBox="0 0 966 64" preserveAspectRatio="none"
+         aria-hidden="true" focusable="false">
+      <path d="M52 22C80 15 120 14 180 28C230 40 280 44 318 36M372 30C440 22 490 11 545 11C590 11 615 17 640 22M697 29C760 38 830 46 895 48"/>
+    </svg>
+    <svg class="steps__leaf" viewBox="0 0 32 20" fill="none"
+         aria-hidden="true" focusable="false">
+      <path d="M1 12C8 2 22 0 31 5C27 14 15 19 1 12Z" fill="#7A9160"/>
+      <path d="M3 12L26 6" stroke="#45583A" stroke-width="1"/>
+    </svg>
+
+    <ol class="steps__list">
+      <li class="step">
+        <span class="step__number">01</span>
+        <h3 class="step__title">Temukan titik mulamu</h3>
+        <p class="step__desc">
+          Daftar, isi kendaraan yang sering dipakai, dan tentukan target
+          sustainability awalmu.
+        </p>
+      </li>
+
+      <li class="step">
+        <span class="step__number">02</span>
+        <h3 class="step__title">Rawat langkah harian</h3>
+        <p class="step__desc">
+          Catat asal dan tujuan perjalanan. Check-in kebiasaan baikmu setiap hari.
+        </p>
+      </li>
+
+      <li class="step">
+        <span class="step__number">03</span>
+        <h3 class="step__title">Lihat dirimu bertumbuh</h3>
+        <p class="step__desc">
+          Pantau rekap, kumpulkan badge, lalu bagikan pencapaianmu ke komunitas.
+        </p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ===== CTA Bawah ===== -->
+<section class="cta" aria-labelledby="cta-title">
+  <img class="cta__branch" src="{% static 'img/cta-branch.svg' %}" alt=""
+       aria-hidden="true">
+  <img class="cta__leaf" src="{% static 'img/cta-leaf.svg' %}" alt=""
+       aria-hidden="true">
+
+  <div class="cta__inner">
+    <p class="cta__eyebrow">Satu langkah kecil, mulai hari ini.</p>
+    <h2 class="cta__title" id="cta-title">
+      Beri ruang untuk<br>kebiasaan yang lebih hijau.
+    </h2>
+    <p class="cta__desc">
+      Daftar gratis, isi profil singkat, dan catat perjalanan pertamamu.
+    </p>
+    <a href="{% url 'accounts:register' %}" class="cta__button">
+      Mulai bersama mossly <span aria-hidden="true">→</span>
+    </a>
+  </div>
+
+  <svg class="cta__wave" viewBox="0 0 1440 64" preserveAspectRatio="none"
+       aria-hidden="true" focusable="false">
+    <path d="M0 28C80 12 160 4 250 4C420 4 600 64 860 64C1100 64 1230 0 1440 6V64H0Z"/>
+  </svg>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer class="landing-footer">
+  <div class="landing-footer__top">
+    <p class="landing-footer__tagline">
+      Langkah kecil setiap hari,<br>untuk bumi yang lebih hijau.
+    </p>
+
+    <nav class="landing-footer__col" aria-label="Jelajahi">
+      <h2 class="landing-footer__heading">Jelajahi</h2>
+      <ul class="landing-footer__links">
+        <li><a href="#">Carbon Tracker</a></li>
+        <li><a href="#habit">Habit &amp; Goal</a></li>
+        <li><a href="#">Personal Dashboard</a></li>
+        <li><a href="#">Komunitas</a></li>
+      </ul>
+    </nav>
+
+    <nav class="landing-footer__col" aria-label="Akun">
+      <h2 class="landing-footer__heading">Akun</h2>
+      <ul class="landing-footer__links">
+        <li><a href="#">Masuk</a></li>
+        <li><a href="{% url 'accounts:register' %}">Daftar gratis</a></li>
+        <li><a href="#">Reset password</a></li>
+        <li><a href="#">Edit profil</a></li>
+      </ul>
+    </nav>
+  </div>
+
+  <img class="landing-footer__logo" src="{% static 'img/mossly-wordmark.png' %}"
+       alt="Mossly">
+</footer>
 {% endblock %}
