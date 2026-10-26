@@ -1,0 +1,93 @@
+/* ============================================
+  CTA Bawah (landing page)
+   ============================================ */
+
+.cta {
+  position: relative;
+  overflow: hidden;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding: 3.5rem 1.5rem 4rem;
+  background: #e1e9d9;
+  text-align: center;
+}
+
+.cta__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+.cta__eyebrow {
+  margin-bottom: 1.1rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #3d4f31;
+}
+
+.cta__title {
+  margin-bottom: 0.9rem;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #2d3b25;
+}
+
+.cta__desc {
+  margin-bottom: 1.4rem;
+  font-size: 0.8125rem;
+  color: #3d4f31;
+}
+
+.cta__button {
+  display: inline-block;
+  padding: 0.7rem 1.6rem;
+  border-radius: 999px;
+  background: #4f6639;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #fff;
+  transition: background 0.2s ease;
+}
+
+.cta__button:hover {
+  background: #3f5230;
+}
+
+.cta__branch {
+  position: absolute;
+  top: -0.5rem;
+  right: 3.4%;
+  width: 11.5rem;
+}
+
+.cta__leaf {
+  position: absolute;
+  bottom: 3.5rem;
+  left: 4.5%;
+  width: 3.5rem;
+}
+
+.cta__wave {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4rem;
+  fill: #c5d3b2;
+}
+
+@media (max-width: 767px) {
+  .cta__branch {
+    width: 6.5rem;
+    right: 0;
+  }
+
+  .cta__leaf {
+    width: 2.5rem;
+  }
+}
