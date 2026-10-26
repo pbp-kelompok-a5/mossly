@@ -1,10 +1,12 @@
 from django.http import HttpResponse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.contrib.auth import logout
 
 
 def login_view(request):
-    return HttpResponse("Placeholder login")
+    return render(request, "accounts/login.html", {
+        "preview_submitted": request.method == "POST",
+    })
 
 
 def register_view(request):
