@@ -125,7 +125,7 @@
   <h2 class="steps__title" id="steps-title">Perjalanan hijau dimulai di sini.</h2>
 
   <div class="steps__track">
-    <!-- Garis putus-putus penghubung antar langkah -->
+    <!-- Garis putus-putus -->
     <svg class="steps__path" viewBox="0 0 966 64" preserveAspectRatio="none"
          aria-hidden="true" focusable="false">
       <path d="M52 22C80 15 120 14 180 28C230 40 280 44 318 36M372 30C440 22 490 11 545 11C590 11 615 17 640 22M697 29C760 38 830 46 895 48"/>
@@ -190,36 +190,4 @@
     <path d="M0 28C80 12 160 4 250 4C420 4 600 64 860 64C1100 64 1230 0 1440 6V64H0Z"/>
   </svg>
 </section>
-
-<!-- ===== Footer ===== -->
-<footer class="landing-footer">
-  <div class="landing-footer__top">
-    <p class="landing-footer__tagline">
-      Langkah kecil setiap hari,<br>untuk bumi yang lebih hijau.
-    </p>
-
-    <nav class="landing-footer__col" aria-label="Jelajahi">
-      <h2 class="landing-footer__heading">Jelajahi</h2>
-      <ul class="landing-footer__links">
-        <li><a href="#">Carbon Tracker</a></li>
-        <li><a href="#habit">Habit &amp; Goal</a></li>
-        <li><a href="#">Personal Dashboard</a></li>
-        <li><a href="#">Komunitas</a></li>
-      </ul>
-    </nav>
-
-    <nav class="landing-footer__col" aria-label="Akun">
-      <h2 class="landing-footer__heading">Akun</h2>
-      <ul class="landing-footer__links">
-        <li><a href="#">Masuk</a></li>
-        <li><a href="{% url 'accounts:register' %}">Daftar gratis</a></li>
-        <li><a href="#">Reset password</a></li>
-        <li><a href="#">Edit profil</a></li>
-      </ul>
-    </nav>
-  </div>
-
-  <img class="landing-footer__logo" src="{% static 'img/mossly-wordmark.png' %}"
-       alt="Mossly">
-</footer>
 {% endblock %}

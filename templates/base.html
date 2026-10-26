@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
     <link rel="stylesheet" href="{% static 'css/global.css' %}">
     <link rel="stylesheet" href="{% static 'css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'css/footer.css' %}">
 
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     {% block extra_head %}{% endblock %}
@@ -40,8 +41,40 @@
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="footer">
-    <p>&copy; 2026 Mossly · Kelompok PBP</p>
+  <!-- ===== Footer ===== -->
+  <footer class="landing-footer">
+    <div class="container">
+      <div class="landing-footer__top">
+        <p class="landing-footer__tagline">
+          Langkah kecil setiap hari,<br>untuk bumi yang lebih hijau.
+        </p>
+
+        <nav class="landing-footer__col" aria-label="Jelajahi">
+          <h2 class="landing-footer__heading">Jelajahi</h2>
+          <ul class="landing-footer__links">
+            <li><a href="{% url 'carbon:index' %}">Carbon Tracker</a></li>
+            <li><a href="{% url 'habits:index' %}">Habit &amp; Goal</a></li>
+            <li><a href="{% url 'dashboard:index' %}">Personal Dashboard</a></li>
+            <li><a href="{% url 'community:index' %}">Komunitas</a></li>
+          </ul>
+        </nav>
+
+        <nav class="landing-footer__col" aria-label="Akun">
+          <h2 class="landing-footer__heading">Akun</h2>
+          <ul class="landing-footer__links">
+            <li><a href="{% url 'accounts:login' %}">Masuk</a></li>
+            <li><a href="{% url 'accounts:register' %}">Daftar gratis</a></li>
+            <li><a href="#">Reset password</a></li>
+            <li><a href="#">Edit profil</a></li>
+          </ul>
+        </nav>
+      </div>
+
+      <!--
+      <img class="landing-footer__logo" src="{% static 'img/mossly-wordmark.png' %}"
+           alt="Mossly">
+      -->
+    </div>
   </footer>
 </body>
 </html>
