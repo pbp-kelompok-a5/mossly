@@ -153,3 +153,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'dashboard:index'
 LOGOUT_REDIRECT_URL = 'main:landing'
+
+# Geoapify API
+GEOAPIFY_API_KEY = os.getenv('GEOAPIFY_API_KEY', '')
