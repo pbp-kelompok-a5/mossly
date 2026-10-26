@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Masuk · Mossly</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Red+Hat+Display:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Halaman autentikasi mandiri memuat CSS bersama tanpa mengubah base.html. -->
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+  <link rel="stylesheet" href="{% static 'css/global.css' %}">
+  <link rel="stylesheet" href="{% static 'css/components.css' %}">
+  <link rel="stylesheet" href="{% static 'accounts/css/login.css' %}">
+  <script src="{% static 'accounts/js/login.js' %}" defer></script>
+</head>
+<body>
+  <main class="login-layout">
+    <section class="welcome" aria-labelledby="welcome-title">
+      <a class="login-brand" href="{% url 'main:landing' %}" aria-label="Mossly — beranda">
+        <img src="{% static 'img/logo/logo.svg' %}" alt="Mossly" width="197" height="53">
+      </a>
+
+      <div class="welcome-content">
+        <p class="eyebrow text-label-s"><span aria-hidden="true"></span> LANGKAH KECIL, DAMPAK BAIK</p>
+        <h1 id="welcome-title">Kebiasaan baik,<br>tumbuh <span>bersamamu.</span></h1>
+        <p class="welcome-description text-body-m">Perjalanan menuju hidup berkelanjutan dimulai dari hal sederhana. Yuk, lanjutkan langkah hijaumu hari ini.</p>
+
+        <div class="growth" aria-hidden="true">
+          <svg class="sprout" viewBox="0 0 240 190" fill="none">
+            <ellipse cx="120" cy="171" rx="91" ry="10" class="sprout-shadow"/>
+            <path d="M119 167C119 133 121 98 144 67" class="sprout-stem" stroke-width="5" stroke-linecap="round"/>
+            <path d="M125 112C119 65 149 28 201 32C202 76 175 113 125 112Z" class="sprout-leaf"/>
+            <path d="M126 110L176 58" class="sprout-stem" stroke-width="3" stroke-linecap="round"/>
+            <path d="M118 138C75 144 43 114 43 78C88 73 119 95 118 138Z" class="sprout-leaf-soft"/>
+            <path d="M118 138L65 98" class="sprout-stem" stroke-width="3" stroke-linecap="round"/>
+            <path d="M96 169H145" class="sprout-stem" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+          <span class="growth-caption text-label-s">Sedikit setiap hari. Berarti untuk bumi.</span>
+        </div>
+      </div>
+
+      <p class="welcome-footer text-label-s">Tumbuh lebih baik, bersama Mossly.</p>
+    </section>
+
+    <section class="login-panel" aria-labelledby="login-title">
+      <a class="back-link text-label-s" href="{% url 'main:landing' %}"><span aria-hidden="true">←</span> Kembali ke beranda</a>
+
+      <div class="form-container">
+        <p class="eyebrow text-label-s">SELAMAT DATANG KEMBALI</p>
+        <h2 id="login-title">Masuk ke Mossly</h2>
+        <p class="form-description text-body-s">Langkah hijaumu berikutnya dimulai di sini.</p>
+
+        <form id="login-form" action="{% url 'accounts:login' %}" method="post">
+          {% csrf_token %}
+          <div class="field form-field">
+            <label class="field-label" for="username">Username</label>
+            <input class="input" id="username" name="username" type="text" placeholder="Masukkan username" autocomplete="username" required>
+          </div>
+
+          <div class="field form-field">
+            <label class="field-label" for="password">Password</label>
+            <div class="password-field">
+              <input class="input" id="password" name="password" type="password" placeholder="Masukkan password" autocomplete="current-password" required>
+              <button class="btn btn-ghost btn-icon btn-m btn-rounded password-toggle" type="button" aria-label="Tampilkan password" aria-controls="password" aria-pressed="false" hidden>
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                  <path class="eye-slash" d="m3 3 18 18"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button class="btn btn-rounded submit-button" type="submit">Masuk <span aria-hidden="true">→</span></button>
+          <div id="preview-message" class="alert preview-message" role="status"{% if not preview_submitted %} hidden{% endif %}>
+            <p class="alert-body">Ini masih pratinjau tampilan. Proses login belum diaktifkan.</p>
+          </div>
+        </form>
+
+        <div class="signup text-label-s"><span>Belum punya akun?</span> <a href="{% url 'accounts:register' %}">Daftar sekarang <span aria-hidden="true">↗</span></a></div>
+      </div>
+
+      <p class="panel-footer text-label-s">Satu kebiasaan baik untuk masa depan yang lebih hijau.</p>
+    </section>
+  </main>
+</body>
+</html>
