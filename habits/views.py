@@ -1,17 +1,18 @@
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from . import display, services
 from .forms import GoalForm, GoalProgressForm, HabitForm
-from .models import Goal, GoalChecklistItem, Habit, SustainabilityEvent
+from .models import Goal, GoalChecklistItem, GoalProgressLog, Habit, HabitCheckIn, SustainabilityEvent
 
 # Session key holding the milestone event to celebrate on the next page load.
 MILESTONE_SESSION_KEY = "habits_new_milestone"
@@ -462,3 +463,286 @@ def goal_checklist_toggle(request, pk, item_pk):
     )
     services.toggle_checklist_item(item)
     return _redirect_back(request, "habits:goal_detail", pk)
+
+
+# --- History and habit detail ----------------------------------------------------
+
+HISTORY_PERIODS = (("month", "Bulan ini"), ("3m", "3 bulan"), ("year", "Tahun"))
+# The activity log covers recent days only; skipped habits are listed for the
+# last week so older gaps do not fill the log.
+ACTIVITY_DAYS = 30
+ACTIVITY_LIMIT = 15
+MISSED_DAYS_SHOWN = 7
+MOST_CONSISTENT_SHOWN = 3
+
+
+def _month_cells(first, last, today, level_for):
+    """Calendar cells for one month, Monday first, with blanks before day 1.
+
+    level_for(day) returns the heatmap level for a past or current day.
+    """
+    cells = [None] * first.weekday()
+    day = first
+    while day <= last:
+        upcoming = day > today
+        cells.append({
+            "day": day.day,
+            "label": display.long_date(day),
+            "level": None if upcoming else level_for(day),
+            "is_today": day == today,
+            "is_upcoming": upcoming,
+        })
+        day += timedelta(days=1)
+    return cells
+
+
+def _year_weeks(year, today, level_for):
+    """Week columns for a year grid: each column runs Monday to Sunday."""
+    first = date(year, 1, 1)
+    start = first - timedelta(days=first.weekday())
+    last = date(year, 12, 31)
+    weeks = []
+    labelled_month = None
+    while start <= last:
+        week = [start + timedelta(days=offset) for offset in range(7)]
+        in_year = [day for day in week if day.year == year]
+        # Label a column with its first day's month, once per month, so a
+        # week that only ends in a new month stays under the old one.
+        label = ""
+        if in_year and in_year[0].month != labelled_month:
+            labelled_month = in_year[0].month
+            label = display.MONTH_SHORT[labelled_month - 1]
+        days = []
+        for day in week:
+            if day.year != year:
+                days.append(None)
+                continue
+            upcoming = day > today
+            days.append({
+                "label": display.long_date(day),
+                "level": None if upcoming else level_for(day),
+                "is_today": day == today,
+                "is_upcoming": upcoming,
+            })
+        weeks.append({"label": label, "days": days})
+        start += timedelta(days=7)
+    return weeks
+
+
+def _month_summary(habits, checkins, year, month, today):
+    first, last = services.month_bounds(year, month)
+    done, expected = services.period_counts(habits, checkins, first, last, today)
+    return {
+        "name": display.MONTH_NAMES[month - 1],
+        "first": first,
+        "last": last,
+        "done": done,
+        "percent": services.consistency_percent(done, expected),
+        "perfect": services.perfect_days(habits, checkins, first, last, today),
+        "is_upcoming": first > today,
+    }
+
+
+def _activity_log(user, habits, checkins, today):
+    """Recent check-ins, milestones, new habits, goal progress, and skipped habits."""
+    since = today - timedelta(days=ACTIVITY_DAYS)
+    since_moment = timezone.make_aware(datetime.combine(since, datetime.min.time()))
+    by_pk = {habit.pk: habit for habit in habits}
+    entries = []
+
+    def add(day, moment, icon, tint, title, subtitle):
+        entries.append({"day": day, "moment": moment, "icon": icon, "tint": tint,
+                        "title": title, "subtitle": subtitle})
+
+    for checkin in HabitCheckIn.objects.filter(habit__user=user, checkin_date__gte=since):
+        habit = by_pk[checkin.habit_id]
+        streak = services.current_streak(habit, checkins[habit.pk], checkin.checkin_date)
+        add(checkin.checkin_date, checkin.checked_at, "check", "moss-200",
+            f"Check-in: {habit.name}", f"{streak} hari berturut-turut")
+    for event in user.sustainability_events.filter(occurred_at__gte=since_moment):
+        day = timezone.localdate(event.occurred_at)
+        if event.event_type == SustainabilityEvent.EventType.HABIT_MILESTONE:
+            add(day, event.occurred_at, "trophy", "moss-100",
+                f"Streak {event.milestone_days} hari: {event.title_snapshot}",
+                "Milestone terkirim ke Personal Dashboard")
+        else:
+            add(day, event.occurred_at, "goal", "moss-200",
+                f"Goal selesai: {event.title_snapshot}", "Terkirim ke Personal Dashboard")
+    logs = GoalProgressLog.objects.filter(goal__user=user, logged_at__gte=since_moment).select_related("goal")
+    for log in logs:
+        amount = f"+{display.format_amount(log.amount)} {display.UNIT_SHORT[log.goal.unit]}"
+        add(timezone.localdate(log.logged_at), log.logged_at, "target", "clay-100",
+            f"Progres: {log.goal.title}", f"{amount} · {log.note}" if log.note else amount)
+    for habit in habits:
+        created = timezone.localdate(habit.created_at)
+        if created >= since:
+            subtitle = "Streak pertamamu dimulai hari ini" if created == today else "Mulai dicatat"
+            add(created, habit.created_at, habit.icon, habit.tint, f"Habit baru: {habit.name}", subtitle)
+    for offset in range(1, MISSED_DAYS_SHOWN + 1):
+        day = today - timedelta(days=offset)
+        missed = services.missed_habits(habits, checkins, day)
+        if missed:
+            add(day, None, "circle-alert", "clay-100", f"Melewatkan {len(missed)} habit",
+                display.join_names(habit.name for habit in missed))
+
+    # Newest day first; within a day, timed entries newest first, then skipped habits.
+    entries.sort(
+        key=lambda entry: (entry["day"], entry["moment"] is not None, entry["moment"] or since_moment),
+        reverse=True,
+    )
+    groups = []
+    for entry in entries[:ACTIVITY_LIMIT]:
+        label = display.relative_date(entry["day"], today)
+        if label not in ("Hari ini", "Kemarin"):
+            label = display.day_month_long(entry["day"])
+        if not groups or groups[-1]["label"] != label:
+            groups.append({"label": label, "entries": []})
+        entry["time"] = display.clock(entry["moment"]) if entry["moment"] else ""
+        groups[-1]["entries"].append(entry)
+    return groups
+
+
+def _history_hero(period, months, overall, today):
+    """Eyebrow, title, and subtitle for the selected period.
+
+    With no habit scheduled in the period there is no consistency to show, so
+    the hero switches to a gentle invitation (no_habits) instead of 0%.
+    """
+    current = months[-1]
+    eyebrow = {
+        "month": f"Riwayat · {current['name']} {today.year}",
+        "3m": "Riwayat · 3 bulan terakhir",
+        "year": f"Riwayat · Tahun {today.year}",
+    }[period]
+    if overall["percent"] is None:
+        scope = "bulan ini" if period == "month" else "di periode ini"
+        return {
+            "eyebrow": eyebrow,
+            "no_habits": True,
+            "title": f"Belum ada habit yang dicatat {scope}",
+            "subtitle": "Tambahkan habit untuk melihat konsistensimu di sini. "
+                        "Progres dan goal yang selesai tetap tercatat di log aktivitas.",
+        }
+    first_step = "Satu check-in kecil hari ini sudah jadi awal yang baik."
+
+    if period == "month":
+        previous = months[-2]
+        change = services.consistency_change(current["percent"], previous["percent"])
+        if change and change > 0:
+            title = f"{current['percent']}% konsistensi bulan ini, naik {change}% dari {previous['name']}"
+        else:
+            title = f"{current['percent']}% konsistensi bulan ini"
+        if current["done"]:
+            subtitle = (
+                f"Kamu sudah menyelesaikan {current['done']} check-in dan "
+                f"{current['perfect']} hari sempurna. Pertahankan ritmenya."
+            )
+        else:
+            subtitle = f"Belum ada check-in bulan ini. {first_step}"
+        return {"eyebrow": eyebrow, "title": title, "subtitle": subtitle}
+
+    known = [month for month in months if month["percent"] is not None]
+    best = max(known, key=lambda month: month["percent"])
+    if period == "3m":
+        if len(known) > 1 and current["percent"] is not None and current["percent"] > known[0]["percent"]:
+            title = f"Konsistensimu naik dari {known[0]['percent']}% ke {current['percent']}%"
+        elif current["percent"] is not None:
+            title = f"Konsistensimu {current['percent']}% bulan ini"
+        else:
+            title = "Belum ada habit yang dicatat bulan ini"
+        average = services.consistency_percent(sum(m["percent"] for m in known), 100 * len(known))
+        subtitle = f"Rata-rata {average}% per bulan. {best['name']} adalah bulan terbaikmu sejauh ini."
+    else:
+        title = f"{overall['done']} check-in sejak Januari {today.year}"
+        subtitle = f"Kamu paling konsisten di bulan {best['name']}. Terus tumbuh."
+    if not overall["done"]:
+        subtitle = f"Belum ada check-in di periode ini. {first_step}"
+    return {"eyebrow": eyebrow, "title": title, "subtitle": subtitle}
+
+
+@login_required
+def history(request):
+    today = services.local_today()
+    period = request.GET.get("period")
+    if period not in dict(HISTORY_PERIODS):
+        period = "month"
+    user = request.user
+    habits = list(user.habits.all())
+    checkins = services.checkins_by_habit(habits)
+
+    def level_for(day):
+        return services.heat_level(*services.day_counts(habits, checkins, day))
+
+    this_first, this_last = services.month_bounds(today.year, today.month)
+    context = {
+        "period": period,
+        "periods": [
+            {"key": key, "label": label, "url": f"{reverse('habits:history')}?period={key}"}
+            for key, label in HISTORY_PERIODS
+        ],
+        "month_name": display.MONTH_NAMES[today.month - 1],
+        "year": today.year,
+        "day_names": display.DAY_SHORT,
+        "day_initials": display.DAY_INITIALS,
+    }
+    has_activity = (
+        any(checkins.values())
+        or GoalProgressLog.objects.filter(goal__user=user).exists()
+        or user.sustainability_events.exists()
+    )
+    if not has_activity:
+        cells = _month_cells(this_first, this_last, today, lambda day: 0)
+        for cell in cells:
+            if cell:  # nothing recorded yet: every day reads as an open outline
+                cell["is_upcoming"] = True
+        context.update(is_empty=True, month_cells=cells)
+        return render(request, "habits/history/history.html", context)
+
+    deltas = {"month": (-1, 0), "3m": (-2, -1, 0)}.get(period)
+    if deltas:
+        months = [
+            _month_summary(habits, checkins, *services.shift_month(today.year, today.month, delta), today)
+            for delta in deltas
+        ]
+        start = months[0]["first"] if period == "3m" else this_first
+        end = this_last
+    else:
+        months = [_month_summary(habits, checkins, today.year, month, today) for month in range(1, 13)]
+        start, end = date(today.year, 1, 1), date(today.year, 12, 31)
+    done, expected = services.period_counts(habits, checkins, start, end, today)
+    overall = {
+        "done": done,
+        "percent": services.consistency_percent(done, expected),
+        "perfect": services.perfect_days(habits, checkins, start, end, today),
+    }
+    for month in months:
+        month["cells"] = _month_cells(month["first"], month["last"], today, level_for)
+
+    current = months[-1] if period != "year" else months[today.month - 1]
+    consistent = []
+    for habit in habits:
+        stats = services.habit_month_stats(habit, checkins[habit.pk], today.year, today.month, today)
+        if stats["rate"] is not None:
+            consistent.append({"name": habit.name, "percent": stats["rate"]})
+    consistent.sort(key=lambda item: item["percent"], reverse=True)
+
+    context.update(
+        is_empty=False,
+        hero=_history_hero(period, months, overall, today),
+        overall=overall,
+        months=months,
+        month_cells=months[-1]["cells"] if period == "month" else None,
+        year_weeks=_year_weeks(today.year, today, level_for) if period == "year" else None,
+        summary={
+            "checkins": current["done"],
+            "perfect": current["perfect"],
+            "goals_completed": user.sustainability_events.filter(
+                event_type=SustainabilityEvent.EventType.GOAL_COMPLETED,
+                occurred_at__gte=timezone.make_aware(datetime.combine(this_first, datetime.min.time())),
+            ).count(),
+            "longest": max((services.longest_streak(h, checkins[h.pk], today) for h in habits), default=0),
+        },
+        most_consistent=consistent[:MOST_CONSISTENT_SHOWN],
+        activity=_activity_log(user, habits, checkins, today),
+    )
+    return render(request, "habits/history/history.html", context)

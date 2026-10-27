@@ -1,0 +1,232 @@
+{% extends "habits/layout.html" %}
+{% load static %}
+
+{% block title %}Riwayat · Mossly{% endblock %}
+
+{% block page_top %}{% include "habits/components/tabs.html" with active="history" %}{% endblock %}
+
+{% block page %}
+{% if is_empty %}
+  <section class="focus-panel focus-panel-soft" aria-labelledby="focus-title">
+    <div class="focus-panel-text">
+      <p class="eyebrow">Riwayat masih kosong</p>
+      <h1 class="focus-title" id="focus-title">Riwayatmu akan tumbuh di sini.</h1>
+      <p class="focus-subtitle">Setiap check-in, milestone, dan goal yang selesai akan muncul sebagai kalender dan log aktivitas.</p>
+      <a class="btn focus-cta" href="{% url 'habits:index' %}">
+        {% include "habits/components/icon.html" with name="check" %}Mulai check-in pertama
+      </a>
+    </div>
+    <img class="decor empty-decor-branch" src="{% static 'img/decor/ranting.svg' %}" alt="" aria-hidden="true">
+    <img class="decor empty-decor-plant" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
+    <img class="decor empty-decor-flower empty-decor-flower-1" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+    <img class="decor empty-decor-flower empty-decor-flower-2" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+    <img class="decor empty-decor-flower empty-decor-flower-3" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+    <img class="decor empty-decor-grass" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
+    <svg class="decor decor-hill focus-decor-hill" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path class="decor-hill-back" d="M0 60C160 10 320 90 520 50C720 10 900 80 1200 30V120H0V60Z"/>
+      <path class="decor-hill-front" d="M0 92C200 52 380 112 600 82C820 52 1000 102 1200 72V120H0V92Z"/>
+    </svg>
+  </section>
+
+  <div class="habits-layout">
+    <section class="card heat-card" aria-labelledby="calendar-title">
+      <div class="section-head">
+        <h2 class="heat-card-title" id="calendar-title">Kalender {{ month_name }}</h2>
+        <p class="section-note">Belum ada check-in</p>
+      </div>
+      {% include "habits/components/history_month.html" with cells=month_cells size="large" %}
+    </section>
+    <aside class="habits-aside">
+      <section class="side-card side-card-sand empty-log-card" aria-labelledby="empty-log-title">
+        <span class="empty-log-icon">{% include "habits/components/icon.html" with name="footprints" %}</span>
+        <h2 class="side-card-title" id="empty-log-title">Log aktivitas</h2>
+        <p class="side-card-note">Belum ada aktivitas. Check-in pertamamu akan tercatat di sini lengkap dengan waktunya.</p>
+        <img class="decor side-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+      </section>
+    </aside>
+  </div>
+{% elif hero.no_habits %}
+  {# Activity exists (goals) but no habit was scheduled: no consistency to show yet. #}
+  <section class="focus-panel focus-panel-soft" aria-labelledby="focus-title">
+    <div class="focus-panel-text">
+      <p class="eyebrow">{{ hero.eyebrow }}</p>
+      <h1 class="focus-title" id="focus-title">{{ hero.title }}</h1>
+      <p class="focus-subtitle">{{ hero.subtitle }}</p>
+      <a class="btn focus-cta" href="{% url 'habits:habit_create' %}">
+        {% include "habits/components/icon.html" with name="plus" %}Tambah habit
+      </a>
+    </div>
+    <img class="decor empty-decor-branch" src="{% static 'img/decor/ranting.svg' %}" alt="" aria-hidden="true">
+    <img class="decor empty-decor-plant" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
+    <img class="decor empty-decor-flower empty-decor-flower-1" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+    <img class="decor empty-decor-flower empty-decor-flower-2" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+    <img class="decor empty-decor-flower empty-decor-flower-3" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+    <img class="decor empty-decor-grass" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
+    <svg class="decor decor-hill focus-decor-hill" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path class="decor-hill-back" d="M0 60C160 10 320 90 520 50C720 10 900 80 1200 30V120H0V60Z"/>
+      <path class="decor-hill-front" d="M0 92C200 52 380 112 600 82C820 52 1000 102 1200 72V120H0V92Z"/>
+    </svg>
+  </section>
+{% else %}
+  <section class="focus-panel" aria-labelledby="focus-title">
+    <div class="focus-panel-text">
+      <p class="eyebrow">{{ hero.eyebrow }}</p>
+      <h1 class="focus-title" id="focus-title">{{ hero.title }}</h1>
+      {% if hero.subtitle %}<p class="focus-subtitle">{{ hero.subtitle }}</p>{% endif %}
+      <a class="btn btn-accent focus-cta" href="{% url 'dashboard:index' %}">
+        Lihat di Dashboard {% include "habits/components/icon.html" with name="arrow-up-right" %}
+      </a>
+    </div>
+
+    <div class="focus-stats">
+      <div class="progress-ring" style="--value: {{ overall.percent|default:0 }}" role="img"
+           aria-label="Konsistensi {{ overall.percent|default:0 }} persen">
+        <span class="progress-ring-value">{{ overall.percent|default:0 }}%</span>
+        <span class="progress-ring-label">konsistensi</span>
+      </div>
+      <div class="focus-streak">
+        <span class="focus-streak-icon">{% include "habits/components/icon.html" with name="calendar-check" %}</span>
+        <p class="focus-streak-value">{{ overall.perfect }} hari</p>
+        <p class="focus-streak-label">Hari sempurna</p>
+      </div>
+    </div>
+
+    <img class="decor focus-decor-leaf" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
+    <img class="decor focus-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+    <img class="decor focus-decor-leaf-sm" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
+    <img class="decor focus-decor-seedling" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
+    <img class="decor focus-decor-grass focus-decor-grass-left" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
+    <img class="decor focus-decor-grass focus-decor-grass-right" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
+    <svg class="decor decor-hill focus-decor-hill" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path class="decor-hill-back" d="M0 60C160 10 320 90 520 50C720 10 900 80 1200 30V120H0V60Z"/>
+      <path class="decor-hill-front" d="M0 92C200 52 380 112 600 82C820 52 1000 102 1200 72V120H0V92Z"/>
+    </svg>
+  </section>
+{% endif %}
+
+{% if not is_empty %}
+  <div class="habits-layout history-layout history-{{ period }}">
+    <section class="goal-section history-calendar" aria-labelledby="calendar-title">
+      <div class="section-head">
+        <h2 class="section-title" id="calendar-title">
+          {% if period == "month" %}Kalender {{ month_name }}{% elif period == "3m" %}{{ months.0.name }} – {{ months.2.name }}{% else %}Kalender {{ year }}{% endif %}
+        </h2>
+        <nav class="tabs-pill" aria-label="Periode riwayat">
+          {% for item in periods %}
+            <a class="tab" href="{{ item.url }}"{% if item.key == period %} aria-current="page"{% endif %}>{{ item.label }}</a>
+          {% endfor %}
+        </nav>
+      </div>
+
+      <div class="card heat-card">
+        {% if period == "month" %}
+          {% include "habits/components/history_month.html" with cells=month_cells size="large" %}
+        {% elif period == "3m" %}
+          <div class="heat-months">
+            {% for month in months %}
+              <div class="heat-month-block">
+                <p class="heat-month-name">{{ month.name }}</p>
+                <p class="heat-month-note">{% if month.percent is not None %}{{ month.percent }}% konsistensi{% else %}Belum ada data{% endif %}</p>
+                {% include "habits/components/history_month.html" with cells=month.cells size="small" %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="section-head heat-year-head">
+            <p class="heat-year-total">{{ overall.done }} check-in · {{ overall.perfect }} hari sempurna</p>
+            <p class="section-note">Dari 1 Januari sampai hari ini</p>
+          </div>
+          <div class="heat-year" role="img" aria-label="Kalender {{ year }}: {{ overall.done }} check-in, {{ overall.perfect }} hari sempurna">
+            <span class="heat-year-corner" aria-hidden="true"></span>
+            {% for name in day_names %}
+              <span class="heat-year-day" aria-hidden="true">{% cycle name "" %}</span>
+            {% endfor %}
+            {% for week in year_weeks %}
+              <span class="heat-year-month" aria-hidden="true">{{ week.label }}</span>
+              {% for cell in week.days %}
+                {% if cell %}
+                  <span class="heat-cell{% if cell.is_upcoming %} heat-upcoming{% else %} heat-l{{ cell.level }}{% endif %}{% if cell.is_today %} is-today{% endif %}" title="{{ cell.label }}"></span>
+                {% else %}
+                  <span class="heat-blank"></span>
+                {% endif %}
+              {% endfor %}
+            {% endfor %}
+          </div>
+          <div class="heat-months heat-months-year">
+            {% for month in months %}
+              <div class="heat-month-block">
+                <p class="heat-month-name">{{ month.name }}</p>
+                <p class="heat-month-note">{% if month.percent is not None %}{{ month.percent }}%{% else %}–{% endif %}</p>
+                {% include "habits/components/history_month.html" with cells=month.cells size="tiny" %}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <ul class="heat-legend">
+          <li>Sedikit</li>
+          {% for level in "01234" %}<li class="heat-cell heat-l{{ level }}" aria-hidden="true"></li>{% endfor %}
+          <li>Semua habit selesai</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="goal-section history-log" aria-labelledby="log-title">
+      <div class="section-head">
+        <h2 class="section-title" id="log-title">Log aktivitas</h2>
+        <p class="section-note">Check-in, milestone, dan goal selesai</p>
+      </div>
+      <div class="card activity-card">
+        {% for group in activity %}
+          <p class="eyebrow activity-day">{{ group.label }}</p>
+          <ul class="activity-list">
+            {% for entry in group.entries %}
+              <li class="activity-item">
+                <span class="habit-icon tint-{{ entry.tint }}">{% include "habits/components/icon.html" with name=entry.icon %}</span>
+                <span class="log-body">
+                  <span class="log-title">{{ entry.title }}</span>
+                  <span class="log-day">{{ entry.subtitle }}</span>
+                </span>
+                {% if entry.time %}<span class="log-time">{{ entry.time }}</span>{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% empty %}
+          <p class="empty-note">Belum ada aktivitas dalam 30 hari terakhir.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <aside class="habits-aside">
+      <section class="side-card side-card-sand" aria-labelledby="summary-title">
+        <p class="eyebrow eyebrow-accent" id="summary-title">Ringkasan {{ month_name }}</p>
+        <dl class="pace-list">
+          <div><dt>Total check-in</dt><dd>{{ summary.checkins }}</dd></div>
+          <div><dt>Hari sempurna</dt><dd>{{ summary.perfect }}</dd></div>
+          <div><dt>Goal selesai</dt><dd>{{ summary.goals_completed }}</dd></div>
+          <div><dt>Streak terpanjang</dt><dd>{{ summary.longest }} hari</dd></div>
+        </dl>
+        <img class="decor side-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+      </section>
+
+      <section class="side-card side-card-muted" aria-labelledby="consistent-title">
+        <p class="eyebrow" id="consistent-title">Paling konsisten</p>
+        {% if most_consistent %}
+          <ul class="consistent-list">
+            {% for item in most_consistent %}
+              <li class="goal-progress">
+                <p class="goal-progress-row"><span>{{ item.name }}</span><span>{{ item.percent }}%</span></p>
+                <progress class="progress" value="{{ item.percent }}" max="100">{{ item.percent }}%</progress>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="side-card-note">Belum ada check-in bulan ini.</p>
+        {% endif %}
+        <img class="decor side-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+        <img class="decor side-decor-grass" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
+      </section>
+    </aside>
+  </div>
+{% endif %}
+{% endblock %}

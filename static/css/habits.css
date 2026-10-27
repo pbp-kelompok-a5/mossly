@@ -868,6 +868,92 @@ html:not(.js) .js-only { display: none; }
 .finish-list .icon { color: var(--color-icon-brand); }
 .finish-actions { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
 
+/* === History: heatmap (Heat Cell L0-L4, Upcoming, Today) === */
+.heat-card { display: grid; gap: var(--space-5); }
+.heat-card-title { font: var(--type-h4); }
+
+.heat-month {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-2);
+  justify-items: center;
+}
+.heat-weekday {
+  font: var(--type-label-s);
+  font-weight: var(--weight-regular);
+  color: var(--color-text-tertiary);
+}
+.heat-cell,
+.heat-blank {
+  width: var(--space-10);
+  aspect-ratio: 1;
+}
+/* The shared base page sets a solid border style on every element. */
+.heat-blank { border: 0; }
+.heat-cell {
+  display: grid;
+  place-items: center;
+  font: var(--type-label-s);
+  color: var(--color-text-secondary);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-full);
+}
+.heat-l0 { background: var(--color-bg-subtle); }
+.heat-l1 { background: var(--color-moss-200); color: var(--color-text-primary); }
+.heat-l2 { background: var(--color-moss-300); color: var(--color-text-primary); }
+.heat-l3 { background: var(--color-moss-400); color: var(--color-text-on-brand); }
+.heat-l4 { background: var(--color-bg-brand); color: var(--color-text-on-brand); }
+.heat-upcoming {
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-surface);
+  border-color: var(--color-border-subtle);
+}
+.heat-cell.is-today { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
+
+.heat-month-small { gap: var(--space-2); }
+.heat-month-small .heat-cell,
+.heat-month-small .heat-blank { width: var(--space-6); }
+.heat-month-tiny { gap: var(--space-1); }
+.heat-month-tiny .heat-weekday { display: none; }
+.heat-month-tiny .heat-cell { width: var(--space-3); border-width: 1px; }
+.heat-month-tiny .heat-blank { width: var(--space-3); }
+.heat-month-tiny .heat-cell.is-today { outline-width: 1px; outline-offset: 1px; }
+
+.heat-months { display: grid; gap: var(--space-6); }
+.heat-months-year { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
+.heat-month-block { display: grid; gap: var(--space-2); align-content: start; }
+.heat-month-name { font: var(--type-label-l); }
+.heat-month-note { font: var(--type-body-s); color: var(--color-text-secondary); }
+
+.heat-year,
+.heat-year-head { display: none; }
+.heat-year-total { font: var(--type-label-l); }
+
+.heat-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  font: var(--type-body-s);
+  color: var(--color-text-tertiary);
+  list-style: none;
+}
+.heat-legend .heat-cell { width: var(--space-3); border-width: 1px; }
+
+/* === History: activity log and side cards === */
+.activity-card { display: grid; gap: var(--space-3); }
+.activity-day { margin-top: var(--space-2); color: var(--color-text-tertiary); }
+.activity-list { display: grid; gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+.activity-item { display: flex; align-items: center; gap: var(--space-4); }
+
+.consistent-list { display: grid; gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+
+.empty-log-card { justify-items: center; text-align: center; }
+.empty-log-card .side-card-title { justify-content: center; }
+.empty-log-icon { color: var(--color-icon-accent); }
+
 /* ==========================================================
    md (768): content stretches fluidly; roomier spacing
    ========================================================== */
@@ -903,6 +989,11 @@ html:not(.js) .js-only { display: none; }
   .goal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
   .goal-card, .goal-placeholder { padding: var(--space-6); }
   .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .heat-month-large .heat-cell,
+  .heat-month-large .heat-blank { width: var(--space-12); }
+  .history-3m .heat-months { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .heat-months-year { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 /* ==========================================================
@@ -960,6 +1051,45 @@ html:not(.js) .js-only { display: none; }
   .empty-decor-grass { right: var(--space-2); bottom: 0; width: var(--space-20); filter: brightness(1.25); }
 
   .side-card { padding: var(--space-8); }
+
+  /* History: calendar and log on the left, side cards on the right; the
+     year grid needs the full width, so the side cards drop beside the log. */
+  .history-layout > .history-calendar { grid-column: 1; grid-row: 1; }
+  .history-layout > .history-log { grid-column: 1; grid-row: 2; }
+  .history-layout > .habits-aside { grid-column: 2; grid-row: 1 / span 2; }
+  .history-year > .history-calendar { grid-column: 1 / -1; }
+  .history-year > .habits-aside { grid-row: 2; }
+
+  /* The year view switches from twelve small months to one week grid. */
+  .heat-months-year { display: none; }
+  .heat-year-head { display: flex; }
+  .heat-year {
+    display: grid;
+    grid-template-rows: auto repeat(7, var(--space-4));
+    grid-template-columns: max-content;
+    grid-auto-flow: column;
+    grid-auto-columns: var(--space-4);
+    gap: var(--space-1);
+    overflow-x: auto;
+    padding-bottom: var(--space-1);
+  }
+  .heat-year .heat-cell { width: var(--space-4); border-width: 1px; }
+  .heat-year .heat-blank { width: var(--space-4); }
+  .heat-year .heat-cell.is-today { outline-width: 1.5px; outline-offset: 1px; }
+  .heat-year-corner { grid-row: 1; }
+  .heat-year-day {
+    padding-right: var(--space-2);
+    font: var(--type-label-s);
+    font-weight: var(--weight-regular);
+    line-height: var(--space-4);
+    color: var(--color-text-tertiary);
+  }
+  .heat-year-month {
+    font: var(--type-label-s);
+    font-weight: var(--weight-regular);
+    color: var(--color-text-tertiary);
+    white-space: nowrap;
+  }
 
   .page-decor-branch {
     display: block;

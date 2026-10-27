@@ -6,11 +6,14 @@ here instead of relying on Django's locale formatting.
 
 from decimal import Decimal
 
+from django.utils import timezone
+
 from .models import Goal, Habit
 from .services import STREAK_MILESTONES
 
 DAY_NAMES = ("Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu")
 DAY_SHORT = ("Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min")
+DAY_INITIALS = ("S", "S", "R", "K", "J", "S", "M")
 MONTH_NAMES = (
     "Januari", "Februari", "Maret", "April", "Mei", "Juni",
     "Juli", "Agustus", "September", "Oktober", "November", "Desember",
@@ -71,6 +74,24 @@ AMOUNT_PROMPTS = {
     Goal.Unit.HARI: "Tambah berapa hari?",
     Goal.Unit.KG_CO2E: "Tambah berapa kg CO2e?",
 }
+
+
+def join_names(names):
+    """'A', 'A dan B', 'A, B, dan C'."""
+    names = list(names)
+    if len(names) <= 2:
+        return " dan ".join(names)
+    return f"{', '.join(names[:-1])}, dan {names[-1]}"
+
+
+def day_month_long(day):
+    """'18 Oktober'"""
+    return f"{day.day} {MONTH_NAMES[day.month - 1]}"
+
+
+def clock(moment):
+    """'07.45' in local time."""
+    return timezone.localtime(moment).strftime("%H.%M")
 
 
 def day_month(day):
