@@ -1,0 +1,15 @@
+{% extends "accounts/base_auth.html" %}
+{% load static %}
+{% block title %}Daftar · Mossly{% endblock %}
+{% block extra_head %}<script src="{% static 'accounts/js/login.js' %}" defer></script>{% endblock %}
+{% block panel_content %}
+  <p class="eyebrow text-label-s">MULAI LANGKAH HIJAUMU</p>
+  <h2 id="login-title">Buat akun Mossly</h2>
+  <p class="form-description text-body-s">Daftar, lalu atur preferensi awal untuk perjalananmu.</p>
+  <form action="{% url 'accounts:register' %}" method="post">
+    {% csrf_token %}
+    {% include "accounts/_form_fields.html" %}
+    <button class="btn btn-rounded submit-button" type="submit">Daftar dan lanjut</button>
+  </form>
+  <div class="signup text-label-s">Sudah punya akun? <a href="{% url 'accounts:login' %}">Masuk sekarang</a></div>
+{% endblock %}

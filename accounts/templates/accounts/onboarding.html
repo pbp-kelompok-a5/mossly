@@ -1,0 +1,13 @@
+{% extends "accounts/base_auth.html" %}
+{% block title %}Kenalan dulu · Mossly{% endblock %}
+{% block panel_content %}
+  <p class="eyebrow text-label-s">KENALAN DULU, YUK</p>
+  <h2 id="login-title">Langkah awalmu</h2>
+  <p class="form-description text-body-s">Pilih preferensi yang cocok buatmu. Kamu bisa mengubahnya lagi di profil.</p>
+  <form action="{% url 'accounts:onboarding' %}" method="post">
+    {% csrf_token %}
+    {% include "accounts/_form_fields.html" %}
+    <button class="btn btn-rounded submit-button" type="submit">Selesai, mulai perjalanan</button>
+  </form>
+  <div class="signup text-label-s"><a href="{% url 'accounts:logout' %}">Keluar dari akun</a></div>
+{% endblock %}
