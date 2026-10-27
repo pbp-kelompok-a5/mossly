@@ -51,9 +51,12 @@ class AccessTests(FrozenClockMixin, TestCase):
 
     def test_state_changes_require_post(self):
         self.client.force_login(self.owner)
-        # Delete answers GET with its confirmation page instead (tested below).
-        post_only = [url for url in self.habit_urls() if not url.endswith("/delete/")]
-        for url in post_only + self.goal_urls():
+        # Delete and log progress answer GET with a full page instead (tested below).
+        post_only = [
+            url for url in self.habit_urls() + self.goal_urls()
+            if not url.endswith(("/delete/", "/progress/"))
+        ]
+        for url in post_only:
             with self.subTest(url=url):
                 self.assertEqual(self.client.get(url).status_code, 405)
 

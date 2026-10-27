@@ -1,6 +1,6 @@
-{% comment %}Goal and Riwayat stay inactive until their pages exist.{% endcomment %}
+{% comment %}Riwayat stays inactive until its page exists.{% endcomment %}
 <nav class="tabs habits-tabs" aria-label="Habit & Goal">
   <a class="tab" href="{% url 'habits:index' %}"{% if active == "habit" %} aria-current="page"{% endif %}>Habit</a>
-  <span class="tab" aria-disabled="true">Goal</span>
+  <a class="tab" href="{% url 'habits:goal_list' %}"{% if active == "goal" %} aria-current="page"{% endif %}>Goal</a>
   <span class="tab" aria-disabled="true">Riwayat</span>
 </nav>

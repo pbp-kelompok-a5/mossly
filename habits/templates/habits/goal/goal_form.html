@@ -1,0 +1,26 @@
+{% extends "habits/layout.html" %}
+
+{% block title %}{% if is_edit %}Edit goal{% else %}Buat goal{% endif %} · Mossly{% endblock %}
+
+{% block page_top %}
+{% if is_edit %}
+  <a class="back-link" href="{% url 'habits:goal_detail' goal.pk %}">
+    {% include "habits/components/icon.html" with name="arrow-left" class="icon-sm" %}Kembali ke detail goal
+  </a>
+{% else %}
+  <a class="back-link" href="{% url 'habits:goal_list' %}">
+    {% include "habits/components/icon.html" with name="arrow-left" class="icon-sm" %}Kembali ke Goal
+  </a>
+{% endif %}
+{% endblock %}
+
+{% block page %}
+<div class="card form-page">
+  {% if is_edit %}
+    {% url 'habits:goal_edit' goal.pk as form_action %}
+  {% else %}
+    {% url 'habits:goal_create' as form_action %}
+  {% endif %}
+  {% include "habits/components/goal_form_fields.html" with action=form_action title_id="goal-form-title" in_dialog=False %}
+</div>
+{% endblock %}

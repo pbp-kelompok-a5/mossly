@@ -1,0 +1,167 @@
+{% extends "habits/layout.html" %}
+{% load static %}
+
+{% block title %}{{ goal.title }} · Mossly{% endblock %}
+
+{% block page_top %}
+<a class="back-link" href="{% url 'habits:goal_list' %}">
+  {% include "habits/components/icon.html" with name="arrow-left" class="icon-sm" %}Kembali ke Goal
+</a>
+{% endblock %}
+
+{% block page %}
+<div class="habits-layout">
+  <section class="focus-panel" aria-labelledby="focus-title">
+    <div class="focus-panel-text">
+      <p class="eyebrow">Goal · {{ goal.category }}</p>
+      <h1 class="focus-title" id="focus-title">{{ goal.title }}</h1>
+      <p class="focus-subtitle">
+        Target {{ goal.target_text }}, {{ goal.period_long }}.
+        {% if goal.status == "completed" %}
+          {{ goal.completed_text }}, pencapaian ini sudah terkirim ke Personal Dashboard.
+        {% elif goal.status == "expired" %}
+          Deadline sudah lewat. Kamu bisa memperpanjangnya lewat Edit goal.
+        {% else %}
+          Tinggal {{ goal.remaining_text }} lagi {{ goal.time_left }}.
+        {% endif %}
+      </p>
+      {% if goal.status == "active" %}
+        <a class="btn btn-accent focus-cta" href="{% url 'habits:goal_log_progress' goal.pk %}" data-dialog-open="progress-dialog">
+          {% include "habits/components/icon.html" with name="plus" %}Catat progres
+        </a>
+      {% endif %}
+    </div>
+
+    <div class="focus-stats">
+      <div class="progress-ring" style="--value: {{ goal.percent }}" role="img" aria-label="{{ goal.percent }} persen, {{ goal.progress_text }}">
+        <span class="progress-ring-value">{{ goal.percent }}%</span>
+        <span class="progress-ring-label">{{ goal.progress_text }}</span>
+      </div>
+      <div class="focus-streak">
+        {% if goal.status == "completed" %}
+          <span class="focus-streak-icon">{% include "habits/components/icon.html" with name="trophy" %}</span>
+          <p class="focus-streak-value">Selesai</p>
+          <p class="focus-streak-label">{{ goal.completed_text }}</p>
+        {% elif goal.status == "expired" %}
+          <span class="focus-streak-icon">{% include "habits/components/icon.html" with name="calendar" %}</span>
+          <p class="focus-streak-value">Terlewat</p>
+          <p class="focus-streak-label">{{ goal.deadline_text }}</p>
+        {% else %}
+          <span class="focus-streak-icon">{% include "habits/components/icon.html" with name="calendar" %}</span>
+          <p class="focus-streak-value">{% if goal.days_left %}{{ goal.days_left }} hari{% else %}Hari ini{% endif %}</p>
+          <p class="focus-streak-label">Sisa waktu</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <img class="decor focus-decor-leaf" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
+    <img class="decor focus-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+    <img class="decor focus-decor-leaf-sm" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
+    <img class="decor focus-decor-seedling" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
+    <img class="decor focus-decor-grass focus-decor-grass-left" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
+    <img class="decor focus-decor-grass focus-decor-grass-right" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
+    <svg class="decor decor-hill focus-decor-hill" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path class="decor-hill-back" d="M0 60C160 10 320 90 520 50C720 10 900 80 1200 30V120H0V60Z"/>
+      <path class="decor-hill-front" d="M0 92C200 52 380 112 600 82C820 52 1000 102 1200 72V120H0V92Z"/>
+    </svg>
+  </section>
+
+  <div class="habits-main">
+    <section class="goal-section" aria-labelledby="checklist-title">
+      <div class="section-head">
+        <h2 class="section-title" id="checklist-title">Checklist</h2>
+        {% if checklist %}<p class="section-note">{{ goal.checklist_done }} dari {{ goal.checklist_total }} selesai</p>{% endif %}
+      </div>
+      {% if checklist %}
+        <ul class="checklist">
+          {% for item in checklist %}
+            <li>
+              <form class="checklist-item{% if item.is_done %} is-done{% endif %}" method="post"
+                    action="{% url 'habits:goal_checklist_toggle' goal.pk item.pk %}">
+                {% csrf_token %}
+                <button class="checklist-toggle" type="submit" aria-pressed="{% if item.is_done %}true{% else %}false{% endif %}">
+                  <span class="checkbox-box">{% if item.is_done %}{% include "habits/components/icon.html" with name="check" class="icon-sm" %}{% endif %}</span>
+                  <span class="checklist-label">{{ item.label }}</span>
+                  <span class="checklist-date">{{ item.date }}</span>
+                </button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-note">Belum ada checklist. Tambahkan langkah kecil lewat Edit goal.</p>
+      {% endif %}
+    </section>
+
+    <section class="goal-section" aria-labelledby="log-title">
+      <div class="section-head">
+        <h2 class="section-title" id="log-title">Riwayat progres</h2>
+        <p class="section-note">Tiap catatan menambah hitungan goal</p>
+      </div>
+      {% if logs %}
+        <ul class="card log-list">
+          {% for log in logs %}
+            <li class="log-item">
+              <span class="log-check">{% include "habits/components/icon.html" with name="check" %}</span>
+              <span class="log-body">
+                <span class="log-title">{{ log.amount }} {{ log.note }}</span>
+                <span class="log-day">{{ log.day }}</span>
+              </span>
+              <span class="log-time">{{ log.time }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-note">Belum ada progres. Catatan pertamamu akan muncul di sini.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <aside class="habits-aside">
+    {% if goal.status == "active" %}
+      <section class="side-card side-card-sand" aria-labelledby="pace-title">
+        <p class="eyebrow eyebrow-accent" id="pace-title">Ritme goal</p>
+        <dl class="pace-list">
+          <div><dt>Dibutuhkan</dt><dd>{{ pace.needed }}</dd></div>
+          <div><dt>Rata-rata kamu</dt><dd>{{ pace.average }}</dd></div>
+        </dl>
+        {% if pace.on_track %}
+          <span class="tag tag-achievement">Sesuai target</span>
+        {% else %}
+          <span class="tag tag-outline">Masih bisa dikejar</span>
+        {% endif %}
+        <img class="decor side-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+      </section>
+    {% endif %}
+
+    <section class="side-card side-card-muted" aria-labelledby="finish-title">
+      <p class="eyebrow" id="finish-title">Saat goal selesai</p>
+      <ul class="finish-list">
+        <li>{% include "habits/components/icon.html" with name="check" class="icon-sm" %}Semua target tercapai</li>
+        <li>{% include "habits/components/icon.html" with name="trophy" class="icon-sm" %}Terkirim ke Personal Dashboard</li>
+        <li>{% include "habits/components/icon.html" with name="award" class="icon-sm" %}Dihitung untuk badge goal di Dashboard</li>
+      </ul>
+      <div class="finish-actions">
+        <a class="btn btn-secondary btn-m" href="{% url 'habits:goal_edit' goal.pk %}">Edit goal</a>
+        <a class="btn btn-ghost btn-m danger-link" href="{% url 'habits:goal_delete' goal.pk %}" data-dialog-open="goal-delete-dialog">Hapus</a>
+      </div>
+      <img class="decor side-decor-grass" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
+    </section>
+  </aside>
+</div>
+
+{% if goal.status == "active" %}
+  <dialog class="sheet" id="progress-dialog" aria-labelledby="progress-title">
+    <span class="sheet-handle" aria-hidden="true"></span>
+    <form method="dialog">
+      <button class="sheet-close" type="submit" aria-label="Tutup">{% include "habits/components/icon.html" with name="x" %}</button>
+    </form>
+    {% include "habits/components/goal_progress_fields.html" with form=progress_form title_id="progress-title" in_dialog=True %}
+  </dialog>
+{% endif %}
+
+<dialog class="sheet sheet-compact" id="goal-delete-dialog" aria-labelledby="goal-delete-title">
+  <span class="sheet-handle" aria-hidden="true"></span>
+  {% include "habits/components/goal_delete_body.html" with goal=goal title_id="goal-delete-title" in_dialog=True %}
+</dialog>
+{% endblock %}

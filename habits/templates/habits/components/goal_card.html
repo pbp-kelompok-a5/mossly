@@ -1,0 +1,43 @@
+{% comment %}Card Goal (active, completed, or expired). Expects goal: a goal card dict.{% endcomment %}
+<article class="goal-card{% if goal.status == 'completed' %} is-completed{% endif %}">
+  <header class="goal-card-head">
+    <span class="goal-icon">{% include "habits/components/icon.html" with name="goal" %}</span>
+    <div class="goal-card-titles">
+      <h3 class="goal-card-title">{{ goal.title }}</h3>
+      <p class="goal-card-sub">Target {{ goal.target_text }} · {{ goal.period }}</p>
+    </div>
+    {% if goal.status == "completed" %}
+      <span class="tag tag-achievement">Selesai</span>
+    {% elif goal.status == "expired" %}
+      <span class="tag">Lewat deadline</span>
+    {% else %}
+      <span class="tag tag-outline">{{ goal.category }}</span>
+    {% endif %}
+  </header>
+
+  <div class="goal-progress">
+    <p class="goal-progress-row"><span>{{ goal.progress_text }}</span><span>{{ goal.percent }}%</span></p>
+    <progress class="progress" value="{{ goal.percent }}" max="100">{{ goal.percent }}%</progress>
+  </div>
+
+  <ul class="goal-card-meta">
+    {% if goal.checklist_total %}
+      <li>{% include "habits/components/icon.html" with name="list-checks" class="icon-sm" %}{{ goal.checklist_done }} dari {{ goal.checklist_total }} checklist</li>
+    {% endif %}
+    <li>
+      {% include "habits/components/icon.html" with name="calendar" class="icon-sm" %}
+      {% if goal.status == "completed" %}{{ goal.completed_text }} · terkirim ke Dashboard{% else %}{{ goal.deadline_text }}{% endif %}
+    </li>
+  </ul>
+
+  <footer class="goal-card-actions">
+    <a class="btn btn-ghost btn-m" href="{% url 'habits:goal_detail' goal.pk %}">
+      {% if goal.status == "completed" %}Lihat ringkasan{% else %}Lihat detail{% endif %}<span class="arrow-right" aria-hidden="true"></span>
+    </a>
+    {% if goal.status == "active" %}
+      <a class="btn btn-m" href="{% url 'habits:goal_log_progress' goal.pk %}" data-dialog-open="{{ goal.progress_dialog_id }}">
+        {% include "habits/components/icon.html" with name="plus" class="icon-sm" %}Catat progres
+      </a>
+    {% endif %}
+  </footer>
+</article>

@@ -1,0 +1,55 @@
+{% load static %}
+{% comment %}
+Empty state for a user with no active goal. Expects suggestions (with deadline)
+and has_history. part="hero" or part="examples" renders one half, so past
+goals can be listed between them; without part both halves render.
+{% endcomment %}
+{% if part != "examples" %}
+<section class="focus-panel focus-panel-soft" aria-labelledby="empty-title">
+  <div class="focus-panel-text">
+    <p class="eyebrow">{% if has_history %}Belum ada goal aktif{% else %}Belum ada goal{% endif %}</p>
+    <h1 class="focus-title" id="empty-title">Tentukan satu target dengan deadline.</h1>
+    <p class="focus-subtitle">Goal membantu kebiasaan kecil punya tujuan jelas. Tambahkan checklist dan pantau lewat progress bar.</p>
+    <a class="btn focus-cta" href="{% url 'habits:goal_create' %}" data-dialog-open="goal-create-dialog">
+      {% include "habits/components/icon.html" with name="plus" %}{% if has_history %}Buat goal baru{% else %}Buat goal pertama{% endif %}
+    </a>
+  </div>
+  <img class="decor empty-decor-branch" src="{% static 'img/decor/ranting.svg' %}" alt="" aria-hidden="true">
+  <img class="decor empty-decor-plant" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
+  <img class="decor empty-decor-flower empty-decor-flower-1" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+  <img class="decor empty-decor-flower empty-decor-flower-2" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+  <img class="decor empty-decor-flower empty-decor-flower-3" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+  <img class="decor empty-decor-grass" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
+  <svg class="decor decor-hill focus-decor-hill" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <path class="decor-hill-back" d="M0 60C160 10 320 90 520 50C720 10 900 80 1200 30V120H0V60Z"/>
+    <path class="decor-hill-front" d="M0 92C200 52 380 112 600 82C820 52 1000 102 1200 72V120H0V92Z"/>
+  </svg>
+</section>
+{% endif %}
+
+{% if part != "hero" %}
+<section class="suggestions" id="goal-examples" aria-labelledby="examples-title">
+  <div class="section-head">
+    <h2 class="section-title" id="examples-title">Contoh goal</h2>
+    <p class="section-note">Ketuk + untuk memakai template</p>
+  </div>
+  <ul class="suggestion-list">
+    {% for item in suggestions %}
+      <li class="habit-row">
+        <span class="habit-icon tint-{{ item.tint }}">{% include "habits/components/icon.html" with name=item.icon %}</span>
+        <div class="habit-row-body">
+          <p class="habit-row-name">{{ item.title }}</p>
+          <p class="habit-row-meta is-quiet">{{ item.hint }}</p>
+        </div>
+        <a class="btn btn-icon btn-secondary check-button"
+           href="{% url 'habits:goal_create' %}?title={{ item.title|urlencode }}&amp;category={{ item.category }}&amp;target={{ item.target }}&amp;unit={{ item.unit }}&amp;days={{ item.days }}"
+           data-dialog-open="goal-create-dialog" data-prefill-title="{{ item.title }}" data-prefill-category="{{ item.category }}"
+           data-prefill-target-value="{{ item.target }}" data-prefill-unit="{{ item.unit }}" data-prefill-deadline="{{ item.deadline }}"
+           aria-label="Pakai contoh {{ item.title }}">
+          {% include "habits/components/icon.html" with name="plus" %}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
