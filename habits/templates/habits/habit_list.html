@@ -1,0 +1,143 @@
+{% extends "habits/layout.html" %}
+{% load static %}
+
+{% block title %}Habit · Mossly{% endblock %}
+
+{% block page_top %}{% include "habits/components/tabs.html" with active="habit" %}{% endblock %}
+
+{% block page %}
+  {% if is_empty %}
+    {% include "habits/components/habit_empty.html" %}
+  {% else %}
+    <div class="habits-layout">
+      <section class="focus-panel" aria-labelledby="focus-title">
+        <div class="focus-panel-text">
+          <p class="eyebrow">{{ greeting }}, {{ display_name }}</p>
+          {% if scheduled_today %}
+            <h1 class="focus-title" id="focus-title">{{ done_today }} dari {{ scheduled_today }} kebiasaan hijau sudah kamu selesaikan hari ini</h1>
+            <p class="focus-subtitle">
+              {% if remaining_today %}Tinggal {{ remaining_today }} lagi untuk hari yang sempurna.{% else %}Hari yang sempurna, semua kebiasaan hari ini selesai.{% endif %}
+              {{ today_label }}.
+            </p>
+          {% else %}
+            <h1 class="focus-title" id="focus-title">Tidak ada kebiasaan terjadwal hari ini</h1>
+            <p class="focus-subtitle">Nikmati harimu. {{ today_label }}.</p>
+          {% endif %}
+          <a class="btn btn-accent focus-cta" href="{% url 'habits:habit_create' %}" data-dialog-open="habit-create-dialog">
+            {% include "habits/components/icon.html" with name="plus" %}Tambah habit
+          </a>
+        </div>
+
+        <div class="focus-stats">
+          <div class="progress-ring" style="--value: {{ done_percent }}" role="img"
+               aria-label="{{ done_today }} dari {{ scheduled_today }} selesai">
+            <span class="progress-ring-value">{{ done_today }}/{{ scheduled_today }}</span>
+            <span class="progress-ring-label">selesai</span>
+          </div>
+          <div class="focus-streak">
+            <span class="focus-streak-icon">{% include "habits/components/icon.html" with name="flame" %}</span>
+            <p class="focus-streak-value">{{ longest_streak }} hari</p>
+            <p class="focus-streak-label">Streak terpanjang</p>
+          </div>
+        </div>
+
+        <img class="decor focus-decor-leaf" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
+        <img class="decor focus-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+        <svg class="decor decor-hill focus-decor-hill" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <path class="decor-hill-back" d="M0 60C160 10 320 90 520 50C720 10 900 80 1200 30V120H0V60Z"/>
+          <path class="decor-hill-front" d="M0 92C200 52 380 112 600 82C820 52 1000 102 1200 72V120H0V92Z"/>
+        </svg>
+      </section>
+
+      <div class="habits-main">
+        {% include "habits/components/week_strip.html" %}
+
+        {% for group in groups %}
+          <section class="habit-group" aria-labelledby="group-{{ forloop.counter }}">
+            <div class="section-head">
+              <h2 class="habit-group-title" id="group-{{ forloop.counter }}">
+                {% include "habits/components/icon.html" with name=group.icon %}{{ group.label }}
+              </h2>
+              <p class="section-note">{{ group.done }} dari {{ group.rows|length }} selesai</p>
+            </div>
+            <ul class="habit-list">
+              {% for row in group.rows %}{% include "habits/components/habit_row.html" %}{% endfor %}
+            </ul>
+          </section>
+        {% endfor %}
+
+        {% if unscheduled %}
+          <section class="habit-group" aria-labelledby="group-off">
+            <div class="section-head">
+              <h2 class="habit-group-title" id="group-off">
+                {% include "habits/components/icon.html" with name="calendar" %}Tidak dijadwalkan hari ini
+              </h2>
+            </div>
+            <ul class="habit-list">
+              {% for row in unscheduled %}{% include "habits/components/habit_row.html" with hide_check=True %}{% endfor %}
+            </ul>
+          </section>
+        {% endif %}
+      </div>
+
+      <aside class="habits-aside">
+        <section class="side-card side-card-sand" aria-labelledby="next-milestone-title">
+          <p class="eyebrow eyebrow-accent" id="next-milestone-title">Milestone berikutnya</p>
+          {% if next_milestone.all_reached %}
+            <p class="side-card-stat">Semua milestone tercapai</p>
+          {% else %}
+            <p class="side-card-stat">{{ next_milestone.target }} hari</p>
+            <p class="side-card-text">{{ next_milestone.name }}, tinggal {{ next_milestone.days_left }} hari lagi</p>
+            <progress class="progress" value="{{ next_milestone.streak }}" max="{{ next_milestone.target }}">
+              {{ next_milestone.streak }} dari {{ next_milestone.target }} hari
+            </progress>
+          {% endif %}
+          <p class="side-card-note">Setiap milestone otomatis dikirim ke Personal Dashboard.</p>
+          <img class="decor side-decor-sprout" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
+        </section>
+
+        <section class="side-card side-card-muted" aria-labelledby="sent-title">
+          <h2 class="side-card-title" id="sent-title">
+            <span class="side-card-badge">{% include "habits/components/icon.html" with name="trophy" %}</span>
+            Terkirim ke Dashboard
+          </h2>
+          {% if sent_milestones %}
+            <ul class="sent-list">
+              {% for item in sent_milestones %}
+                <li class="sent-item">
+                  <span class="sent-check">{% include "habits/components/icon.html" with name="check" class="icon-sm" %}</span>
+                  <span>
+                    <span class="sent-item-title">{{ item.title }}</span>
+                    <span class="sent-item-date">{{ item.date }}</span>
+                  </span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="side-card-note">Milestone pertamamu akan muncul di sini.</p>
+          {% endif %}
+          <a class="btn btn-ghost btn-m" href="{% url 'dashboard:index' %}">
+            Lihat di Dashboard {% include "habits/components/icon.html" with name="arrow-up-right" class="icon-sm" %}
+          </a>
+          <img class="decor side-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+          <img class="decor side-decor-grass" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
+        </section>
+      </aside>
+    </div>
+  {% endif %}
+
+  <dialog class="sheet" id="habit-create-dialog" aria-labelledby="habit-create-title">
+    <span class="sheet-handle" aria-hidden="true"></span>
+    <form method="dialog">
+      <button class="sheet-close" type="submit" aria-label="Tutup">{% include "habits/components/icon.html" with name="x" %}</button>
+    </form>
+    {% url 'habits:habit_create' as create_url %}
+    {% include "habits/components/habit_form_fields.html" with action=create_url title_id="habit-create-title" in_dialog=True is_edit=False %}
+  </dialog>
+
+  {% if milestone %}{% include "habits/components/milestone_dialog.html" %}{% endif %}
+
+  {% if not is_empty %}
+    <img class="decor page-decor-branch" src="{% static 'img/decor/ranting.svg' %}" alt="" aria-hidden="true">
+  {% endif %}
+{% endblock %}

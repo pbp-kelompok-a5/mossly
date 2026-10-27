@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+{% comment %}
+Shared frame for this module's pages: loads the module's CSS and JS and shows
+one-time messages. Pages fill "page_top" (tabs, back link) and "page".
+{% endcomment %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/habits.css' %}">
+<script src="{% static 'js/habits.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="habits-page">
+  {% block page_top %}{% endblock %}
+
+  {% if messages %}
+    <div class="habits-messages">
+      {% for message in messages %}
+        <div class="alert{% if message.level_tag == 'error' %} alert-error{% elif message.level_tag == 'success' %} alert-success{% endif %}" role="status">
+          <p class="alert-body">{{ message }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% block page %}{% endblock %}
+</div>
+{% endblock %}

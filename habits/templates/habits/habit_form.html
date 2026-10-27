@@ -1,0 +1,35 @@
+{% extends "habits/layout.html" %}
+
+{% block title %}{% if is_edit %}Edit habit{% else %}Tambah habit{% endif %} · Mossly{% endblock %}
+
+{% block page_top %}
+<a class="back-link" href="{% url 'habits:index' %}">
+  {% include "habits/components/icon.html" with name="arrow-left" class="icon-sm" %}Kembali ke Habit
+</a>
+{% endblock %}
+
+{% block page %}
+<div class="card form-page">
+  {% if is_edit %}
+    {% url 'habits:habit_edit' habit.pk as form_action %}
+  {% else %}
+    {% url 'habits:habit_create' as form_action %}
+  {% endif %}
+  {% include "habits/components/habit_form_fields.html" with action=form_action title_id="habit-form-title" in_dialog=False %}
+
+  {% if is_edit %}
+    <div class="form-page-danger">
+      <a class="btn btn-ghost btn-m danger-link" href="{% url 'habits:habit_delete' habit.pk %}" data-dialog-open="habit-delete-dialog">
+        {% include "habits/components/icon.html" with name="trash-2" class="icon-sm" %}Hapus habit
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+{% if is_edit %}
+  <dialog class="sheet sheet-compact" id="habit-delete-dialog" aria-labelledby="habit-delete-title">
+    <span class="sheet-handle" aria-hidden="true"></span>
+    {% include "habits/components/habit_delete_body.html" with title_id="habit-delete-title" in_dialog=True %}
+  </dialog>
+{% endif %}
+{% endblock %}
