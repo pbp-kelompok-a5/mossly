@@ -70,7 +70,11 @@ Expects: form, action, title_id, in_dialog, is_edit, milestone_list.
   <div class="field">
     <label class="field-label" for="{{ form.reminder_time.id_for_label }}">Pengingat <span class="field-hint">(opsional)</span></label>
     {{ form.reminder_time }}
-    {% if form.reminder_time.errors %}<p class="field-error">{{ form.reminder_time.errors.0 }}</p>{% endif %}
+    {% if form.reminder_time.errors %}
+      <p class="field-error">{{ form.reminder_time.errors.0 }}</p>
+    {% else %}
+      <p class="field-hint">Pengingat akan aktif di aplikasi mobile nanti. Untuk sekarang, jamnya disimpan dulu.</p>
+    {% endif %}
   </div>
 
   {% if not is_edit %}
@@ -86,7 +90,7 @@ Expects: form, action, title_id, in_dialog, is_edit, milestone_list.
     {% if in_dialog %}
       <button class="btn btn-ghost" type="submit" formmethod="dialog" formnovalidate>Batal</button>
     {% else %}
-      <a class="btn btn-ghost" href="{% url 'habits:index' %}">Batal</a>
+      <a class="btn btn-ghost" href="{% if is_edit %}{% url 'habits:habit_detail' form.instance.pk %}{% else %}{% url 'habits:index' %}{% endif %}">Batal</a>
     {% endif %}
     <button class="btn" type="submit">Simpan habit</button>
   </div>
