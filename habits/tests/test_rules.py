@@ -67,12 +67,12 @@ class CurrentStreakTests(SimpleTestCase):
 
     def test_weekday_habit_skips_unscheduled_days(self):
         # TODAY is a Monday. Scheduled Mon/Wed/Fri: today, last Fri, last Wed.
-        habit = weekday_habit("024")
+        habit = weekday_habit([0, 2, 4])
         dates = {TODAY, days_ago(3), days_ago(5)}
         self.assertEqual(current_streak(habit, dates, TODAY), 3)
 
     def test_weekday_habit_missed_scheduled_day_breaks(self):
-        habit = weekday_habit("024")
+        habit = weekday_habit([0, 2, 4])
         dates = {TODAY, days_ago(5)}  # last Friday missed
         self.assertEqual(current_streak(habit, dates, TODAY), 1)
 
@@ -185,3 +185,7 @@ class GoalRuleTests(SimpleTestCase):
     def test_completed_goal_stays_completed_after_deadline(self):
         goal = self.goal(deadline=days_ago(5), status=Goal.Status.COMPLETED)
         self.assertEqual(goal_status(goal, Decimal("20"), TODAY), GoalStatus.COMPLETED)
+
+    def test_stored_expired_status_is_respected(self):
+        goal = self.goal(deadline=days_ago(5), status=Goal.Status.EXPIRED)
+        self.assertEqual(goal_status(goal, Decimal("1"), TODAY), GoalStatus.EXPIRED)
