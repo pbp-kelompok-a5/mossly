@@ -13,7 +13,7 @@ from .dates import at_start_of_day, today
 from .models import EmissionFactor, TransportMode, Trip
 from .services import (
     GeoapifyError, calculate_emission, calculate_route, coordinate,
-    geocode_search, location_token, verify_location,
+    geocode_search, location_token, reverse_geocode, verify_location,
     get_emission_factor,
 )
 
@@ -125,6 +125,30 @@ class ServiceTests(SimpleTestCase):
         with patch('carbon.dates.timezone.now', return_value=datetime(2026, 10, 25, 18, tzinfo=timezone.utc)):
             self.assertEqual(today(), date(2026, 10, 26))
 
+    @patch('carbon.services._request')
+    def test_reverse_keeps_selected_coordinates_not_nearest_building(self, request):
+        request.return_value = [{'properties': {'formatted': 'Alamat dekat pin', 'country_code': 'id', 'lat': -6, 'lon': 106}}]
+        result = reverse_geocode('-6.3603164', '106.8271864')
+        self.assertEqual(result, {'name': 'Alamat dekat pin', 'lat': -6.360316, 'lon': 106.827186})
+        request.assert_called_once_with('geocode/reverse', {'lat': '-6.360316', 'lon': '106.827186', 'limit': 1})
+
+    @patch('carbon.services._request')
+    def test_reverse_rejects_invalid_coordinates_before_request(self, request):
+        for lat, lon in [(None, 106), ('NaN', 106), (91, 106), (-6, 181), (-6, 'Infinity')]:
+            with self.subTest(lat=lat, lon=lon), self.assertRaises(ValueError):
+                reverse_geocode(lat, lon)
+        request.assert_not_called()
+
+    @patch('carbon.services._request')
+    def test_reverse_rejects_empty_foreign_and_malformed_results(self, request):
+        for features, status in [([], 404), ([None], 502), ([{'properties': {}}], 502),
+                                 ([{'properties': {'formatted': 'Singapore', 'country_code': 'sg'}}], 400),
+                                 ([{'properties': {'formatted': 'x' * 256, 'country_code': 'id'}}], 502)]:
+            with self.subTest(features=features), self.assertRaises(GeoapifyError) as error:
+                request.return_value = features
+                reverse_geocode(-6, 106)
+            self.assertEqual(error.exception.status, status)
+
 
 class CarbonTests(TestCase):
     @classmethod
@@ -184,6 +208,7 @@ class CarbonTests(TestCase):
                 response = self.client.post(reverse('carbon:add_trip'), self.payload(**values))
                 self.assertEqual(response.status_code, 200)
                 self.assertTrue(response.context['form'].errors)
+                self.assertIsNone(response.context['trip_state']['preview'])
         route.assert_not_called()
         self.assertFalse(Trip.objects.exists())
 
@@ -205,6 +230,8 @@ class CarbonTests(TestCase):
         response = self.client.post(reverse('carbon:add_trip'), self.payload(note='Tetap ada'))
         self.assertContains(response, 'Layanan sedang sibuk.')
         self.assertContains(response, 'Tetap ada')
+        self.assertEqual(response.context['trip_state']['locations'], {'origin': ORIGIN, 'destination': DESTINATION})
+        self.assertIsNone(response.context['trip_state']['preview'])
         self.assertFalse(Trip.objects.exists())
 
     @patch('carbon.views.calculate_route')
@@ -212,7 +239,7 @@ class CarbonTests(TestCase):
         factor = EmissionFactor.objects.create(mode=TransportMode.objects.get(code='mobil'), kg_co2e_per_km='.2',
                                                 source='Test factor', version='old-version', valid_from=today())
         trip = self.trip(emission_factor=factor)
-        response = self.client.post(reverse('carbon:edit_trip', args=[trip.pk]), self.payload(note='Diperbaiki', trip_date=(today() - timedelta(days=1)).isoformat(), origin_token='', destination_token='', emission_kg='0'))
+        response = self.client.post(reverse('carbon:edit_trip', args=[trip.pk]), self.payload(note='Diperbaiki', trip_date=(today() - timedelta(days=1)).isoformat(), origin_token='', destination_token='', origin_lat='-6.361600', emission_kg='0'))
         self.assertEqual(response.status_code, 302)
         trip.refresh_from_db()
         self.assertEqual(trip.note, 'Diperbaiki')
@@ -239,6 +266,9 @@ class CarbonTests(TestCase):
         trip = self.trip()
         response = self.client.post(reverse('carbon:edit_trip', args=[trip.pk]), self.payload(mode='motor', note='Tidak boleh tersimpan'))
         self.assertContains(response, 'Rute gagal')
+        self.assertIsNone(response.context['trip_state']['preview'])
+        self.assertEqual(response.context['form']['mode'].value(), 'motor')
+        self.assertEqual(len(response.context['trip_state']['locations']), 2)
         trip.refresh_from_db()
         self.assertEqual(trip.mode.code, 'mobil')
         self.assertEqual(trip.note, '')
@@ -315,13 +345,13 @@ class CarbonTests(TestCase):
         self.client.logout()
         for name in ('index', 'add_trip'):
             self.assertEqual(self.client.get(reverse(f'carbon:{name}')).status_code, 302)
-        for name in ('api_geocode', 'api_route', 'api_history'):
+        for name in ('api_geocode', 'api_reverse_geocode', 'api_route', 'api_history'):
             response = self.client.get(reverse(f'carbon:{name}'))
             self.assertEqual(response.status_code, 401)
             self.assertEqual(response.json()['code'], 'authentication_required')
 
     def test_method_restrictions(self):
-        for name in ('index', 'api_history', 'api_geocode', 'api_route'):
+        for name in ('index', 'api_history', 'api_geocode', 'api_reverse_geocode', 'api_route'):
             self.assertEqual(self.client.post(reverse(f'carbon:{name}')).status_code, 405)
         self.assertEqual(self.client.put(reverse('carbon:add_trip')).status_code, 405)
 
@@ -334,6 +364,47 @@ class CarbonTests(TestCase):
         data = self.client.get(url, {'q': '  Depok  '}).json()['results'][0]
         search.assert_called_once_with('Depok')
         self.assertTrue(verify_location(data['location_token'], data['name'], data['lat'], data['lon'], self.user.pk))
+
+    @patch('carbon.views.calculate_route', return_value=ROUTE)
+    @patch('carbon.services._request')
+    def test_map_selection_can_be_saved_but_not_tampered_with(self, request, route):
+        request.return_value = [{'properties': {'formatted': ORIGIN['name'], 'country_code': 'id'}}]
+        result = self.client.get(reverse('carbon:api_reverse_geocode'), {'lat': ORIGIN['lat'], 'lon': ORIGIN['lon']})
+        self.assertEqual(result.status_code, 200)
+        location = result.json()
+        token = location['location_token']
+        self.assertTrue(verify_location(token, location['name'], location['lat'], location['lon'], self.user.pk))
+        self.assertFalse(verify_location(token, location['name'], location['lat'], location['lon'], self.other.pk))
+        response = self.client.post(reverse('carbon:add_trip'), self.payload(origin_token=token, origin_lat='-6.4'))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Trip.objects.exists())
+        route.assert_not_called()
+        response = self.client.post(reverse('carbon:add_trip'), self.payload(origin_token=token))
+        self.assertRedirects(response, reverse('carbon:index'))
+        self.assertEqual(Trip.objects.get().origin_lat, Decimal(str(ORIGIN['lat'])))
+
+    @patch('carbon.services._request')
+    def test_reverse_api_errors(self, request):
+        url = reverse('carbon:api_reverse_geocode')
+        self.assertEqual(self.client.get(url, {'lat': 'NaN', 'lon': 106}).status_code, 400)
+        request.assert_not_called()
+        request.return_value = [{'properties': {'formatted': 'Singapore', 'country_code': 'sg'}}]
+        response = self.client.get(url, {'lat': 1.3, 'lon': 103.8})
+        self.assertEqual(response.status_code, 400)
+        self.assertNotIn('location_token', response.json())
+        for status in (503, 504):
+            request.side_effect = GeoapifyError('Pesan aman', status=status)
+            self.assertEqual(self.client.get(url, {'lat': -6, 'lon': 106}).status_code, status)
+
+    @patch('carbon.views.calculate_route')
+    def test_route_geometry_available_in_preview_and_edit(self, route):
+        geometry = {'type': 'LineString', 'coordinates': [[106.83, -6.36], [106.82, -6.39]]}
+        route.return_value = {**ROUTE, 'route_geometry': geometry}
+        response = self.client.get(reverse('carbon:api_route'), {'olat': -6, 'olon': 106, 'dlat': -7, 'dlon': 107, 'mode': 'mobil'})
+        self.assertEqual(response.json()['route_geometry'], geometry)
+        trip = self.trip(route_geometry=geometry)
+        response = self.client.get(reverse('carbon:edit_trip', args=[trip.pk]))
+        self.assertEqual(response.context['trip_state']['preview']['route_geometry'], geometry)
 
     @patch('carbon.views.calculate_route', return_value=ROUTE)
     def test_route_api_validates_input_before_provider(self, route):
