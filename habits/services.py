@@ -30,6 +30,13 @@ class DayStatus:
     EMPTY = "empty"  # nothing was scheduled that day
 
 
+# A goal is "nearing its deadline" within this many days and below target.
+NEAR_DEADLINE_DAYS = 7
+
+# Units counted in whole numbers; kg CO2e may be fractional.
+WHOLE_NUMBER_UNITS = (Goal.Unit.KALI, Goal.Unit.HARI)
+
+
 class GoalStatus:
     ACTIVE = "active"
     COMPLETED = "completed"
@@ -241,6 +248,67 @@ def goal_status(goal, progress, today):
     return GoalStatus.ACTIVE
 
 
+def days_until(deadline, today):
+    """Whole days from today to the deadline; 0 on the deadline day."""
+    return (deadline - today).days
+
+
+def is_near_deadline(goal, progress, today):
+    return (
+        goal_status(goal, progress, today) == GoalStatus.ACTIVE
+        and progress < goal.target_value
+        and 0 <= days_until(goal.deadline, today) <= NEAR_DEADLINE_DAYS
+    )
+
+
+def goal_pace(goal, progress, today):
+    """Amount per day still needed versus the user's average so far.
+
+    Today counts as a day in both, so on the deadline day the whole remainder
+    is needed today. A goal at or above its target is always on track.
+    """
+    days_left = max(days_until(goal.deadline, today) + 1, 1)
+    days_elapsed = max((min(today, goal.deadline) - goal.start_date).days + 1, 1)
+    needed = max(goal.target_value - progress, Decimal("0")) / days_left
+    average = progress / days_elapsed
+    return {
+        "needed": needed,
+        "average": average,
+        "on_track": progress >= goal.target_value or average >= needed,
+    }
+
+
+def check_amount(unit, amount):
+    """Reject fractions for units that are counted in whole numbers."""
+    amount = Decimal(amount)
+    if unit in WHOLE_NUMBER_UNITS and amount != amount.to_integral_value():
+        raise ValidationError("Untuk satuan kali atau hari, isi dengan bilangan bulat.")
+
+
+def toggle_checklist_item(item):
+    """Flip a checklist item. The checklist never decides goal completion."""
+    item.is_done = not item.is_done
+    item.done_at = timezone.now() if item.is_done else None
+    item.save(update_fields=["is_done", "done_at"])
+    return item
+
+
+def refresh_goal_after_edit(goal):
+    """Bring the stored status in line after the target or dates changed.
+
+    An expired goal whose deadline moved to today or later becomes active
+    again; any goal may now meet its target and complete (once).
+    """
+    today = local_today()
+    with transaction.atomic():
+        goal = Goal.objects.select_for_update().get(pk=goal.pk)
+        if goal.status == Goal.Status.EXPIRED and goal.deadline >= today:
+            goal.status = Goal.Status.ACTIVE
+            goal.save(update_fields=["status"])
+        complete_goal_if_reached(goal)
+    expire_overdue_goals(Goal.objects.filter(pk=goal.pk), today)
+
+
 def expire_overdue_goals(goals, today=None):
     """Store "expired" on active goals past their deadline and below target.
 
@@ -265,6 +333,7 @@ def expire_overdue_goals(goals, today=None):
 
 def log_goal_progress(goal, amount, note=""):
     """Add progress to an active goal; return the completion event, if any."""
+    check_amount(goal.unit, amount)
     # Outside the transaction below, so a rejected log does not roll it back.
     expire_overdue_goals(Goal.objects.filter(pk=goal.pk))
     with transaction.atomic():
