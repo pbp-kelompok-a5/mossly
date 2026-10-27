@@ -1,0 +1,14 @@
+{% extends "accounts/base_auth.html" %}
+{% block title %}Keluar · Mossly{% endblock %}
+{% block panel_content %}
+  <p class="eyebrow text-label-s">SAMPAI JUMPA LAGI</p>
+  <h2 id="login-title">Keluar dari Mossly?</h2>
+  <p class="form-description text-body-s">Kamu bisa masuk kembali kapan saja untuk melanjutkan langkah hijaumu.</p>
+  <div class="auth-actions">
+    <form action="{% url 'accounts:logout' %}" method="post">
+      {% csrf_token %}
+      <button class="btn btn-rounded" type="submit">Ya, keluar</button>
+    </form>
+    <a class="text-label-m" href="{% url 'dashboard:index' %}">Batal</a>
+  </div>
+{% endblock %}

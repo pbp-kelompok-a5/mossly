@@ -57,7 +57,8 @@
 .eye-slash { display: none; }
 .password-toggle[aria-pressed="true"] .eye-slash { display: block; }
 .submit-button { width: 100%; margin-top: var(--space-2); }
-.preview-message { margin-top: var(--space-5); }
+.auth-error { margin-bottom: var(--space-6); }
+.auth-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
 .signup { display: flex; justify-content: center; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-8); padding-top: var(--space-6); border-top: thin solid var(--color-border-subtle); }
 .signup > span { color: var(--color-text-secondary); }
 .signup a { color: var(--color-text-brand); font-weight: var(--weight-bold); text-decoration: none; }
