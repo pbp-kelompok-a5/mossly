@@ -1,0 +1,11 @@
+<span class="avatar avatar-lg" role="img" aria-label="Avatar {{ profile.get_avatar_display }}">
+  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+    {% if profile.avatar == 'leaf' %}
+      <path d="M4 20 18 6M5 16C2 7 10 3 21 3c0 11-4 19-13 16"/>
+    {% elif profile.avatar == 'tree' %}
+      <path d="m12 2-7 8h3l-5 7h7v5h4v-5h7l-5-7h3L12 2Z"/>
+    {% else %}
+      <path d="M12 22V12M12 15C4 15 2 9 3 5c7-1 10 3 9 10ZM12 11c0-6 4-9 9-9 1 6-2 11-9 9Z"/>
+    {% endif %}
+  </svg>
+</span>

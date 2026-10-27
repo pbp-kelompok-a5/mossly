@@ -48,6 +48,9 @@
       <a class="back-link text-label-s" href="{% url 'main:landing' %}"><span aria-hidden="true">←</span> Kembali ke beranda</a>
 
       <div class="form-container">
+        {% for message in messages %}
+          <div class="alert alert-success auth-error" role="status"><p class="alert-body">{{ message }}</p></div>
+        {% endfor %}
         {% block panel_content %}{% endblock %}
       </div>
 
