@@ -1,0 +1,86 @@
+/* Layout khusus login. Warna, spacing, dan tipografi mengikuti token bersama.
+   Button, field, input, alert, dan icon menggunakan components.css. */
+.login-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+.login-layout [hidden] { display: none !important; }
+
+/* global.css lama memberi semua .btn warna putih !important.
+   Pertahankan warna masing-masing varian komponen, termasuk btn-ghost. */
+.login-layout .btn { color: var(--_fg) !important; }
+
+.login-layout a:focus-visible {
+  outline: var(--space-1) solid var(--color-border-focus);
+  outline-offset: var(--space-1);
+}
+
+.welcome,
+.login-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--space-12) clamp(var(--space-6), 5vw, var(--space-24)) var(--space-8);
+}
+
+.login-brand { display: inline-flex; align-self: flex-start; }
+.login-brand img { display: block; width: calc(var(--space-24) * 1.75); height: auto; }
+.welcome-content { width: 100%; max-width: calc(var(--space-16) * 8); margin: auto; padding: var(--space-16) 0 var(--space-8); }
+.eyebrow { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-6); color: var(--color-text-brand); }
+.eyebrow > span { width: var(--space-2); height: var(--space-2); flex-shrink: 0; background: var(--color-bg-sage); border-radius: var(--radius-full); }
+.welcome h1 span { color: var(--color-text-brand); }
+.welcome-description { max-width: calc(var(--space-24) * 4); margin-top: var(--space-6); color: var(--color-text-secondary); }
+.growth { display: flex; flex-direction: column; align-items: center; margin-top: var(--space-8); }
+.sprout { width: calc(var(--space-24) * 2.25); height: auto; }
+.sprout-shadow { fill: var(--color-bg-brand-soft); }
+.sprout-stem { stroke: var(--color-icon-brand); }
+.sprout-leaf { fill: var(--color-bg-sage); }
+.sprout-leaf-soft { fill: var(--color-bg-brand-soft); }
+.growth-caption { margin-top: var(--space-3); color: var(--color-text-secondary); }
+.welcome-footer,
+.panel-footer { color: var(--color-text-secondary); }
+.welcome-footer { margin-top: var(--space-8); }
+.login-panel { background: var(--color-bg-surface); border-left: thin solid var(--color-border-subtle); }
+.back-link { display: inline-flex; align-items: center; gap: var(--space-3); align-self: flex-start; color: var(--color-text-secondary); text-decoration: none; }
+.back-link:hover,
+.signup a:hover { text-decoration: underline; }
+.form-container { width: 100%; max-width: calc(var(--space-20) * 5); margin: auto; padding: var(--space-20) 0; }
+.form-container .eyebrow { margin-bottom: var(--space-4); }
+.form-description { margin: var(--space-4) 0 var(--space-10); color: var(--color-text-secondary); }
+.form-field { margin-bottom: var(--space-6); }
+.password-field { position: relative; }
+.password-field .input { padding-right: calc(var(--space-12) + var(--space-4)); }
+.password-toggle { position: absolute; right: var(--space-2); top: 50%; transform: translateY(-50%); }
+.eye-slash { display: none; }
+.password-toggle[aria-pressed="true"] .eye-slash { display: block; }
+.submit-button { width: 100%; margin-top: var(--space-2); }
+.preview-message { margin-top: var(--space-5); }
+.signup { display: flex; justify-content: center; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-8); padding-top: var(--space-6); border-top: thin solid var(--color-border-subtle); }
+.signup > span { color: var(--color-text-secondary); }
+.signup a { color: var(--color-text-brand); font-weight: var(--weight-bold); text-decoration: none; }
+.panel-footer { text-align: center; }
+
+/* Breakpoint mengikuti components.css. CSS custom properties tidak dapat
+   digunakan langsung dalam kondisi media query. */
+@media (max-width: 48rem) {
+  .login-layout { grid-template-columns: minmax(0, 1fr); }
+  .welcome { padding: var(--space-8) var(--space-6); }
+  .login-brand img { width: calc(var(--space-12) * 3); }
+  .welcome-content { max-width: calc(var(--space-24) * 5); margin: 0; padding: var(--space-10) 0 0; }
+  .eyebrow { margin-bottom: var(--space-4); }
+  .welcome h1 { font: var(--type-h2); }
+  .welcome-description { margin-top: var(--space-4); font: var(--type-body-s); }
+  .growth,
+  .welcome-footer { display: none; }
+  .login-panel { padding: var(--space-8) var(--space-6) var(--space-6); border-left: 0; border-top: thin solid var(--color-border-subtle); }
+  .form-container { padding: var(--space-10) 0; }
+  .form-description { margin-bottom: var(--space-8); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-layout .input,
+  .login-layout .btn { transition: none; }
+}
