@@ -1,0 +1,22 @@
+{% comment %}
+One month as a heatmap. Expects cells (from the view; None for blanks before
+day 1) and size: "large" shows day numbers, "small" draws dots only.
+{% endcomment %}
+<div class="heat-month heat-month-{{ size }}">
+  {% if size == "large" %}
+    {% for name in day_names %}<span class="heat-weekday">{{ name }}</span>{% endfor %}
+  {% else %}
+    {% for name in day_initials %}<span class="heat-weekday">{{ name }}</span>{% endfor %}
+  {% endif %}
+  {% for cell in cells %}
+    {% if cell %}
+      <span class="heat-cell{% if cell.is_upcoming %} heat-upcoming{% else %} heat-l{{ cell.level }}{% endif %}{% if cell.is_today %} is-today{% endif %}"
+            title="{{ cell.label }}">
+        {% if size == "large" %}<span aria-hidden="true">{{ cell.day }}</span>{% endif %}
+        <span class="visually-hidden">{{ cell.label }}{% if not cell.is_upcoming %}: tingkat {{ cell.level }} dari 4{% endif %}</span>
+      </span>
+    {% else %}
+      <span class="heat-blank" aria-hidden="true"></span>
+    {% endif %}
+  {% endfor %}
+</div>
