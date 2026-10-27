@@ -171,9 +171,17 @@ class GoalProgressTests(FrozenClockMixin, TestCase):
         self.assertFalse(self.goal_events().exists())
 
     def test_progress_is_sum_of_logs(self):
-        services.log_goal_progress(self.goal, Decimal("5"))
-        services.log_goal_progress(self.goal, Decimal("2.5"))
-        self.assertEqual(services.goal_progress_total(self.goal), Decimal("7.5"))
+        goal = make_goal(self.user, unit=Goal.Unit.KG_CO2E, target_value=Decimal("10"))
+        services.log_goal_progress(goal, Decimal("5"))
+        services.log_goal_progress(goal, Decimal("2.5"))
+        self.assertEqual(services.goal_progress_total(goal), Decimal("7.5"))
+
+    def test_fractions_rejected_for_whole_number_units(self):
+        for unit in (Goal.Unit.KALI, Goal.Unit.HARI):
+            goal = make_goal(self.user, unit=unit)
+            with self.subTest(unit=unit), self.assertRaises(ValidationError):
+                services.log_goal_progress(goal, Decimal("1.5"))
+            self.assertFalse(goal.progress_logs.exists())
 
     def test_exactly_at_target_completes_and_sends_event(self):
         services.log_goal_progress(self.goal, Decimal("12"))
