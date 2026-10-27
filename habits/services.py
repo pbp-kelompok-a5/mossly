@@ -10,7 +10,8 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import DecimalField, F, Sum, Value
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from .models import Goal, GoalProgressLog, Habit, HabitCheckIn, SustainabilityEvent
@@ -230,19 +231,45 @@ def goal_progress_percent(progress, target):
 
 
 def goal_status(goal, progress, today):
+    """The goal's status as of today, even if the stored value is not refreshed yet."""
     if goal.status == Goal.Status.COMPLETED:
         return GoalStatus.COMPLETED
+    if goal.status == Goal.Status.EXPIRED:
+        return GoalStatus.EXPIRED
     if today > goal.deadline and progress < goal.target_value:
         return GoalStatus.EXPIRED
     return GoalStatus.ACTIVE
 
 
+def expire_overdue_goals(goals, today=None):
+    """Store "expired" on active goals past their deadline and below target.
+
+    There is no background job, so this runs whenever the module's pages or
+    progress logging touch the goals. Returns the number of goals updated.
+    """
+    today = today or local_today()
+    overdue = (
+        goals.filter(status=Goal.Status.ACTIVE, deadline__lt=today)
+        .annotate(
+            progress=Coalesce(
+                Sum("progress_logs__amount"),
+                Value(Decimal("0")),
+                output_field=DecimalField(max_digits=10, decimal_places=2),
+            )
+        )
+        .filter(progress__lt=F("target_value"))
+        .values("pk")
+    )
+    return Goal.objects.filter(pk__in=overdue).update(status=Goal.Status.EXPIRED)
+
+
 def log_goal_progress(goal, amount, note=""):
     """Add progress to an active goal; return the completion event, if any."""
+    # Outside the transaction below, so a rejected log does not roll it back.
+    expire_overdue_goals(Goal.objects.filter(pk=goal.pk))
     with transaction.atomic():
         goal = Goal.objects.select_for_update().get(pk=goal.pk)
-        status = goal_status(goal, goal_progress_total(goal), local_today())
-        if status != GoalStatus.ACTIVE:
+        if goal.status != Goal.Status.ACTIVE:
             raise ValidationError("Progres hanya bisa dicatat untuk goal yang masih aktif.")
         GoalProgressLog.objects.create(goal=goal, amount=amount, note=note)
         return complete_goal_if_reached(goal)
@@ -253,7 +280,7 @@ def complete_goal_if_reached(goal):
 
     Must run inside the transaction that changed the progress or the target.
     """
-    if goal.status == Goal.Status.COMPLETED:
+    if goal.status != Goal.Status.ACTIVE:
         return None
     if goal_progress_total(goal) < goal.target_value:
         return None

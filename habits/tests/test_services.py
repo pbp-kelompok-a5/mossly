@@ -54,7 +54,7 @@ class CheckInTests(FrozenClockMixin, TestCase):
             services.check_in(self.habit, TODAY + timedelta(days=1))
 
     def test_unscheduled_day_is_rejected(self):
-        habit = make_habit(self.user, frequency_type="weekdays", weekdays="1")  # Tuesdays
+        habit = make_habit(self.user, frequency_type="weekdays", weekdays=[1])  # Tuesdays
         with self.assertRaises(ValidationError):
             services.check_in(habit, TODAY)  # Monday
 
@@ -224,6 +224,8 @@ class GoalProgressTests(FrozenClockMixin, TestCase):
         with self.assertRaises(ValidationError):
             services.log_goal_progress(goal, Decimal("1"))
         self.assertFalse(goal.progress_logs.exists())
+        goal.refresh_from_db()
+        self.assertEqual(goal.status, Goal.Status.EXPIRED)
 
     def test_deleting_goal_keeps_event(self):
         services.log_goal_progress(self.goal, Decimal("20"))
@@ -241,3 +243,42 @@ class GoalProgressTests(FrozenClockMixin, TestCase):
                 goal=self.goal,
                 title_snapshot="dup",
             )
+
+
+class ExpireOverdueGoalsTests(FrozenClockMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = make_user()
+
+    def status_of(self, goal):
+        goal.refresh_from_db()
+        return goal.status
+
+    def test_only_overdue_goals_below_target_expire(self):
+        overdue = make_goal(self.user, start_date=days_ago(30), deadline=days_ago(1))
+        overdue.progress_logs.create(amount=Decimal("19.99"))
+        due_today = make_goal(self.user, start_date=days_ago(30), deadline=TODAY)
+        completed = make_goal(
+            self.user, start_date=days_ago(30), deadline=days_ago(1), status=Goal.Status.COMPLETED
+        )
+        at_target = make_goal(self.user, start_date=days_ago(30), deadline=days_ago(1))
+        at_target.progress_logs.create(amount=Decimal("5"))
+        at_target.progress_logs.create(amount=Decimal("15"))
+
+        updated = services.expire_overdue_goals(Goal.objects.all())
+
+        self.assertEqual(updated, 1)
+        self.assertEqual(self.status_of(overdue), Goal.Status.EXPIRED)
+        self.assertEqual(self.status_of(due_today), Goal.Status.ACTIVE)
+        self.assertEqual(self.status_of(completed), Goal.Status.COMPLETED)
+        self.assertEqual(self.status_of(at_target), Goal.Status.ACTIVE)
+
+    def test_goal_without_any_progress_expires(self):
+        goal = make_goal(self.user, start_date=days_ago(30), deadline=days_ago(1))
+        services.expire_overdue_goals(Goal.objects.all())
+        self.assertEqual(self.status_of(goal), Goal.Status.EXPIRED)
+
+    def test_scoped_to_given_goals(self):
+        other = make_goal(make_user("other"), start_date=days_ago(30), deadline=days_ago(1))
+        services.expire_overdue_goals(self.user.goals.all())
+        self.assertEqual(self.status_of(other), Goal.Status.ACTIVE)

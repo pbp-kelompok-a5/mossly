@@ -33,17 +33,20 @@ class HabitValidationTests(FrozenClockMixin, TestCase):
     def test_weekdays_required_for_weekday_habit(self):
         self.assert_invalid(self.habit(frequency_type="weekdays"), "weekdays")
 
-    def test_invalid_weekday_digits_are_rejected(self):
-        self.assert_invalid(self.habit(frequency_type="weekdays", weekdays="07"), "weekdays")
-        self.assert_invalid(self.habit(frequency_type="weekdays", weekdays="11"), "weekdays")
+    def test_invalid_weekdays_are_rejected(self):
+        for weekdays in ([0, 7], [1, 1], [-1], ["1"], [True], "024", []):
+            with self.subTest(weekdays=weekdays):
+                self.assert_invalid(
+                    self.habit(frequency_type="weekdays", weekdays=weekdays), "weekdays"
+                )
 
     def test_weekdays_are_normalised(self):
-        weekly = self.habit(frequency_type="weekdays", weekdays="420")
+        weekly = self.habit(frequency_type="weekdays", weekdays=[4, 2, 0])
         weekly.full_clean()
-        self.assertEqual(weekly.weekdays, "024")
-        daily = self.habit(weekdays="135")
+        self.assertEqual(weekly.weekdays, [0, 2, 4])
+        daily = self.habit(weekdays=[1, 3, 5])
         daily.full_clean()
-        self.assertEqual(daily.weekdays, "")
+        self.assertIsNone(daily.weekdays)
 
     def test_times_per_week_frequency_is_not_offered_yet(self):
         self.assert_invalid(self.habit(frequency_type="times_per_week"), "frequency_type")

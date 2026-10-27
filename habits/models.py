@@ -7,7 +7,7 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
-WEEKDAY_DIGITS = "0123456"  # Monday is 0, matching date.weekday()
+WEEKDAY_NUMBERS = range(7)  # Monday is 0, matching date.weekday()
 
 
 class Habit(models.Model):
@@ -54,7 +54,8 @@ class Habit(models.Model):
     frequency_type = models.CharField(
         max_length=20, choices=Frequency.choices, default=Frequency.DAILY
     )
-    weekdays = models.CharField(max_length=7, blank=True)
+    # Sorted day numbers for "weekdays" habits, e.g. [0, 2, 4]; null otherwise.
+    weekdays = models.JSONField(null=True, blank=True)
     times_per_week = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
@@ -73,21 +74,21 @@ class Habit(models.Model):
 
     @property
     def weekday_numbers(self):
-        return {int(d) for d in self.weekdays}
+        return set(self.weekdays or ())
 
     def clean(self):
         super().clean()
-        if self.weekdays and (
-            any(d not in WEEKDAY_DIGITS for d in self.weekdays)
-            or len(set(self.weekdays)) != len(self.weekdays)
-        ):
+        if self.frequency_type != self.Frequency.WEEKDAYS:
+            self.weekdays = None
+            return
+        days = self.weekdays or []
+        if not isinstance(days, list) or any(
+            type(d) is not int or d not in WEEKDAY_NUMBERS for d in days
+        ) or len(set(days)) != len(days):
             raise ValidationError({"weekdays": "Pilihan hari tidak valid."})
-        if self.frequency_type == self.Frequency.WEEKDAYS and not self.weekdays:
+        if not days:
             raise ValidationError({"weekdays": "Pilih minimal satu hari."})
-        if self.frequency_type == self.Frequency.DAILY:
-            self.weekdays = ""
-        else:
-            self.weekdays = "".join(sorted(self.weekdays))
+        self.weekdays = sorted(days)
 
 
 class HabitCheckIn(models.Model):
@@ -120,10 +121,12 @@ class Goal(models.Model):
         HARI = "hari", "hari"
         KG_CO2E = "kg_co2e", "kg CO2e"
 
-    # "expired" is not stored: it depends on today's date and is computed on read.
+    # Other modules read this table directly, so "expired" is stored too. It is
+    # refreshed by the services whenever this module's pages are used.
     class Status(models.TextChoices):
         ACTIVE = "active", "Aktif"
         COMPLETED = "completed", "Selesai"
+        EXPIRED = "expired", "Lewat deadline"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="goals"
