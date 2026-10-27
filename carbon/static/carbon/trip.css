@@ -1,0 +1,70 @@
+/* Carbon composes the shared components; visual values use existing tokens. */
+.carbon-page {
+  display: grid;
+  gap: var(--space-6);
+  max-inline-size: calc(var(--space-30) * 9);
+  margin-inline: auto;
+  padding-block: var(--space-6);
+}
+
+.carbon-page--form { max-inline-size: calc(var(--space-30) * 6); }
+.carbon-stack { display: grid; gap: var(--space-6); }
+.carbon-section { display: grid; gap: var(--space-4); }
+.carbon-heading { display: grid; gap: var(--space-2); }
+.carbon-muted { color: var(--color-text-secondary); }
+.carbon-brand { color: var(--color-text-brand); }
+.carbon-back { justify-self: start; }
+
+.carbon-header,
+.carbon-trip,
+.carbon-actions,
+.carbon-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.carbon-header { align-items: start; justify-content: space-between; }
+.carbon-trip { align-items: start; }
+.carbon-trip-content { flex: 1 1 calc(var(--space-30) * 3); min-inline-size: 0; overflow-wrap: anywhere; }
+.carbon-actions { gap: var(--space-2); }
+.carbon-metadata { gap: var(--space-3); }
+.carbon-header .carbon-heading { flex: 1 1 calc(var(--space-30) * 3); }
+
+.carbon-metrics {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-30) * 2)), 1fr));
+}
+
+.carbon-trip-list { display: grid; gap: var(--space-4); list-style: none; padding: 0; margin: 0; }
+.carbon-mode-field { border: 0; padding: 0; margin: 0; min-inline-size: 0; }
+.carbon-mode-field legend { margin-block-end: var(--space-3); }
+.carbon-modes {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--space-30)), 1fr));
+}
+
+/* There is no shared radio-card component; compose .card for this variation. */
+.carbon-mode-option { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-4); cursor: pointer; }
+.carbon-mode-option input { accent-color: var(--color-bg-brand); margin: 0; }
+.carbon-mode-option:has(input:checked) { background: var(--color-bg-brand-soft); border-color: var(--color-border-focus); }
+.carbon-mode-option:has(input:focus-visible) { outline: thin solid var(--color-border-focus); outline-offset: var(--space-1); }
+
+/* Autocomplete reuses .dropdown, .dropdown-menu and .dropdown-option. */
+.carbon-results { max-block-size: calc(var(--space-30) * 2); overflow-y: auto; }
+.carbon-results .dropdown-option { white-space: normal; overflow-wrap: anywhere; }
+.carbon-results .dropdown-option:focus-visible { outline: thin solid var(--color-border-focus); }
+.carbon-preview { background: var(--color-bg-brand-soft); }
+.carbon-error-list { margin: 0; padding-inline-start: var(--space-5); }
+.carbon-attribution { color: var(--color-text-secondary); overflow-wrap: anywhere; }
+.carbon-empty { text-align: center; padding-block: var(--space-12); justify-items: center; }
+.carbon-page [hidden] { display: none !important; }
+.carbon-page .field-hint:empty,
+.carbon-actions:has(> [hidden]:only-child) { display: none; }
+
+/* The legacy global .btn color is !important. Keep the component's own
+   variant foreground inside Carbon without changing shared styles. */
+.carbon-page .btn { color: var(--_fg) !important; }

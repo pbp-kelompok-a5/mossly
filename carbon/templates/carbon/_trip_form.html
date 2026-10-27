@@ -1,0 +1,68 @@
+<form method="post" id="trip-form" class="carbon-stack" data-geocode-url="{% url 'carbon:api_geocode' %}" data-route-url="{% url 'carbon:api_route' %}">
+    {% csrf_token %}
+    {% if form.errors %}
+    <div class="alert alert-error" role="alert" tabindex="-1">
+        <div class="alert-body carbon-heading">
+            <strong>Perjalanan belum disimpan. Periksa kembali isian berikut:</strong>
+            <ul class="carbon-error-list">
+                {% for field in form %}{% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}{% endfor %}
+                {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+    <div class="field">
+        <label for="id_origin_label" class="field-label">Asal <span class="required">*</span></label>
+        <div class="dropdown">
+            {{ form.origin_label }}
+            <div id="origin-results" class="dropdown-menu carbon-results" role="listbox" aria-label="Pilihan lokasi asal" hidden></div>
+        </div>
+        <p id="origin-status" class="field-hint" role="status"></p>
+        {% if form.origin_label.errors %}<p id="id_origin_label_error" class="field-error">{{ form.origin_label.errors.0 }}</p>{% endif %}
+        {{ form.origin_lat }}{{ form.origin_lng }}{{ form.origin_token }}
+    </div>
+    <div class="field">
+        <label for="id_destination_label" class="field-label">Tujuan <span class="required">*</span></label>
+        <div class="dropdown">
+            {{ form.destination_label }}
+            <div id="destination-results" class="dropdown-menu carbon-results" role="listbox" aria-label="Pilihan lokasi tujuan" hidden></div>
+        </div>
+        <p id="destination-status" class="field-hint" role="status"></p>
+        {% if form.destination_label.errors %}<p id="id_destination_label_error" class="field-error">{{ form.destination_label.errors.0 }}</p>{% endif %}
+        {{ form.destination_lat }}{{ form.destination_lng }}{{ form.destination_token }}
+    </div>
+    <fieldset class="field carbon-mode-field"{% if form.mode.errors %} aria-describedby="id_mode_error"{% endif %}>
+        <legend class="field-label">Moda Transportasi <span class="required">*</span></legend>
+        <div class="carbon-modes">{% for radio in form.mode %}<label class="card carbon-mode-option text-label-m">{{ radio.tag }} {{ radio.choice_label }}</label>{% endfor %}</div>
+        {% if form.mode.errors %}<p id="id_mode_error" class="field-error">{{ form.mode.errors.0 }}</p>{% endif %}
+    </fieldset>
+    <div class="field">
+        <label for="id_trip_date" class="field-label">Tanggal Perjalanan <span class="required">*</span></label>
+        {{ form.trip_date }}
+        {% if form.trip_date.errors %}<p id="id_trip_date_error" class="field-error">{{ form.trip_date.errors.0 }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="id_note" class="field-label">Catatan</label>
+        {{ form.note }}
+        <p id="note-hint" class="field-hint">Opsional, maksimal 200 karakter.</p>
+        {% if form.note.errors %}<p id="id_note_error" class="field-error">{{ form.note.errors.0 }}</p>{% endif %}
+    </div>
+    <section id="preview-box" class="card carbon-preview carbon-section" role="status" aria-live="polite" aria-labelledby="preview-title" hidden>
+        <h2 id="preview-title" class="text-h4">Estimasi Perjalanan</h2>
+        <dl class="carbon-metrics">
+            <div class="carbon-heading"><dt class="text-body-s carbon-muted">Jarak</dt><dd id="preview-distance" class="text-h3"></dd></div>
+            <div class="carbon-heading"><dt class="text-body-s carbon-muted">Estimasi emisi CO₂e</dt><dd id="preview-co2" class="text-h3"></dd></div>
+        </dl>
+        <p id="preview-duration" class="text-body-s carbon-muted"></p>
+    </section>
+    <p id="route-status" class="field-hint" role="status"></p>
+    <div id="api-error" class="alert alert-error" role="alert" hidden><p id="api-error-message" class="alert-body"></p></div>
+    <div class="carbon-actions"><button type="button" id="retry-route" class="btn btn-secondary btn-m" hidden>Coba hitung lagi</button></div>
+    <div class="alert alert-warning">
+        <p class="alert-body">Estimasi emisi langsung memakai faktor referensi UK DESNZ 2023 sebagai pendekatan, bukan faktor rata-rata Indonesia. Sepeda dan jalan kaki dihitung nol emisi langsung; emisi siklus hidup tidak dihitung.</p>
+    </div>
+    <div class="carbon-actions"><button type="submit" id="submit-btn" class="btn" disabled>{% if is_edit %}Simpan Perubahan{% else %}Simpan Perjalanan{% endif %}</button></div>
+    <noscript><div class="alert alert-error"><p class="alert-body">Aktifkan JavaScript untuk memilih lokasi dan menghitung jarak otomatis.</p></div></noscript>
+    {% include 'carbon/_attribution.html' %}
+</form>
+{{ trip_state|json_script:'carbon-trip-state' }}
