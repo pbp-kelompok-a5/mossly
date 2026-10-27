@@ -1,0 +1,34 @@
+{% load static %}
+{% comment %}
+Shown once after a check-in reaches a milestone. Rendered open so it is
+visible without JavaScript; the script upgrades it to a modal.
+{% endcomment %}
+<dialog class="sheet milestone-sheet" id="milestone-dialog" aria-labelledby="milestone-title" open data-autoshow>
+  <div class="milestone-hero">
+    <img class="decor milestone-decor-leaf" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
+    <img class="decor milestone-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+    <span class="milestone-trophy">{% include "habits/components/icon.html" with name="trophy" %}</span>
+    <svg class="decor decor-hill milestone-decor-hill" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path class="decor-hill-back" d="M0 60C160 10 320 90 520 50C720 10 900 80 1200 30V120H0V60Z"/>
+      <path class="decor-hill-front" d="M0 92C200 52 380 112 600 82C820 52 1000 102 1200 72V120H0V92Z"/>
+    </svg>
+    <form method="dialog">
+      <button class="sheet-close" type="submit" aria-label="Tutup">{% include "habits/components/icon.html" with name="x" %}</button>
+    </form>
+  </div>
+  <div class="milestone-body">
+    <p class="eyebrow eyebrow-accent">Milestone tercapai</p>
+    <h2 class="milestone-title" id="milestone-title">{{ milestone.days }} hari berturut-turut!</h2>
+    <p class="milestone-text">"{{ milestone.name }}" sudah {{ milestone.days }} hari berturut-turut. Kebiasaan kecil ini sudah jadi bagian dari ritmemu.</p>
+    {% if milestone.badge %}
+      <span class="achievement-badge"><span class="achievement-badge-icon" aria-hidden="true"></span>{{ milestone.badge }}</span>
+    {% endif %}
+    <p class="sent-pill">{% include "habits/components/icon.html" with name="check" class="icon-sm" %}Terkirim ke Personal Dashboard</p>
+    <a class="btn milestone-cta" href="{% url 'dashboard:index' %}">
+      Lihat di Dashboard {% include "habits/components/icon.html" with name="arrow-up-right" %}
+    </a>
+    <form method="dialog">
+      <button class="btn btn-ghost milestone-cta" type="submit">Lanjutkan</button>
+    </form>
+  </div>
+</dialog>

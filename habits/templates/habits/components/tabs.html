@@ -1,0 +1,5 @@
+<nav class="tabs habits-tabs" aria-label="Habit & Goal">
+  <a class="tab" href="{% url 'habits:index' %}"{% if active == "habit" %} aria-current="page"{% endif %}>Habit</a>
+  <a class="tab" href="{% url 'habits:goal_list' %}"{% if active == "goal" %} aria-current="page"{% endif %}>Goal</a>
+  <a class="tab" href="{% url 'habits:history' %}"{% if active == "history" %} aria-current="page"{% endif %}>Riwayat</a>
+</nav>

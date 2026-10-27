@@ -1,0 +1,15 @@
+{% extends "habits/layout.html" %}
+
+{% block title %}Catat progres · Mossly{% endblock %}
+
+{% block page_top %}
+<a class="back-link" href="{% url 'habits:goal_detail' goal.pk %}">
+  {% include "habits/components/icon.html" with name="arrow-left" class="icon-sm" %}Kembali ke detail goal
+</a>
+{% endblock %}
+
+{% block page %}
+<div class="card form-page">
+  {% include "habits/components/goal_progress_fields.html" with title_id="progress-title" in_dialog=False %}
+</div>
+{% endblock %}

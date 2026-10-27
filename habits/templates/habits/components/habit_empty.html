@@ -1,0 +1,46 @@
+{% load static %}
+{% comment %}Empty state for a user with no habits yet. Expects suggestions.{% endcomment %}
+<section class="focus-panel focus-panel-soft" aria-labelledby="empty-title">
+  <div class="focus-panel-text">
+    <p class="eyebrow">Mulai dari nol</p>
+    <h1 class="focus-title" id="empty-title">Belum ada kebiasaan. Mulai dari satu langkah kecil.</h1>
+    <p class="focus-subtitle">Kebiasaan yang sederhana lebih mudah dijaga. Pilih satu saran di bawah, atau buat sendiri sesuai harimu.</p>
+    <a class="btn" href="{% url 'habits:habit_create' %}" data-dialog-open="habit-create-dialog">
+      {% include "habits/components/icon.html" with name="plus" %}Tambah habit pertama
+    </a>
+  </div>
+  <img class="decor empty-decor-branch" src="{% static 'img/decor/ranting.svg' %}" alt="" aria-hidden="true">
+  <img class="decor empty-decor-plant" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
+  <img class="decor empty-decor-flower empty-decor-flower-1" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+  <img class="decor empty-decor-flower empty-decor-flower-2" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+  <img class="decor empty-decor-flower empty-decor-flower-3" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+  <img class="decor empty-decor-grass" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
+  <svg class="decor decor-hill focus-decor-hill" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <path class="decor-hill-back" d="M0 60C160 10 320 90 520 50C720 10 900 80 1200 30V120H0V60Z"/>
+    <path class="decor-hill-front" d="M0 92C200 52 380 112 600 82C820 52 1000 102 1200 72V120H0V92Z"/>
+  </svg>
+</section>
+
+<section class="suggestions" aria-labelledby="suggestions-title">
+  <div class="section-head">
+    <h2 class="section-title" id="suggestions-title">Saran untuk memulai</h2>
+    <p class="section-note">Ketuk + untuk menambahkan</p>
+  </div>
+  <ul class="suggestion-list">
+    {% for item in suggestions %}
+      <li class="habit-row">
+        <span class="habit-icon tint-{{ item.tint }}">{% include "habits/components/icon.html" with name=item.icon %}</span>
+        <div class="habit-row-body">
+          <p class="habit-row-name">{{ item.name }}</p>
+          <p class="habit-row-meta is-quiet">{{ item.hint }}</p>
+        </div>
+        <a class="btn btn-icon btn-secondary check-button"
+           href="{% url 'habits:habit_create' %}?name={{ item.name|urlencode }}&amp;icon={{ item.icon }}"
+           data-dialog-open="habit-create-dialog" data-prefill-name="{{ item.name }}" data-prefill-icon="{{ item.icon }}"
+           aria-label="Tambahkan {{ item.name }}">
+          {% include "habits/components/icon.html" with name="plus" %}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+</section>

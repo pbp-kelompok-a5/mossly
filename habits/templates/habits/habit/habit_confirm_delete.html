@@ -1,0 +1,9 @@
+{% extends "habits/layout.html" %}
+
+{% block title %}Hapus habit · Mossly{% endblock %}
+
+{% block page %}
+<div class="card form-page form-page-compact">
+  {% include "habits/components/habit_delete_body.html" with title_id="habit-delete-title" in_dialog=False %}
+</div>
+{% endblock %}
