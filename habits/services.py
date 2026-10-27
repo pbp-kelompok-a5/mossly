@@ -5,7 +5,7 @@ computed here, on read, and never stored. Functions that change state also
 write Dashboard events in the same transaction.
 """
 
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -76,18 +76,24 @@ def current_streak(habit, checkin_dates, today):
     return streak
 
 
-def longest_streak(habit, checkin_dates, today):
+def longest_run(habit, checkin_dates, start, end):
+    """Longest run of consecutive scheduled days with a check-in in [start, end]."""
     best = run = 0
-    day = habit.start_date
-    while day <= today:
+    day = max(start, habit.start_date)
+    while day <= end:
         if is_scheduled(habit, day):
             if day in checkin_dates:
                 run += 1
                 best = max(best, run)
-            elif day < today:
+            else:
                 run = 0
         day += ONE_DAY
     return best
+
+
+def longest_streak(habit, checkin_dates, today):
+    # An unchecked today ends the loop, so it never cuts the best run short.
+    return longest_run(habit, checkin_dates, habit.start_date, today)
 
 
 def milestones_reached(streak):
@@ -156,6 +162,91 @@ def consistency_change(current, previous):
     if current is None or previous is None:
         return None
     return current - previous
+
+
+# --- History: heatmap, periods, per-habit statistics -----------------------------
+
+
+def heat_level(scheduled, done):
+    """Heatmap level 0-4 for a day: 0 = nothing done, 4 = every habit done.
+
+    Buckets: 1 = 1-39%, 2 = 40-69%, 3 = 70-99%. The percent is rounded down
+    so a day only reaches level 4 when it is truly complete.
+    """
+    if scheduled == 0 or done == 0:
+        return 0
+    if done >= scheduled:
+        return 4
+    percent = done * 100 // scheduled
+    if percent < 40:
+        return 1
+    if percent < 70:
+        return 2
+    return 3
+
+
+def perfect_days(habits, checkins_by_habit, start, end, today):
+    """Days in [start, end] (never past today) on which every scheduled habit was done."""
+    count = 0
+    day = start
+    while day <= min(end, today):
+        scheduled, done = day_counts(habits, checkins_by_habit, day)
+        if scheduled and done >= scheduled:
+            count += 1
+        day += ONE_DAY
+    return count
+
+
+def month_bounds(year, month):
+    first = date(year, month, 1)
+    last = date(year + month // 12, month % 12 + 1, 1) - ONE_DAY
+    return first, last
+
+
+def shift_month(year, month, delta):
+    index = year * 12 + (month - 1) + delta
+    return index // 12, index % 12 + 1
+
+
+def missed_habits(habits, checkins_by_habit, day):
+    """Habits scheduled on a day that got no check-in."""
+    return [
+        habit for habit in habits
+        if is_scheduled(habit, day) and day not in checkins_by_habit.get(habit.pk, ())
+    ]
+
+
+def strongest_weekday(habit, checkin_dates, start, end):
+    """Weekday (0 = Monday) with the most check-ins in [start, end], or None.
+
+    Ties go to the earlier weekday.
+    """
+    counts = [0] * 7
+    for day in checkin_dates:
+        if start <= day <= end and is_scheduled(habit, day):
+            counts[day.weekday()] += 1
+    best = max(counts)
+    return counts.index(best) if best else None
+
+
+def habit_month_stats(habit, checkin_dates, year, month, today):
+    """Check-ins, scheduled days so far, success rate, longest run, strongest day."""
+    first, last = month_bounds(year, month)
+    end = min(last, today)
+    scheduled = done = 0
+    day = max(first, habit.start_date)
+    while day <= end:
+        if is_scheduled(habit, day):
+            scheduled += 1
+            done += day in checkin_dates
+        day += ONE_DAY
+    return {
+        "done": done,
+        "scheduled": scheduled,
+        "rate": consistency_percent(done, scheduled),
+        "longest": longest_run(habit, checkin_dates, first, end),
+        "strongest_weekday": strongest_weekday(habit, checkin_dates, first, end),
+    }
 
 
 def checkins_by_habit(habits, start=None, end=None):
