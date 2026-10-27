@@ -9,11 +9,11 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from .dates import today
-from .forms import LOCATION_FIELDS, TripForm
+from .forms import TripForm
 from .models import Trip
 from .services import (
     GeoapifyError, calculate_emission, calculate_route, geocode_search,
-    get_emission_factor, get_mode, location_token, validate_route_inputs,
+    get_emission_factor, get_mode, location_token, reverse_geocode, validate_route_inputs,
 )
 
 
@@ -42,78 +42,58 @@ def index(request):
     return render(request, 'carbon/index.html', {'trips': trips, 'summary': _summary(trips)})
 
 
-def _save_trip(form, user):
-    """Semua hasil kalkulasi berasal dari backend, bukan hidden input browser."""
-    trip = form.save(commit=False)
-    trip.user = user
-    try:
-        if form.route_changed:
-            mode = get_mode(trip.mode.code)
-            factor = get_emission_factor(mode, trip.trip_date)
-            route = calculate_route(trip.origin_lat, trip.origin_lng, trip.destination_lat, trip.destination_lng, mode.geoapify_profile)
-            trip.distance_km = route['distance_km']
-            trip.distance_source = Trip.DistanceSource.ROUTING
-            trip.duration_s = route['duration_s']
-            trip.route_geometry = route['route_geometry']
-            trip.emission_factor = factor
-            trip.emission_kg = calculate_emission(trip.distance_km, factor.kg_co2e_per_km)
-        trip.full_clean()
-    except (GeoapifyError, ValueError) as error:
-        form.add_error(None, str(error))
-        return False
-    except ValidationError as error:
-        form.add_error(None, ' '.join(error.messages))
-        return False
-    trip.save()
-    return True
-
-
-def _form_context(form, original=None):
+def _form_context(form):
+    """Pulihkan pilihan yang valid; pakai hasil tersimpan jika rute tidak berubah."""
     locations = {}
-    current = form.cleaned_data if form.is_bound else form.initial
     for prefix in ('origin', 'destination'):
         names = [f'{prefix}_label', f'{prefix}_lat', f'{prefix}_lng']
-        if not form.is_bound or not any(name in form.errors for name in names):
-            try:
-                location = {'name': form[names[0]].value(), 'lat': float(form[names[1]].value()), 'lon': float(form[names[2]].value())}
-                unchanged = original and all(current.get(name) == original[name] for name in names)
-                if not form.is_bound or unchanged or form[f'{prefix}_token'].value():
-                    locations[prefix] = location
-            except (TypeError, ValueError):
-                pass
+        if any(name in form.errors for name in names):
+            continue
+        name, lat, lng = [form[field].value() for field in names]
+        if name and lat is not None and lng is not None:
+            locations[prefix] = {'name': name, 'lat': float(lat), 'lon': float(lng)}
+    trip = form.instance
     preview = None
-    current_mode = current.get('mode')
-    mode_code = current_mode.code if hasattr(current_mode, 'code') else current_mode
-    if original and mode_code == original['mode_code'] and all(current.get(name) == original[name] for name in LOCATION_FIELDS):
-        preview = {'distance_km': float(original['distance_km']), 'co2e_kg': float(original['emission_kg']),
-                   'duration_minutes': round(original['duration_s'] / 60, 1) if original['duration_s'] is not None else None}
-    return {'form': form, 'is_edit': original is not None,
-            'trip_state': {'locations': locations, 'preview': preview, 'original_mode': original['mode_code'] if original else None},
-            'today': today().isoformat()}
+    if trip.pk and not form.route_changed:
+        preview = {'distance_km': float(trip.distance_km), 'co2e_kg': float(trip.emission_kg),
+                   'duration_minutes': round(trip.duration_s / 60, 1) if trip.duration_s is not None else None,
+                   'route_geometry': trip.route_geometry}
+    return {'form': form, 'is_edit': bool(trip.pk), 'trip_state': {
+        'locations': locations, 'preview': preview, 'original_mode': form.initial.get('mode'),
+    }}
 
 
 @login_required
 @require_http_methods(['GET', 'POST'])
-def add_trip(request):
-    form = TripForm(request.POST if request.method == 'POST' else None, user=request.user)
-    if request.method == 'POST' and form.is_valid() and _save_trip(form, request.user):
-        return redirect('carbon:index')
-    return render(request, 'carbon/add.html', _form_context(form))
-
-
-@login_required
-@require_http_methods(['GET', 'POST'])
-def edit_trip(request, pk):
-    # ERD tim: data pribadi milik orang lain diperlakukan sama dengan ID tak ada.
-    trip = get_object_or_404(_user_trips(request.user), pk=pk)
-    original = {name: getattr(trip, name) for name in (*LOCATION_FIELDS, 'distance_km', 'emission_kg', 'duration_s')}
-    original['mode_code'] = trip.mode.code
+def trip_form(request, pk=None):
+    # Kedua URL memakai alur yang sama; ID yang diisi berarti mengedit milik user.
+    trip = get_object_or_404(_user_trips(request.user), pk=pk) if pk is not None else None
     form = TripForm(request.POST if request.method == 'POST' else None, instance=trip, user=request.user)
-    if request.method == 'POST' and form.is_valid() and _save_trip(form, request.user):
-        return redirect('carbon:index')
-    context = _form_context(form, original)
-    context['trip'] = trip
-    return render(request, 'carbon/edit.html', context)
+    if request.method == 'POST' and form.is_valid():
+        trip = form.save(commit=False)
+        trip.user = request.user
+        try:
+            # Edit tanggal/catatan saja mempertahankan hasil lama tanpa request API.
+            if form.route_changed:
+                mode = get_mode(trip.mode.code)
+                factor = get_emission_factor(mode, trip.trip_date)
+                route = calculate_route(trip.origin_lat, trip.origin_lng, trip.destination_lat, trip.destination_lng, mode.geoapify_profile)
+                trip.distance_km = route['distance_km']
+                trip.distance_source = Trip.DistanceSource.ROUTING
+                trip.duration_s = route['duration_s']
+                trip.route_geometry = route['route_geometry']
+                trip.emission_factor = factor
+                trip.emission_kg = calculate_emission(trip.distance_km, factor.kg_co2e_per_km)
+            trip.full_clean()
+        except (GeoapifyError, ValueError) as error:
+            form.add_error(None, str(error))
+        except ValidationError as error:
+            form.add_error(None, ' '.join(error.messages))
+        else:
+            trip.save()
+            return redirect('carbon:index')
+    template = 'carbon/edit.html' if pk is not None else 'carbon/add.html'
+    return render(request, template, _form_context(form))
 
 
 @login_required
@@ -145,6 +125,18 @@ def api_geocode(request):
 
 @api_login_required
 @require_GET
+def api_reverse_geocode(request):
+    try:
+        location = reverse_geocode(request.GET.get('lat'), request.GET.get('lon'))
+    except GeoapifyError as error:
+        return _api_error(error)
+    except ValueError as error:
+        return JsonResponse({'error': str(error), 'code': 'invalid_input'}, status=400)
+    return JsonResponse({**location, 'location_token': location_token(location, request.user.pk)})
+
+
+@api_login_required
+@require_GET
 def api_route(request):
     try:
         mode = get_mode(request.GET.get('mode'))
@@ -164,6 +156,7 @@ def api_route(request):
     return JsonResponse({'distance_km': float(route['distance_km']), 'duration_minutes': route['duration_minutes'],
                          'co2e_kg': float(emission), 'emission_kg': float(emission), 'emission_metric': 'CO2e',
                          'mode': mode.geoapify_profile, 'mode_code': mode.code,
+                         'route_geometry': route['route_geometry'],
                          'emission_factor_id': factor.pk, 'factor_version': factor.version})
 
 

@@ -108,6 +108,25 @@ def location_token(location, user_id):
     }, salt=LOCATION_SALT, compress=True)
 
 
+def reverse_geocode(lat, lon):
+    """Cari alamat pin/GPS, tetapi pertahankan koordinat yang dipilih pengguna."""
+    lat, lon = coordinate(lat, 90), coordinate(lon, 180)
+    features = _request('geocode/reverse', {'lat': str(lat), 'lon': str(lon), 'limit': 1})
+    if not features:
+        raise GeoapifyError('Alamat titik ini tidak ditemukan. Pilih titik lain.', 'location_not_found', 404)
+    try:
+        props = features[0]['properties']
+        name = props['formatted'].strip()
+        country = props['country_code']
+        if not name or len(name) > 255 or not isinstance(country, str):
+            raise ValueError
+    except (KeyError, TypeError, AttributeError, ValueError):
+        raise GeoapifyError('Data alamat dari layanan lokasi tidak valid. Silakan coba lagi.') from None
+    if country != 'id':
+        raise GeoapifyError('Pilih lokasi di Indonesia.', 'outside_indonesia', 400)
+    return {'name': name, 'lat': float(lat), 'lon': float(lon)}
+
+
 def verify_location(token, name, lat, lon, user_id):
     try:
         payload = signing.loads(token, salt=LOCATION_SALT)

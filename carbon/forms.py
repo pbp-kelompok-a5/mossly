@@ -32,7 +32,6 @@ class TripForm(forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
-        self.route_changed = not bool(self.instance.pk)
         allowed = Q(is_active=True, geoapify_profile__in=SUPPORTED_PROFILES)
         # Riwayat moda yang dinonaktifkan tetap dapat diedit tanggal/catatannya.
         if self.instance.pk:
@@ -51,6 +50,13 @@ class TripForm(forms.ModelForm):
             self.fields[name].widget.attrs['class'] = 'input'
         self.fields['trip_date'].widget.attrs['max'] = today().isoformat()
 
+    @property
+    def route_changed(self):
+        # Django sudah membandingkan input dengan nilai awal melalui changed_data.
+        return not self.instance.pk or (
+            self.is_bound and any(name in self.changed_data for name in ROUTE_FIELDS)
+        )
+
     def clean_trip_date(self):
         value = self.cleaned_data['trip_date']
         if value > today():
@@ -68,13 +74,10 @@ class TripForm(forms.ModelForm):
                 cleaned.get(f'{prefix}_token', ''), *(cleaned[name] for name in fields),
                 self.user.pk if self.user else None,
             ):
-                self.add_error(f'{prefix}_label', 'Pilih lokasi dari daftar hasil pencarian Indonesia.')
+                self.add_error(f'{prefix}_label', 'Pilih lokasi Indonesia dari hasil pencarian, peta, atau tombol lokasi saya.')
         coords = ('origin_lat', 'origin_lng', 'destination_lat', 'destination_lng')
         if all(name in cleaned for name in coords) and (cleaned['origin_lat'], cleaned['origin_lng']) == (cleaned['destination_lat'], cleaned['destination_lng']):
             self.add_error('destination_label', 'Asal dan tujuan harus berbeda.')
-        self.route_changed = not self.instance.pk or any(
-            name in cleaned and cleaned[name] != getattr(self.instance, name) for name in ROUTE_FIELDS
-        )
         if self.route_changed:
             # ModelForm memvalidasi instance sebelum view menghitung ulang.
             # Faktor lama tidak boleh dipasangkan dengan moda baru sementara itu.

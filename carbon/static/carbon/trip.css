@@ -53,10 +53,9 @@
 .carbon-mode-option:has(input:checked) { background: var(--color-bg-brand-soft); border-color: var(--color-border-focus); }
 .carbon-mode-option:has(input:focus-visible) { outline: thin solid var(--color-border-focus); outline-offset: var(--space-1); }
 
-/* Autocomplete reuses .dropdown, .dropdown-menu and .dropdown-option. */
-.carbon-results { max-block-size: calc(var(--space-30) * 2); overflow-y: auto; }
-.carbon-results .dropdown-option { white-space: normal; overflow-wrap: anywhere; }
-.carbon-results .dropdown-option:focus-visible { outline: thin solid var(--color-border-focus); }
+.carbon-search { display: flex; gap: var(--space-2); }
+.carbon-search .input { flex: 1; min-inline-size: 0; }
+.carbon-search .btn { flex-shrink: 0; }
 .carbon-preview { background: var(--color-bg-brand-soft); }
 .carbon-error-list { margin: 0; padding-inline-start: var(--space-5); }
 .carbon-attribution { color: var(--color-text-secondary); overflow-wrap: anywhere; }
@@ -68,3 +67,13 @@
 /* The legacy global .btn color is !important. Keep the component's own
    variant foreground inside Carbon without changing shared styles. */
 .carbon-page .btn { color: var(--_fg) !important; }
+
+.carbon-map {
+  block-size: calc(var(--space-30) * 3);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+  isolation: isolate;
+  font: var(--type-body-s);
+}
+.carbon-map .carbon-route { stroke: var(--color-text-brand); stroke-width: var(--space-1); }
+.carbon-page [data-map-pick][aria-pressed="true"] { background: var(--color-bg-brand-soft); }
