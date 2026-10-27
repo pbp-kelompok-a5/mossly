@@ -3,7 +3,7 @@
 {% block title %}Mossly · Gaya Hidup Berkelanjutan{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/landing-fildza.css' %}">
+<link rel="stylesheet" href="{% static 'css/landing-page.css' %}">
 <link rel="stylesheet" href="{% static 'css/global.css' %}">
 <link rel="stylesheet" href="{% static 'css/components.css' %}">
 <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
@@ -84,6 +84,72 @@
     <a href="{% url 'accounts:register' %}" class="habit__cta">
       Mulai kebiasaan baik <span aria-hidden="true">→</span>
     </a>
+  </div>
+</section>
+
+<!-- ===== Dashboard & Komunitas ===== -->
+<section class="results" id="hasil" aria-labelledby="results-title">
+  <p class="results__eyebrow">Tumbuh sendiri. Lebih seru bersama.</p>
+  <h2 class="results__title" id="results-title">Lihat hasilnya. Bagikan ceritanya.</h2>
+
+  <div class="results__grid">
+    <!-- Kartu kiri: Personal Dashboard -->
+    <article class="results-card results-card--moss" aria-labelledby="dashboard-title">
+      <p class="results-card__label">03 — Personal Dashboard</p>
+      <h3 class="results-card__title" id="dashboard-title">Kebun kecil pencapaianmu.</h3>
+      <p class="results-card__desc">
+        Total emisi, streak, goal selesai, dan badge. Semua progresmu terkumpul
+        dalam satu tempat.
+      </p>
+
+      <div class="results__stats">
+        <div class="stat-tile">
+          <p class="stat-tile__label">Total emisi bulan ini</p>
+          <p class="stat-tile__value">48,6 kg</p>
+          <p class="stat-tile__hint">Turun 12% dari bulan lalu</p>
+        </div>
+        <div class="stat-tile">
+          <p class="stat-tile__label">Badge terkumpul</p>
+          <p class="stat-tile__value">7 badge</p>
+          <p class="stat-tile__hint">1 badge baru minggu ini</p>
+        </div>
+      </div>
+
+      <div class="results__badge-note">
+        <img class="results__badge-icon" src="{% static 'img/dashboard-seedling.svg' %}"
+             width="56" height="56" alt="" aria-hidden="true">
+        <p>Setiap badge punya cerita.<br>Rayakan progres, sekecil apa pun.</p>
+      </div>
+    </article>
+
+    <!-- Kartu kanan: Sustainability Community -->
+    <article class="results-card results-card--clay" aria-labelledby="community-title">
+      <p class="results-card__label">04 — Sustainability Community</p>
+      <h3 class="results-card__title" id="community-title">Teman di sepanjang jalan.</h3>
+      <p class="results-card__desc">
+        Berbagi tips, bertukar cerita, dan saling menyemangati untuk hidup lebih
+        sustainable.
+      </p>
+
+      <div class="post-card">
+        <div class="post-card__head">
+          <span class="post-card__avatar" aria-hidden="true">E</span>
+          <div class="post-card__author">
+            <p class="post-card__name">Ezar</p>
+            <p class="post-card__time">2 jam lalu</p>
+          </div>
+          <span class="post-card__tag">Tips</span>
+        </div>
+        <p class="post-card__body">
+          Ganti rute ke kampus pakai KRL + jalan kaki 10 menit. Emisi
+          mingguanku turun hampir setengah!
+        </p>
+        <p class="post-card__meta">
+          <span>Suka 24</span>
+          <span>Komentar 8</span>
+        </p>
+      </div>
+    </article>
   </div>
 </section>
 
