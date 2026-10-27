@@ -1,0 +1,152 @@
+{% extends "habits/layout.html" %}
+{% load static %}
+
+{% block title %}{{ habit.name }} · Mossly{% endblock %}
+
+{% block page_top %}
+<a class="back-link" href="{% url 'habits:index' %}">
+  {% include "habits/components/icon.html" with name="arrow-left" class="icon-sm" %}Kembali ke Habit
+</a>
+{% endblock %}
+
+{% block page %}
+<div class="habits-layout">
+  <section class="focus-panel" aria-labelledby="focus-title">
+    <div class="focus-panel-text">
+      <p class="eyebrow">Habit · {{ time_label }}</p>
+      <h1 class="focus-title" id="focus-title">{{ habit.name }}</h1>
+      <p class="focus-subtitle">{{ subtitle }}</p>
+      {% url 'habits:habit_detail' habit.pk as detail_url %}
+      {% if is_done_today %}
+        <form method="post" action="{% url 'habits:habit_undo_check_in' habit.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ detail_url }}">
+          <button class="btn btn-accent focus-cta" type="submit" aria-label="Sudah check-in. Tekan untuk membatalkan.">
+            {% include "habits/components/icon.html" with name="check" %}Sudah check-in
+          </button>
+        </form>
+      {% elif is_scheduled_today %}
+        <form method="post" action="{% url 'habits:habit_check_in' habit.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ detail_url }}">
+          <button class="btn btn-accent focus-cta" type="submit">
+            {% include "habits/components/icon.html" with name="check" %}Check-in hari ini
+          </button>
+        </form>
+      {% endif %}
+    </div>
+
+    <div class="focus-stats">
+      <div class="progress-ring" style="--value: {{ ring_percent }}" role="img"
+           aria-label="{% if target %}{{ streak }} dari {{ target }} hari menuju milestone berikutnya{% else %}Semua milestone tercapai{% endif %}">
+        {% if target %}
+          <span class="progress-ring-value">{{ streak }}/{{ target }}</span>
+          <span class="progress-ring-label">menuju {{ target }} hari</span>
+        {% else %}
+          <span class="progress-ring-value">{{ streak }}</span>
+          <span class="progress-ring-label">semua milestone</span>
+        {% endif %}
+      </div>
+      <div class="focus-streak">
+        <span class="focus-streak-icon">{% include "habits/components/icon.html" with name="flame" %}</span>
+        <p class="focus-streak-value">{{ streak }} hari</p>
+        <p class="focus-streak-label">Streak saat ini</p>
+      </div>
+    </div>
+
+    <img class="decor focus-decor-leaf" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
+    <img class="decor focus-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+    <img class="decor focus-decor-leaf-sm" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
+    <img class="decor focus-decor-seedling" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
+    <svg class="decor decor-hill focus-decor-hill" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path class="decor-hill-back" d="M0 60C160 10 320 90 520 50C720 10 900 80 1200 30V120H0V60Z"/>
+      <path class="decor-hill-front" d="M0 92C200 52 380 112 600 82C820 52 1000 102 1200 72V120H0V92Z"/>
+    </svg>
+  </section>
+
+  <div class="habits-main">
+    <section class="goal-section" aria-labelledby="calendar-title">
+      <div class="section-head">
+        <h2 class="section-title" id="calendar-title">Kalender {{ month_name }}</h2>
+        <p class="section-note">{{ stats.checkins }} check-in</p>
+      </div>
+      <div class="card heat-card">
+        <div class="heat-month heat-month-large">
+          {% for name in day_names %}<span class="heat-weekday">{{ name }}</span>{% endfor %}
+          {% for cell in cells %}
+            {% if cell %}
+              <span class="heat-cell habit-day-{{ cell.state }}{% if cell.is_today %} is-today{% endif %}" title="{{ cell.label }}">
+                <span aria-hidden="true">{{ cell.day }}</span>
+                <span class="visually-hidden">{{ cell.label }}{% if cell.state == "done" %}: check-in{% elif cell.state == "missed" %}: terlewat{% elif cell.state == "off" %}: tidak dijadwalkan{% endif %}</span>
+              </span>
+            {% else %}
+              <span class="heat-blank" aria-hidden="true"></span>
+            {% endif %}
+          {% endfor %}
+        </div>
+        <ul class="heat-legend">
+          <li>Terlewat</li>
+          <li class="heat-cell habit-day-missed" aria-hidden="true"></li>
+          <li class="heat-cell habit-day-done" aria-hidden="true"></li>
+          <li>Check-in</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="goal-section" aria-labelledby="settings-title">
+      <h2 class="section-title" id="settings-title">Pengaturan habit</h2>
+      <div class="card settings-card">
+        <dl class="settings-list">
+          <div><dt>Waktu check-in</dt><dd>{{ time_label }}</dd></div>
+          <div><dt>Frekuensi</dt><dd>{{ frequency }}</dd></div>
+          <div><dt>Pengingat</dt><dd>{{ reminder }}</dd></div>
+        </dl>
+        <div class="finish-actions settings-actions">
+          <a class="btn btn-ghost btn-m danger-link" href="{% url 'habits:habit_delete' habit.pk %}" data-dialog-open="habit-delete-dialog">Hapus habit</a>
+          <a class="btn btn-secondary btn-m" href="{% url 'habits:habit_edit' habit.pk %}">Edit habit</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <aside class="habits-aside">
+    <section class="side-card side-card-sand" aria-labelledby="stats-title">
+      <p class="eyebrow eyebrow-accent" id="stats-title">Statistik {{ month_name }}</p>
+      <dl class="pace-list">
+        <div><dt>Check-in</dt><dd>{{ stats.checkins }}</dd></div>
+        <div><dt>Tingkat berhasil</dt><dd>{{ stats.rate }}</dd></div>
+        <div><dt>Streak terpanjang</dt><dd>{{ stats.longest }}</dd></div>
+        <div><dt>Hari terkuat</dt><dd>{{ stats.strongest }}</dd></div>
+      </dl>
+      <img class="decor side-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+    </section>
+
+    <section class="side-card side-card-muted" aria-labelledby="ladder-title">
+      <p class="eyebrow" id="ladder-title">Tangga milestone</p>
+      <ol class="ladder">
+        {% for step in ladder %}
+          <li class="ladder-step ladder-{{ step.state }}">
+            <span class="ladder-icon">
+              {% if step.state == "reached" %}{% include "habits/components/icon.html" with name="check" class="icon-sm" %}
+              {% elif step.state == "next" %}{% include "habits/components/icon.html" with name="flame" class="icon-sm" %}
+              {% else %}{% include "habits/components/icon.html" with name="lock" class="icon-sm" %}{% endif %}
+            </span>
+            <span class="log-body">
+              <span class="log-title">{{ step.days }} hari</span>
+              <span class="log-day">{{ step.note }}</span>
+            </span>
+          </li>
+        {% endfor %}
+      </ol>
+      <img class="decor side-decor-grass" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
+    </section>
+  </aside>
+</div>
+
+<dialog class="sheet sheet-compact" id="habit-delete-dialog" aria-labelledby="habit-delete-title">
+  <span class="sheet-handle" aria-hidden="true"></span>
+  {% include "habits/components/habit_delete_body.html" with title_id="habit-delete-title" in_dialog=True %}
+</dialog>
+
+{% if milestone %}{% include "habits/components/milestone_dialog.html" %}{% endif %}
+{% endblock %}

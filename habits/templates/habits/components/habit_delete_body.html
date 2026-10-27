@@ -8,7 +8,7 @@
     {% if in_dialog %}
       <button class="btn btn-secondary" type="submit" formmethod="dialog" formnovalidate>Batal</button>
     {% else %}
-      <a class="btn btn-secondary" href="{% url 'habits:habit_edit' habit.pk %}">Batal</a>
+      <a class="btn btn-secondary" href="{% url 'habits:habit_detail' habit.pk %}">Batal</a>
     {% endif %}
     <button class="btn confirm-danger" type="submit">Ya, hapus</button>
   </form>

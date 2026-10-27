@@ -219,3 +219,53 @@ class HistoryPageTests(FrozenClockMixin, TestCase):
         self.client.logout()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
+
+
+class HabitDetailPageTests(FrozenClockMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = make_user()
+        self.client.force_login(self.user)
+        self.habit = make_habit(self.user, name="Naik transportasi umum", time_of_day="pagi", start_date=date(2026, 10, 1))
+        for day in (19, 20, 21, 22, 23, 24, 25):
+            services.check_in(self.habit, date(2026, 10, day))
+        self.url = reverse("habits:habit_detail", args=[self.habit.pk])
+
+    def test_detail_page(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "Habit · Pagi")
+        self.assertContains(response, "Setiap hari, dimulai 1 Oktober 2026.")
+        self.assertContains(response, "Check-in hari ini")
+        self.assertContains(response, "7/14")
+        self.assertContains(response, "menuju 14 hari")
+        self.assertContains(response, "7 dari 26 hari")
+        self.assertContains(response, "27%")
+        self.assertContains(response, "Senin")
+        self.assertContains(response, "Terkirim ke Dashboard", count=2)
+        self.assertContains(response, "7 hari lagi")
+        self.assertContains(response, "Belum terbuka", count=1)
+        self.assertContains(response, "habit-day-done", count=8)  # 7 days plus the legend
+        self.assertContains(response, "Tidak ada")  # reminder
+
+    def test_check_in_from_detail_returns_to_detail(self):
+        url = reverse("habits:habit_check_in", args=[self.habit.pk])
+        response = self.client.post(url, {"next": self.url})
+        self.assertRedirects(response, self.url, fetch_redirect_response=False)
+        page = self.client.get(self.url)
+        self.assertContains(page, "Sudah check-in")
+        self.assertContains(page, "Check-in terakhir hari ini pukul")
+
+    def test_weekday_habit_marks_unscheduled_days_off(self):
+        habit = make_habit(self.user, name="Bersepeda", frequency_type="weekdays", weekdays=[5], start_date=date(2026, 10, 1))
+        response = self.client.get(reverse("habits:habit_detail", args=[habit.pk]))
+        self.assertContains(response, "Setiap Sab, dimulai")
+        self.assertContains(response, "habit-day-off")
+        self.assertNotContains(response, "Check-in hari ini")
+
+    def test_other_users_habit_returns_404(self):
+        self.client.force_login(make_user("other"))
+        self.assertEqual(self.client.get(self.url).status_code, 404)
+
+    def test_list_links_to_detail(self):
+        response = self.client.get(reverse("habits:index"))
+        self.assertContains(response, f'href="{self.url}"')

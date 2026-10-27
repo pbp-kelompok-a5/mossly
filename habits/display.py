@@ -89,9 +89,28 @@ def day_month_long(day):
     return f"{day.day} {MONTH_NAMES[day.month - 1]}"
 
 
+def full_date(day):
+    """'1 Oktober 2026'"""
+    return f"{day.day} {MONTH_NAMES[day.month - 1]} {day.year}"
+
+
 def clock(moment):
     """'07.45' in local time."""
     return timezone.localtime(moment).strftime("%H.%M")
+
+
+def frequency_text(habit):
+    """'Setiap hari' or 'Sen, Rab, Jum'."""
+    if habit.frequency_type == Habit.Frequency.WEEKDAYS:
+        return ", ".join(DAY_SHORT[d] for d in sorted(habit.weekday_numbers))
+    return "Setiap hari"
+
+
+def reminder_text(habit):
+    if habit.reminder_time is None:
+        return "Tidak ada"
+    when = "setiap hari" if habit.frequency_type == Habit.Frequency.DAILY else "di hari terjadwal"
+    return f"{habit.reminder_time.strftime('%H.%M')} · {when}"
 
 
 def day_month(day):

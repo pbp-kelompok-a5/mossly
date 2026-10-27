@@ -3,9 +3,15 @@
 {% block title %}{% if is_edit %}Edit habit{% else %}Tambah habit{% endif %} · Mossly{% endblock %}
 
 {% block page_top %}
-<a class="back-link" href="{% url 'habits:index' %}">
-  {% include "habits/components/icon.html" with name="arrow-left" class="icon-sm" %}Kembali ke Habit
-</a>
+{% if is_edit %}
+  <a class="back-link" href="{% url 'habits:habit_detail' habit.pk %}">
+    {% include "habits/components/icon.html" with name="arrow-left" class="icon-sm" %}Kembali ke detail habit
+  </a>
+{% else %}
+  <a class="back-link" href="{% url 'habits:index' %}">
+    {% include "habits/components/icon.html" with name="arrow-left" class="icon-sm" %}Kembali ke Habit
+  </a>
+{% endif %}
 {% endblock %}
 
 {% block page %}

@@ -6,6 +6,7 @@ urlpatterns = [
     path("habit/", views.index, name="index"),
     path("habit/new/", views.habit_create, name="habit_create"),
     path("habit/history/", views.history, name="history"),
+    path("habit/<int:pk>/", views.habit_detail, name="habit_detail"),
     path("habit/<int:pk>/edit/", views.habit_edit, name="habit_edit"),
     path("habit/<int:pk>/delete/", views.habit_delete, name="habit_delete"),
     path("habit/<int:pk>/check-in/", views.habit_check_in, name="habit_check_in"),

@@ -170,6 +170,12 @@ class HabitFormTests(FrozenClockMixin, TestCase):
         self.assertEqual(habit.frequency_type, Habit.Frequency.WEEKDAYS)
         self.assertEqual(habit.weekdays, [0, 2, 4])
 
+    def test_reminder_explains_it_is_stored_only_for_now(self):
+        self.assertContains(
+            self.client.get(self.url),
+            "Pengingat akan aktif di aplikasi mobile nanti. Untuk sekarang, jamnya disimpan dulu.",
+        )
+
     def test_frequency_type_cannot_be_posted_directly(self):
         self.post(frequency_type="weekdays")
         self.assertEqual(Habit.objects.get().frequency_type, Habit.Frequency.DAILY)

@@ -195,7 +195,7 @@ def habit_edit(request, pk):
     form = HabitForm(request.POST or None, instance=habit)
     if request.method == "POST" and form.is_valid():
         form.save()
-        return redirect("habits:index")
+        return redirect("habits:habit_detail", habit.pk)
     return render(
         request,
         "habits/habit/habit_form.html",
@@ -225,7 +225,7 @@ def habit_check_in(request, pk):
             # Celebrate the highest milestone when several are crossed at once.
             top = max(events, key=lambda event: event.milestone_days)
             request.session[MILESTONE_SESSION_KEY] = top.pk
-    return redirect("habits:index")
+    return _redirect_back(request, "habits:index")
 
 
 @login_required
@@ -233,7 +233,7 @@ def habit_check_in(request, pk):
 def habit_undo_check_in(request, pk):
     habit = get_object_or_404(Habit, pk=pk, user=request.user)
     services.undo_check_in(habit)
-    return redirect("habits:index")
+    return _redirect_back(request, "habits:index")
 
 
 # --- Goals -------------------------------------------------------------------
@@ -746,3 +746,79 @@ def history(request):
         activity=_activity_log(user, habits, checkins, today),
     )
     return render(request, "habits/history/history.html", context)
+
+
+@login_required
+def habit_detail(request, pk):
+    habit = get_object_or_404(Habit, pk=pk, user=request.user)
+    today = services.local_today()
+    dates = set(habit.checkins.values_list("checkin_date", flat=True))
+    streak = services.current_streak(habit, dates, today)
+    target = services.next_milestone(streak)
+    stats = services.habit_month_stats(habit, dates, today.year, today.month, today)
+    first, last = services.month_bounds(today.year, today.month)
+
+    cells = [None] * first.weekday()
+    day = first
+    while day <= last:
+        if day > today:
+            state = "upcoming"
+        elif not services.is_scheduled(habit, day):
+            state = "off"
+        elif day in dates:
+            state = "done"
+        elif day == today:
+            state = "today"
+        else:
+            state = "missed"
+        cells.append({"day": day.day, "label": display.long_date(day), "state": state, "is_today": day == today})
+        day += timedelta(days=1)
+
+    sent = {
+        event.milestone_days: event
+        for event in habit.events.filter(event_type=SustainabilityEvent.EventType.HABIT_MILESTONE)
+    }
+    ladder = []
+    for days in services.STREAK_MILESTONES:
+        if days in sent:
+            when = display.day_month(timezone.localdate(sent[days].occurred_at))
+            ladder.append({"days": days, "state": "reached", "note": f"Terkirim ke Dashboard · {when}"})
+        elif days == target:
+            ladder.append({"days": days, "state": "next", "note": f"{days - streak} hari lagi"})
+        else:
+            ladder.append({"days": days, "state": "locked", "note": "Belum terbuka"})
+
+    last_checkin = habit.checkins.first()
+    if last_checkin is None:
+        last_text = "Belum ada check-in."
+    else:
+        on = "hari ini" if last_checkin.checkin_date == today else display.day_month_long(last_checkin.checkin_date)
+        last_text = f"Check-in terakhir {on} pukul {display.clock(last_checkin.checked_at)}."
+    frequency = display.frequency_text(habit)
+    schedule = frequency if habit.frequency_type == Habit.Frequency.DAILY else f"Setiap {frequency}"
+    strongest = stats["strongest_weekday"]
+
+    context = {
+        "habit": habit,
+        "time_label": habit.get_time_of_day_display(),
+        "subtitle": f"{schedule}, dimulai {display.full_date(habit.start_date)}. {last_text}",
+        "is_done_today": today in dates,
+        "is_scheduled_today": services.is_scheduled(habit, today),
+        "streak": streak,
+        "target": target,
+        "ring_percent": streak * 100 // target if target else 100,
+        "month_name": display.MONTH_NAMES[today.month - 1],
+        "day_names": display.DAY_SHORT,
+        "cells": cells,
+        "stats": {
+            "checkins": f"{stats['done']} dari {stats['scheduled']} hari",
+            "rate": f"{stats['rate']}%" if stats["rate"] is not None else "–",
+            "longest": f"{stats['longest']} hari",
+            "strongest": display.DAY_NAMES[strongest] if strongest is not None else "–",
+        },
+        "ladder": ladder,
+        "frequency": frequency,
+        "reminder": display.reminder_text(habit),
+        "milestone": _pop_milestone(request),
+    }
+    return render(request, "habits/habit/habit_detail.html", context)
