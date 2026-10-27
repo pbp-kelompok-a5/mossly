@@ -1,0 +1,93 @@
+{% comment %}
+Add/edit habit form. Used inside the sheet dialog and on the standalone page.
+Expects: form, action, title_id, in_dialog, is_edit, milestone_list.
+{% endcomment %}
+<form class="habit-form" method="post" action="{{ action }}">
+  {% csrf_token %}
+
+  <header class="sheet-header">
+    <h2 class="sheet-title" id="{{ title_id }}">{% if is_edit %}Edit habit{% else %}Tambah habit baru{% endif %}</h2>
+    <p class="sheet-subtitle">{% if is_edit %}Ubah detail kebiasaanmu kapan saja.{% else %}Mulai dari yang kecil. Kamu bisa mengubahnya kapan saja.{% endif %}</p>
+  </header>
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-error" role="alert"><p class="alert-body">{{ form.non_field_errors.0 }}</p></div>
+  {% endif %}
+
+  <div class="field">
+    <label class="field-label" for="{{ title_id }}-name">Nama habit</label>
+    <input class="input" type="text" name="name" id="{{ title_id }}-name"
+           value="{{ form.name.value|default_if_none:'' }}" maxlength="80" required
+           aria-describedby="{{ title_id }}-name-hint"{% if form.name.errors %} aria-invalid="true"{% endif %}>
+    {% if form.name.errors %}
+      <p class="field-error" id="{{ title_id }}-name-hint">{{ form.name.errors.0 }}</p>
+    {% else %}
+      <p class="field-hint" id="{{ title_id }}-name-hint">Contoh: Bawa tumbler, Pilah sampah</p>
+    {% endif %}
+  </div>
+
+  <fieldset class="field">
+    <legend class="field-label">Ikon &amp; warna</legend>
+    <div class="icon-options">
+      {% for radio, tint in form.icon_options %}
+        <label class="icon-option tint-{{ tint }}" title="{{ radio.choice_label }}">
+          <input type="radio" name="icon" value="{{ radio.data.value }}"{% if radio.data.selected %} checked{% endif %}>
+          <span class="visually-hidden">{{ radio.choice_label }}</span>
+          {% include "habits/components/icon.html" with name=radio.data.value %}
+        </label>
+      {% endfor %}
+    </div>
+    {% if form.icon.errors %}<p class="field-error">{{ form.icon.errors.0 }}</p>{% endif %}
+  </fieldset>
+
+  <fieldset class="field">
+    <legend class="field-label">Waktu check-in</legend>
+    <div class="choice-chips">
+      {% for radio in form.time_of_day %}
+        <label class="choice-chip">
+          <input type="radio" name="time_of_day" value="{{ radio.data.value }}"{% if radio.data.selected %} checked{% endif %}>
+          <span>{{ radio.choice_label }}</span>
+        </label>
+      {% endfor %}
+    </div>
+    {% if form.time_of_day.errors %}<p class="field-error">{{ form.time_of_day.errors.0 }}</p>{% endif %}
+  </fieldset>
+
+  <fieldset class="field" aria-describedby="{{ title_id }}-days-hint">
+    <legend class="field-label">Hari check-in</legend>
+    <p class="field-hint" id="{{ title_id }}-days-hint">Ketuk hari untuk memilih atau melewatinya.</p>
+    <div class="choice-chips weekday-picker">
+      {% for box in form.weekdays %}
+        <label class="choice-chip">
+          <input type="checkbox" name="weekdays" value="{{ box.data.value }}"{% if box.data.selected %} checked{% endif %}>
+          <span>{% include "habits/components/icon.html" with name="check" class="icon-sm choice-chip-check" %}{{ box.choice_label }}</span>
+        </label>
+      {% endfor %}
+    </div>
+    {% if form.weekdays.errors %}<p class="field-error">{{ form.weekdays.errors.0 }}</p>{% endif %}
+  </fieldset>
+
+  <div class="field">
+    <label class="field-label" for="{{ form.reminder_time.id_for_label }}">Pengingat <span class="field-hint">(opsional)</span></label>
+    {{ form.reminder_time }}
+    {% if form.reminder_time.errors %}<p class="field-error">{{ form.reminder_time.errors.0 }}</p>{% endif %}
+  </div>
+
+  {% if not is_edit %}
+    <div class="alert">
+      <div>
+        <strong>Streak dimulai dari check-in pertamamu</strong>
+        <p class="alert-body">Begitu mencapai {{ milestone_list }} hari, milestone otomatis dikirim ke Personal Dashboard.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="sheet-actions">
+    {% if in_dialog %}
+      <button class="btn btn-ghost" type="submit" formmethod="dialog" formnovalidate>Batal</button>
+    {% else %}
+      <a class="btn btn-ghost" href="{% url 'habits:index' %}">Batal</a>
+    {% endif %}
+    <button class="btn" type="submit">Simpan habit</button>
+  </div>
+</form>

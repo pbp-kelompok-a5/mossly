@@ -1,0 +1,34 @@
+{% comment %}Week strip of Day Chips. Each status has text or an icon, never color alone.{% endcomment %}
+<section class="card week-card" aria-label="Minggu ini">
+  <ol class="week-strip">
+    {% for day in week %}
+      <li class="week-day{% if day.is_today %} is-today{% endif %}">
+        <span class="week-day-name">{{ day.short }}</span>
+        <span class="day-chip day-chip-{{ day.status }}{% if day.is_today %} is-today{% endif %}">
+          {% if day.status == "done" %}
+            {% include "habits/components/icon.html" with name="check" class="icon-sm" %}
+            <span class="visually-hidden">{{ day.label }}: semua habit selesai</span>
+          {% elif day.status == "partial" %}
+            <span aria-hidden="true">{{ day.done }}/{{ day.scheduled }}</span>
+            <span class="visually-hidden">{{ day.label }}: {{ day.done }} dari {{ day.scheduled }} selesai</span>
+          {% elif day.status == "missed" %}
+            <span aria-hidden="true">–</span>
+            <span class="visually-hidden">{{ day.label }}: tidak ada yang dicentang</span>
+          {% elif day.status == "today" %}
+            <span aria-hidden="true">{{ day.number }}</span>
+            <span class="visually-hidden">{{ day.label }}, hari ini: {{ day.done }} dari {{ day.scheduled }} selesai</span>
+          {% else %}
+            <span aria-hidden="true">{{ day.number }}</span>
+            <span class="visually-hidden">{{ day.label }}</span>
+          {% endif %}
+        </span>
+      </li>
+    {% endfor %}
+  </ol>
+</section>
+
+<ul class="day-legend">
+  <li><span class="legend-dot legend-dot-done" aria-hidden="true"></span>Semua habit selesai</li>
+  <li><span class="legend-dot legend-dot-partial" aria-hidden="true"></span>Sebagian selesai</li>
+  <li><span class="legend-dot legend-dot-missed" aria-hidden="true"></span>Tidak ada yang dicentang</li>
+</ul>

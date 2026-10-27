@@ -51,9 +51,25 @@ class AccessTests(FrozenClockMixin, TestCase):
 
     def test_state_changes_require_post(self):
         self.client.force_login(self.owner)
-        for url in self.habit_urls() + self.goal_urls():
+        # Delete answers GET with its confirmation page instead (tested below).
+        post_only = [url for url in self.habit_urls() if not url.endswith("/delete/")]
+        for url in post_only + self.goal_urls():
             with self.subTest(url=url):
                 self.assertEqual(self.client.get(url).status_code, 405)
+
+    def test_delete_get_shows_confirmation_without_deleting(self):
+        self.client.force_login(self.owner)
+        response = self.client.get(reverse("habits:habit_delete", args=[self.habit.pk]))
+        self.assertContains(response, "Hapus habit ini?")
+        self.assertTrue(Habit.objects.filter(pk=self.habit.pk).exists())
+
+    def test_edit_page_of_other_users_habit_returns_404(self):
+        self.client.force_login(self.other)
+        url = reverse("habits:habit_edit", args=[self.habit.pk])
+        self.assertEqual(self.client.get(url).status_code, 404)
+        self.assertEqual(self.client.post(url, {"name": "Diambil"}).status_code, 404)
+        self.habit.refresh_from_db()
+        self.assertEqual(self.habit.name, "Bawa tumbler")
 
     def test_state_changes_require_csrf_token(self):
         client = Client(enforce_csrf_checks=True)

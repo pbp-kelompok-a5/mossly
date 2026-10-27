@@ -1,0 +1,716 @@
+/* ==========================================================
+   habits.css — Habit & Goal Tracker screens
+   Mobile first. Breakpoints: md 48rem (768), lg 64rem (1024), xl 80rem (1280).
+   Only loaded on this module's pages.
+   ========================================================== */
+
+:root {
+  /* Layout: 20px mobile margin, 88px desktop margin, 1264px content width. */
+  --layout-margin-x: var(--space-5);
+  --layout-max-width: 79rem;
+  --layout-margin-x-xl: 5.5rem;
+
+  /* Dialog widths from the modal frames. */
+  --sheet-width: 38.5rem;
+  --sheet-width-compact: 29rem;
+}
+
+/* The shared base template wraps pages in a narrow .container; this module
+   sets its own width instead. */
+main.container:has(> .habits-page) {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.icon-sm { width: 1rem; height: 1rem; }
+
+/* === Page layout === */
+.habits-page {
+  position: relative;
+  display: grid;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: calc(var(--layout-max-width) + 2 * var(--layout-margin-x));
+  margin-inline: auto;
+  padding: var(--space-4) var(--layout-margin-x) var(--space-16);
+  overflow-x: clip;
+}
+/* Content sits above page decorations; grid children may shrink below their content. */
+.habits-page > :not(.decor):not(dialog) { position: relative; z-index: 1; min-width: 0; }
+.habits-layout > * { min-width: 0; }
+
+.habits-tabs { width: fit-content; }
+.habits-tabs .tab[aria-disabled="true"] { cursor: not-allowed; }
+.habits-tabs .tab[aria-disabled="true"]:hover { color: var(--color-text-tertiary); }
+
+.habits-messages { display: grid; gap: var(--space-3); }
+
+.habits-layout {
+  display: grid;
+  gap: var(--space-8);
+}
+
+.habits-main,
+.habits-aside {
+  display: grid;
+  gap: var(--space-6);
+  align-content: start;
+  min-width: 0;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.section-title { font: var(--type-h3); }
+.section-note { font: var(--type-body-s); color: var(--color-text-tertiary); }
+
+.eyebrow {
+  font: var(--type-label-s);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-brand);
+}
+.eyebrow-accent { color: var(--color-text-accent); }
+
+/* === Decorations: always behind content, never interactive === */
+.decor {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* === Focus panel (one per tab) === */
+.focus-panel {
+  position: relative;
+  display: grid;
+  gap: var(--space-6);
+  overflow: hidden;
+  padding: var(--space-6) var(--space-6) var(--space-16);
+  color: var(--color-text-on-brand);
+  background: var(--color-bg-brand);
+  border-radius: var(--radius-2xl);
+}
+.focus-panel > :not(.decor) { position: relative; z-index: 1; }
+.focus-panel .eyebrow { color: var(--color-text-on-inverse-muted); }
+
+.focus-panel-text { display: grid; gap: var(--space-3); justify-items: start; }
+.focus-title { font: var(--type-h3); }
+.focus-subtitle { font: var(--type-body-m); color: var(--color-text-on-inverse-muted); }
+.focus-cta { margin-top: var(--space-3); }
+
+.focus-panel-soft {
+  color: var(--color-text-primary);
+  background: var(--color-bg-muted);
+}
+.focus-panel-soft .eyebrow { color: var(--color-text-brand); }
+.focus-panel-soft .focus-subtitle { color: var(--color-text-secondary); }
+
+.focus-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.progress-ring {
+  --_size: var(--space-24);
+  position: relative;
+  display: grid;
+  place-content: center;
+  flex: none;
+  width: var(--_size);
+  aspect-ratio: 1;
+  text-align: center;
+  border-radius: var(--radius-full);
+  background: conic-gradient(
+    var(--color-clay-300) calc(var(--value) * 1%),
+    var(--color-moss-700) 0
+  );
+}
+.progress-ring::before {
+  content: "";
+  position: absolute;
+  inset: var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-brand);
+}
+.progress-ring > * { position: relative; }
+.progress-ring-value { font: var(--type-h3); }
+.progress-ring-label { font: var(--type-label-s); color: var(--color-text-on-inverse-muted); }
+
+.focus-streak { display: grid; gap: var(--space-1); justify-items: start; }
+.focus-streak-icon {
+  display: grid;
+  place-items: center;
+  width: var(--space-12);
+  height: var(--space-12);
+  margin-bottom: var(--space-2);
+  color: var(--color-clay-800);
+  background: var(--color-clay-300);
+  border-radius: var(--radius-full);
+}
+.focus-streak-value { font: var(--type-h3); }
+.focus-streak-label { font: var(--type-body-s); color: var(--color-text-on-inverse-muted); }
+
+/* Inline hills stretch to the panel width; colors follow the panel. */
+.decor-hill { --_hill-back: var(--color-moss-400); --_hill-front: var(--color-moss-300); }
+.decor-hill-back { fill: var(--_hill-back); }
+.decor-hill-front { fill: var(--_hill-front); }
+.focus-panel-soft .decor-hill { --_hill-back: var(--color-moss-200); --_hill-front: var(--color-moss-300); }
+
+.focus-decor-hill {
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: none;
+  height: var(--space-12);
+}
+.focus-decor-leaf { top: var(--space-4); right: var(--space-4); width: var(--space-10); opacity: .9; }
+.focus-decor-flower { display: none; }
+.focus-decor-branch,
+.focus-decor-sprout { display: none; }
+
+/* === Week strip and Day Chip === */
+.week-card { padding: var(--space-4); }
+
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.week-day { display: grid; justify-items: center; gap: var(--space-2); }
+.week-day-name { font: var(--type-label-s); font-weight: var(--weight-regular); color: var(--color-text-tertiary); }
+.week-day.is-today .week-day-name { font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+
+.day-chip {
+  display: grid;
+  place-items: center;
+  width: var(--space-10);
+  height: var(--space-10);
+  font: var(--type-label-s);
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-surface);
+  border: 1.5px solid var(--color-border-subtle);
+  border-radius: var(--radius-full);
+}
+.day-chip-done {
+  color: var(--color-text-on-brand);
+  background: var(--color-bg-brand);
+  border-color: var(--color-bg-brand);
+}
+.day-chip-partial {
+  color: var(--color-text-accent);
+  background: var(--color-bg-accent-soft);
+  border-color: var(--color-clay-300);
+}
+.day-chip-missed {
+  background: var(--color-bg-subtle);
+  border-color: var(--color-bg-subtle);
+}
+.day-chip-today {
+  color: var(--color-text-primary);
+  border-color: var(--color-border-focus);
+}
+.day-chip.is-today:not(.day-chip-today) {
+  outline: 1.5px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.day-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+  padding: 0;
+  font: var(--type-body-s);
+  color: var(--color-text-secondary);
+  list-style: none;
+}
+.day-legend li { display: inline-flex; align-items: center; gap: var(--space-2); }
+.legend-dot {
+  width: var(--space-3);
+  height: var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1.5px solid transparent;
+}
+.legend-dot-done { background: var(--color-bg-brand); }
+.legend-dot-partial { background: var(--color-bg-accent-soft); border-color: var(--color-clay-300); }
+.legend-dot-missed { background: var(--color-bg-subtle); border-color: var(--color-border-default); }
+
+/* === Habit groups and Habit Row === */
+.habit-group { display: grid; gap: var(--space-3); }
+.habit-group-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font: var(--type-h4);
+}
+.habit-group-title .icon { color: var(--color-icon-accent); }
+
+.habit-list,
+.suggestion-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.habit-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+}
+.habit-row.is-done {
+  background: var(--color-bg-muted);
+  box-shadow: none;
+}
+
+.habit-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--space-12);
+  height: var(--space-12);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-full);
+}
+.tint-moss-100 { background: var(--color-moss-100); }
+.tint-moss-200 { background: var(--color-moss-200); }
+.tint-clay-100 { background: var(--color-clay-100); }
+.tint-pink-100 { background: var(--color-pink-100); }
+.tint-pink-200 { background: var(--color-pink-200); }
+
+.habit-row-body { display: grid; gap: var(--space-1); flex: 1; min-width: 0; }
+.habit-row-name {
+  font: var(--type-label-l);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+a.habit-row-name:hover { text-decoration: underline; text-underline-offset: .2em; }
+.habit-row.is-done .habit-row-name { color: var(--color-text-secondary); }
+
+.habit-row-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font: var(--type-body-s);
+  color: var(--color-text-secondary);
+}
+.habit-row-meta .icon { color: var(--color-icon-accent); }
+.habit-row-meta.is-quiet .icon { color: var(--color-text-tertiary); }
+
+.check-button { flex: none; }
+.check-button.is-done { --_bg: var(--color-moss-700); --_bg-hover: var(--color-moss-800); }
+
+/* === Side cards === */
+.side-card {
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+  overflow: hidden;
+  padding: var(--space-6);
+  border-radius: var(--radius-2xl);
+}
+.side-card > :not(.decor) { position: relative; z-index: 1; }
+.side-card-sand { background: var(--color-bg-accent-soft); }
+.side-card-muted { background: var(--color-bg-brand-soft); justify-items: start; }
+
+.side-card-stat { font: var(--type-h1); }
+.side-card-text { font: var(--type-body-m); color: var(--color-text-secondary); }
+.side-card-note { font: var(--type-body-s); color: var(--color-text-secondary); }
+.side-card-title { display: flex; align-items: center; gap: var(--space-3); font: var(--type-h4); }
+.side-card-badge {
+  display: grid;
+  place-items: center;
+  width: var(--space-10);
+  height: var(--space-10);
+  color: var(--color-text-on-brand);
+  background: var(--color-bg-brand);
+  border-radius: var(--radius-full);
+}
+
+.sent-list { display: grid; gap: var(--space-4); margin: var(--space-2) 0; padding: 0; list-style: none; }
+.sent-item { display: flex; align-items: center; gap: var(--space-3); }
+.sent-check {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--space-8);
+  height: var(--space-8);
+  color: var(--color-text-on-brand);
+  background: var(--color-bg-brand);
+  border-radius: var(--radius-full);
+}
+.sent-item-title { display: block; font: var(--type-label-m); }
+.sent-item-date { display: block; font: var(--type-body-s); color: var(--color-text-tertiary); }
+
+.side-decor-sprout { top: var(--space-4); right: var(--space-4); width: var(--space-12); }
+.side-decor-flower { top: var(--space-4); right: var(--space-4); width: var(--space-8); }
+.side-decor-grass { right: var(--space-4); bottom: 0; width: var(--space-16); opacity: .8; }
+
+.page-decor-branch { display: none; }
+
+/* === Empty state === */
+.suggestions { display: grid; gap: var(--space-4); }
+
+/* === Dialogs: bottom sheet on mobile, centered modal from lg === */
+.sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 50;
+  width: 100%;
+  max-width: none;
+  max-height: 92dvh;
+  margin: 0;
+  overflow-y: auto;
+  padding: var(--space-8) var(--space-5) var(--space-6);
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface);
+  border: 0;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  box-shadow: var(--shadow-lg);
+}
+.sheet[open] { animation: sheet-up .25s ease-out; }
+.sheet::backdrop { background: color-mix(in srgb, var(--color-moss-900) 45%, transparent); }
+
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet[open] { animation: none; }
+}
+
+.sheet-handle {
+  position: absolute;
+  top: var(--space-3);
+  left: 50%;
+  width: var(--space-10);
+  height: var(--space-1);
+  background: var(--color-bg-sage);
+  border-radius: var(--radius-full);
+  transform: translateX(-50%);
+}
+
+.sheet-close {
+  position: absolute;
+  top: var(--space-5);
+  right: var(--space-5);
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: var(--space-10);
+  height: var(--space-10);
+  padding: 0;
+  color: var(--color-text-primary);
+  background: var(--color-bg-brand-soft);
+  border: 0;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+.sheet-close:hover { background: var(--color-moss-200); }
+.sheet-close:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
+
+.sheet-header { display: grid; gap: var(--space-2); padding-right: var(--space-12); }
+.sheet-title { font: var(--type-h3); }
+.sheet-subtitle { font: var(--type-body-s); color: var(--color-text-secondary); }
+
+.sheet-actions {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-3);
+}
+.sheet-actions .btn { width: 100%; }
+
+/* === Habit form === */
+.habit-form { display: grid; gap: var(--space-6); }
+.habit-form fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.habit-form legend { margin-bottom: var(--space-3); padding: 0; }
+
+/* Fixed column counts so rows always split evenly (no lone item on its own row). */
+.icon-options {
+  display: grid;
+  grid-template-columns: repeat(4, max-content);
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.choice-chips {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.weekday-picker { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.choice-chips .choice-chip span {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+}
+
+/* Radio and checkbox inputs stay focusable but invisible; the label shows state. */
+.icon-option input,
+.choice-chip input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.icon-option {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: calc(var(--space-12) + var(--space-2));
+  height: calc(var(--space-12) + var(--space-2));
+  color: var(--color-text-primary);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+.icon-option:has(input:checked) {
+  box-shadow: 0 0 0 2px var(--color-bg-surface), 0 0 0 4px var(--color-border-focus);
+}
+.icon-option:has(input:focus-visible) {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 5px;
+}
+
+.choice-chip span {
+  display: inline-block;
+  padding: var(--space-2) var(--space-5);
+  font: var(--type-label-m);
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface);
+  border: 1.5px solid var(--color-border-default);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+.choice-chip { position: relative; }
+.choice-chip:has(input:checked) span {
+  color: var(--color-text-on-brand);
+  background: var(--color-bg-brand);
+  border-color: var(--color-bg-brand);
+}
+.choice-chip:has(input:focus-visible) span {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.weekday-picker { margin-top: var(--space-3); }
+/* Selected days also show a check, so the state never relies on color alone. */
+.weekday-picker .choice-chip span { align-items: center; gap: var(--space-1); padding-inline: var(--space-2); }
+.choice-chip-check { display: none; }
+.choice-chip:has(input:checked) .choice-chip-check { display: inline-block; }
+
+/* === Delete confirmation === */
+.confirm { display: grid; justify-items: center; gap: var(--space-4); text-align: center; }
+.confirm-icon {
+  display: grid;
+  place-items: center;
+  width: var(--space-16);
+  height: var(--space-16);
+  color: var(--color-text-danger);
+  background: var(--color-bg-danger-soft);
+  border-radius: var(--radius-full);
+}
+.confirm-text { font: var(--type-body-m); color: var(--color-text-secondary); }
+.confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  width: 100%;
+  margin-top: var(--space-2);
+}
+/* The design system has no danger button yet; this one is local to the module. */
+.confirm-danger {
+  --_bg: var(--color-bg-danger);
+  --_bg-hover: color-mix(in srgb, var(--color-bg-danger) 85%, var(--color-moss-900));
+  --_fg: var(--color-text-on-brand);
+}
+
+/* === Milestone celebration === */
+.milestone-sheet { padding: 0; overflow-x: hidden; }
+.milestone-hero {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: var(--space-10) var(--space-6) var(--space-16);
+  background: var(--color-bg-brand);
+}
+.milestone-trophy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--space-24);
+  height: var(--space-24);
+  color: var(--color-clay-900);
+  background: var(--color-clay-300);
+  border-radius: var(--radius-full);
+}
+.milestone-trophy .icon { width: var(--space-10); height: var(--space-10); stroke-width: 1.5; }
+.milestone-decor-leaf { left: var(--space-8); top: var(--space-8); width: var(--space-12); }
+.milestone-decor-flower { right: var(--space-16); top: var(--space-6); width: var(--space-8); }
+.milestone-decor-hill { inset: auto 0 0 0; width: 100%; max-width: none; height: var(--space-12); }
+
+.milestone-body {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+}
+.milestone-title { font: var(--type-h2); }
+.milestone-text { font: var(--type-body-m); color: var(--color-text-secondary); }
+.milestone-body form { width: 100%; }
+.milestone-cta { width: 100%; }
+
+.sent-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font: var(--type-label-s);
+  color: var(--color-text-primary);
+  background: var(--color-bg-brand-soft);
+  border-radius: var(--radius-full);
+}
+
+/* === Standalone form and confirm pages (no-JavaScript fallback, edit) === */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: fit-content;
+  font: var(--type-label-m);
+  color: var(--color-text-brand);
+  text-decoration: none;
+}
+.form-page {
+  width: 100%;
+  max-width: var(--sheet-width);
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-5);
+}
+.form-page-compact { max-width: var(--sheet-width-compact); }
+.form-page-danger {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-subtle);
+}
+.danger-link { --_fg: var(--color-text-danger); --_bg-hover: var(--color-bg-danger-soft); }
+
+/* ==========================================================
+   md (768): content stretches fluidly; roomier spacing
+   ========================================================== */
+@media (min-width: 48rem) {
+  :root { --layout-margin-x: var(--space-10); }
+
+  .habits-page { gap: var(--space-8); padding-top: var(--space-6); }
+
+  .focus-panel { padding: var(--space-10) var(--space-10) var(--space-20); }
+  .focus-title { font: var(--type-h2); }
+  .progress-ring { --_size: calc(var(--space-30) + var(--space-8)); }
+  .progress-ring::before { inset: var(--space-4); }
+  .progress-ring-value { font: var(--type-h1); }
+  .focus-decor-hill { height: var(--space-16); }
+
+  .week-card { padding: var(--space-5) var(--space-6); }
+
+  .habit-row { padding: var(--space-4) var(--space-5); }
+
+  .suggestion-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
+
+  .icon-options { grid-template-columns: repeat(8, max-content); gap: var(--space-2); }
+  .choice-chips { grid-template-columns: repeat(4, max-content); }
+  .weekday-picker { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+
+  .sheet-actions { flex-direction: row; justify-content: flex-end; }
+  .sheet-actions .btn { width: auto; }
+
+  .form-page { padding: var(--space-10) var(--space-12); }
+}
+
+/* ==========================================================
+   lg (1024): two columns, modals instead of bottom sheets
+   ========================================================== */
+@media (min-width: 64rem) {
+  .habits-page { gap: var(--space-10); }
+
+  .habits-layout {
+    grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
+    gap: var(--space-10) var(--space-12);
+  }
+  .habits-layout > .focus-panel { grid-column: 1 / -1; }
+
+  .focus-panel {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-10);
+  }
+  .focus-panel-text { max-width: 36rem; }
+  .focus-stats { gap: var(--space-10); }
+
+  .focus-decor-leaf { top: var(--space-6); right: auto; left: 58%; width: var(--space-16); }
+  .focus-decor-flower { display: block; top: var(--space-16); left: 64%; width: var(--space-10); }
+  .focus-decor-branch { display: block; right: 22%; bottom: var(--space-10); width: 22rem; }
+  .focus-decor-sprout { display: block; right: var(--space-10); bottom: var(--space-6); width: var(--space-20); }
+
+  .side-card { padding: var(--space-8); }
+
+  .page-decor-branch {
+    display: block;
+    right: 0;
+    bottom: var(--space-4);
+    width: 22rem;
+    opacity: .9;
+  }
+
+  .sheet {
+    inset: 0;
+    width: calc(100% - 2 * var(--space-10));
+    max-width: var(--sheet-width);
+    height: fit-content;
+    max-height: calc(100dvh - 2 * var(--space-8));
+    margin: auto;
+    padding: var(--space-10) var(--space-10) var(--space-8);
+    border-radius: var(--radius-2xl);
+  }
+  .sheet[open] { animation: sheet-fade .2s ease-out; }
+  .sheet-compact { max-width: var(--sheet-width-compact); }
+  .sheet-handle { display: none; }
+  .milestone-sheet { padding: 0; }
+
+  @keyframes sheet-fade {
+    from { opacity: 0; transform: translateY(var(--space-2)); }
+  }
+}
+
+/* ==========================================================
+   xl (1280): fixed content width and 88px side margin
+   ========================================================== */
+@media (min-width: 80rem) {
+  :root { --layout-margin-x: var(--layout-margin-x-xl); }
+}

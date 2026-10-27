@@ -1,0 +1,34 @@
+{% comment %}Habit Row (Todo / Done). Expects row: pk, name, icon, tint, streak, is_done, never_checked_in.{% endcomment %}
+<li class="habit-row{% if row.is_done %} is-done{% endif %}">
+  <span class="habit-icon tint-{{ row.tint }}">{% include "habits/components/icon.html" with name=row.icon %}</span>
+  <div class="habit-row-body">
+    <a class="habit-row-name" href="{% url 'habits:habit_edit' row.pk %}">{{ row.name }}</a>
+    <p class="habit-row-meta{% if not row.streak %} is-quiet{% endif %}">
+      {% include "habits/components/icon.html" with name="flame" class="icon-sm" %}
+      {% if row.streak %}
+        {{ row.streak }} hari berturut-turut
+      {% elif row.never_checked_in %}
+        Baru dimulai · streak pertamamu mulai hari ini
+      {% else %}
+        Siap mulai streak baru hari ini
+      {% endif %}
+    </p>
+  </div>
+  {% if not hide_check %}
+    {% if row.is_done %}
+      <form method="post" action="{% url 'habits:habit_undo_check_in' row.pk %}">
+        {% csrf_token %}
+        <button class="btn btn-icon check-button is-done" type="submit" aria-label="Batalkan check-in {{ row.name }}">
+          {% include "habits/components/icon.html" with name="check" %}
+        </button>
+      </form>
+    {% else %}
+      <form method="post" action="{% url 'habits:habit_check_in' row.pk %}">
+        {% csrf_token %}
+        <button class="btn btn-icon btn-secondary check-button" type="submit" aria-label="Check-in {{ row.name }}">
+          {% include "habits/components/icon.html" with name="check" %}
+        </button>
+      </form>
+    {% endif %}
+  {% endif %}
+</li>
