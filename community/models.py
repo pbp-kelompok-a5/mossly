@@ -1,5 +1,3 @@
-from threading import Thread
-
 from django.db import models
 from django.conf import settings
 
@@ -35,3 +33,5 @@ class Reply (models.Model):
     def __str__(self):
         return f"Reply {self.pk} on thread {self.thread_id}"
 # Create your models here.
+
+
