@@ -648,3 +648,251 @@ html {
     transform: none;
   }
 }
+
+/* ==========================================================================
+   Section: Dashboard & Komunitas (landing page)
+   Mengikuti Figma node 693:4177 "07 / Progress and community".
+   ========================================================================== */
+
+.results {
+  display: grid;
+  gap: 2.75rem;
+  /* Bawahnya tipis: section Cara Kerja sudah punya ruang atas sendiri */
+  padding-block: 5.5rem var(--space-8);
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+}
+
+.results__eyebrow,
+.results-card__label {
+  margin: 0;
+  font-size: .6875rem;
+  font-weight: var(--weight-bold);
+  line-height: 1.6;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--color-moss-600);
+}
+
+.results__title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1.12;
+  color: var(--color-moss-800);
+}
+
+.results__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8);
+  align-items: start;
+}
+
+/* --------------------------------------------------------------------------
+   Kartu modul
+   -------------------------------------------------------------------------- */
+
+.results-card {
+  display: grid;
+  gap: 1.125rem;
+  padding: 2.125rem;
+  border-radius: 1.75rem;
+}
+
+.results-card--moss { background: var(--color-moss-100); }
+.results-card--clay { background: var(--color-clay-100); }
+
+.results-card__title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.12;
+  color: var(--color-moss-800);
+}
+
+.results-card__desc {
+  max-width: 33rem;
+  margin: 0;
+  font-size: .9375rem;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   Personal Dashboard: ringkasan angka dan catatan badge
+   -------------------------------------------------------------------------- */
+
+.results__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.125rem;
+}
+
+.stat-tile {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-tile p { margin: 0; }
+
+.stat-tile__label {
+  font: var(--type-body-s);
+  color: var(--color-text-secondary);
+}
+
+.stat-tile__value {
+  font: var(--type-stat-l);
+  letter-spacing: -.015em;
+  color: var(--color-text-primary);
+}
+
+.stat-tile__hint {
+  font: var(--type-label-s);
+  color: var(--color-text-brand);
+}
+
+.results__badge-note {
+  display: flex;
+  align-items: center;
+  gap: .875rem;
+}
+
+.results__badge-icon {
+  flex: none;
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.results__badge-note p {
+  margin: 0;
+  font-size: .8125rem;
+  line-height: 1.6;
+  color: var(--color-moss-700);
+}
+
+/* --------------------------------------------------------------------------
+   Sustainability Community: contoh post
+   -------------------------------------------------------------------------- */
+
+.post-card {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-surface);
+}
+
+.post-card p { margin: 0; }
+
+.post-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.post-card__avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--space-10);
+  height: var(--space-10);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-sage);
+  font: var(--type-label-m);
+  color: var(--color-text-on-brand);
+}
+
+.post-card__author {
+  display: grid;
+  gap: var(--space-1);
+  flex: 1;
+}
+
+.post-card__name {
+  font: var(--type-label-m);
+  color: var(--color-text-primary);
+}
+
+.post-card__time {
+  font: var(--type-body-s);
+  color: var(--color-text-tertiary);
+}
+
+.post-card__tag {
+  flex: none;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-brand-soft);
+  font: var(--type-label-s);
+  color: var(--color-text-brand);
+}
+
+.post-card__body {
+  font: var(--type-body-m);
+  color: var(--color-text-primary);
+}
+
+.post-card__meta {
+  display: flex;
+  gap: var(--space-5);
+  font: var(--type-label-s);
+  color: var(--color-text-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+
+/* Tablet & bawah: kedua kartu ditumpuk */
+@media (max-width: 1024px) {
+  .results {
+    gap: var(--space-8);
+    padding-block: 4rem var(--space-6);
+  }
+
+  .results__title {
+    font-size: 2.625rem;
+  }
+
+  .results__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+}
+
+/* Ponsel */
+@media (max-width: 640px) {
+  .results {
+    padding-block: 3rem var(--space-4);
+  }
+
+  .results__title {
+    font-size: 2.125rem;
+  }
+
+  .results-card {
+    padding: var(--space-6) var(--space-5);
+  }
+
+  .results-card__title {
+    font-size: 1.625rem;
+  }
+}
+
+/* Ponsel kecil: dua kotak angka tidak lagi muat berdampingan */
+@media (max-width: 420px) {
+  .results__stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
