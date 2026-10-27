@@ -1,0 +1,130 @@
+{% comment %}
+Create/edit goal form, used in the sheet dialog and on the standalone page.
+Expects: form, action, title_id, in_dialog, is_edit.
+Checklist rows post parallel "checklist_id" / "checklist_label" lists; one
+blank row is always offered so the form also works without JavaScript.
+{% endcomment %}
+<form class="goal-form" method="post" action="{{ action }}" data-goal-form>
+  {% csrf_token %}
+
+  <header class="sheet-header">
+    <h2 class="sheet-title" id="{{ title_id }}">{% if is_edit %}Edit goal{% else %}Buat goal baru{% endif %}</h2>
+    <p class="sheet-subtitle">Tentukan target yang jelas dan beri batas waktu.</p>
+  </header>
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-error" role="alert"><p class="alert-body">{{ form.non_field_errors.0 }}</p></div>
+  {% endif %}
+
+  <div class="field">
+    <label class="field-label" for="{{ title_id }}-title">Nama goal</label>
+    <input class="input" type="text" name="title" id="{{ title_id }}-title" maxlength="120" required
+           value="{{ form.title.value|default_if_none:'' }}" aria-describedby="{{ title_id }}-title-hint"{% if form.title.errors %} aria-invalid="true"{% endif %}>
+    {% if form.title.errors %}
+      <p class="field-error" id="{{ title_id }}-title-hint">{{ form.title.errors.0 }}</p>
+    {% else %}
+      <p class="field-hint" id="{{ title_id }}-title-hint">Gunakan kalimat singkat yang mudah diingat</p>
+    {% endif %}
+  </div>
+
+  <div class="field-grid">
+    <div class="field">
+      <label class="field-label" for="{{ title_id }}-category">Kategori</label>
+      <select class="input" name="category" id="{{ title_id }}-category" required{% if form.category.errors %} aria-invalid="true"{% endif %}>
+        {% for value, label in form.fields.category.choices %}
+          <option value="{{ value }}"{% if form.category.value == value %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      {% if form.category.errors %}<p class="field-error">{{ form.category.errors.0 }}</p>{% endif %}
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="{{ title_id }}-target">Target</label>
+      <div class="target-input">
+        <input class="input" type="number" name="target_value" id="{{ title_id }}-target" min="0.01" step="any" required
+               value="{{ form.target_value.value|default_if_none:''|floatformat:'-2u' }}" aria-describedby="{{ title_id }}-target-hint"{% if form.target_value.errors %} aria-invalid="true"{% endif %}>
+        <select class="input" name="unit" aria-label="Satuan target">
+          {% for value, label in form.fields.unit.choices %}
+            <option value="{{ value }}"{% if form.unit.value == value %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% if form.target_value.errors %}
+        <p class="field-error" id="{{ title_id }}-target-hint">{{ form.target_value.errors.0 }}</p>
+      {% elif form.unit.errors %}
+        <p class="field-error" id="{{ title_id }}-target-hint">{{ form.unit.errors.0 }}</p>
+      {% else %}
+        <p class="field-hint" id="{{ title_id }}-target-hint">Bisa kali, hari, atau kg CO2e</p>
+      {% endif %}
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="{{ title_id }}-start">Mulai</label>
+      <input class="input" type="date" name="start_date" id="{{ title_id }}-start" required
+             value="{{ form.start_date.value|date:'Y-m-d'|default:form.start_date.value|default_if_none:'' }}"{% if form.start_date.errors %} aria-invalid="true"{% endif %}>
+      {% if form.start_date.errors %}
+        <p class="field-error">{{ form.start_date.errors.0 }}</p>
+      {% else %}
+        <p class="field-hint">Hari ini termasuk hitungan</p>
+      {% endif %}
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="{{ title_id }}-deadline">Deadline</label>
+      <input class="input" type="date" name="deadline" id="{{ title_id }}-deadline" required data-deadline-input
+             value="{{ form.deadline.value|date:'Y-m-d'|default:form.deadline.value|default_if_none:'' }}"{% if form.deadline.errors %} aria-invalid="true"{% endif %}>
+      {% if form.deadline.errors %}
+        <p class="field-error">{{ form.deadline.errors.0 }}</p>
+      {% else %}
+        <p class="field-hint" data-deadline-hint>Hari terakhir untuk mencapai target</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <fieldset class="field checklist-editor">
+    <legend class="field-label checklist-legend">
+      <span>Checklist <span class="field-hint">(opsional)</span></span>
+      <span class="section-note" data-checklist-count>{{ form.checklist_rows|length }} langkah</span>
+    </legend>
+    <ul class="checklist-edit-list" data-checklist-list>
+      {% for row in form.checklist_rows %}
+        <li class="checklist-edit-row">
+          <span class="checkbox-box" aria-hidden="true"></span>
+          <input type="hidden" name="checklist_id" value="{{ row.id }}">
+          <input class="checklist-edit-input" type="text" name="checklist_label" value="{{ row.label }}" maxlength="120" aria-label="Langkah checklist">
+          <button class="link-button js-only" type="button" data-checklist-remove>Hapus</button>
+        </li>
+      {% endfor %}
+      <li class="checklist-edit-row">
+        <span class="checkbox-box" aria-hidden="true"></span>
+        <input type="hidden" name="checklist_id" value="">
+        <input class="checklist-edit-input" type="text" name="checklist_label" value="" maxlength="120"
+               placeholder="Tulis satu langkah kecil" aria-label="Langkah checklist baru">
+        <button class="link-button js-only" type="button" data-checklist-remove>Hapus</button>
+      </li>
+    </ul>
+    <button class="btn btn-secondary btn-m js-only" type="button" data-checklist-add>
+      {% include "habits/components/icon.html" with name="plus" class="icon-sm" %}Tambah item
+    </button>
+  </fieldset>
+
+  {% if not is_edit %}
+    <div class="alert alert-success">
+      <div>
+        <strong>Goal selesai dikirim otomatis</strong>
+        <p class="alert-body">Saat semua target tercapai, pencapaian ini masuk ke Personal Dashboard dan menambah rekap bulananmu.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="sheet-actions">
+    {% if in_dialog %}
+      <button class="btn btn-ghost" type="submit" formmethod="dialog" formnovalidate>Batal</button>
+    {% elif is_edit %}
+      <a class="btn btn-ghost" href="{% url 'habits:goal_detail' form.instance.pk %}">Batal</a>
+    {% else %}
+      <a class="btn btn-ghost" href="{% url 'habits:goal_list' %}">Batal</a>
+    {% endif %}
+    <button class="btn" type="submit">{% if is_edit %}Simpan goal{% else %}Buat goal{% endif %}</button>
+  </div>
+</form>

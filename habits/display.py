@@ -4,7 +4,9 @@ The project runs with LANGUAGE_CODE "en-us", so day and month names are kept
 here instead of relying on Django's locale formatting.
 """
 
-from .models import Habit
+from decimal import Decimal
+
+from .models import Goal, Habit
 from .services import STREAK_MILESTONES
 
 DAY_NAMES = ("Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu")
@@ -46,6 +48,62 @@ HABIT_SUGGESTIONS = tuple(
         ("Bawa tas belanja sendiri", "Tolak kantong plastik di kasir", Habit.Icon.SHOPPING_BAG),
     )
 )
+
+
+# Short unit for "15 / 20 kali"; the full label ("kg CO2e") is used for targets.
+UNIT_SHORT = {Goal.Unit.KALI: "kali", Goal.Unit.HARI: "hari", Goal.Unit.KG_CO2E: "kg"}
+
+# Example goals in the empty state; "days" fills the deadline from today.
+GOAL_SUGGESTIONS = (
+    {"title": "Naik transportasi umum 20 kali", "hint": "Target 1 bulan · 20 kali", "icon": "target",
+     "tint": "clay-100", "category": Goal.Category.TRANSPORTASI, "target": 20, "unit": Goal.Unit.KALI, "days": 30},
+    {"title": "30 hari tanpa botol plastik", "hint": "Target 30 hari · harian", "icon": "glass-water",
+     "tint": "moss-200", "category": Goal.Category.PLASTIK, "target": 30, "unit": Goal.Unit.HARI, "days": 30},
+    {"title": "Kurangi emisi perjalanan 10 kg", "hint": "Target 1 bulan · kg CO2e", "icon": "leaf",
+     "tint": "moss-100", "category": Goal.Category.EMISI, "target": 10, "unit": Goal.Unit.KG_CO2E, "days": 30},
+    {"title": "Ikut 1 aksi bersih lingkungan", "hint": "Target 1 kegiatan", "icon": "handshake",
+     "tint": "pink-100", "category": Goal.Category.KOMUNITAS, "target": 1, "unit": Goal.Unit.KALI, "days": 30},
+)
+
+
+AMOUNT_PROMPTS = {
+    Goal.Unit.KALI: "Tambah berapa kali?",
+    Goal.Unit.HARI: "Tambah berapa hari?",
+    Goal.Unit.KG_CO2E: "Tambah berapa kg CO2e?",
+}
+
+
+def day_month(day):
+    """'31 Okt'"""
+    return f"{day.day} {MONTH_SHORT[day.month - 1]}"
+
+
+def format_amount(value):
+    """'2,5' or '20': Indonesian decimal comma, no trailing zeros."""
+    value = Decimal(value)
+    if value == value.to_integral_value():
+        return str(int(value))
+    return f"{value:.2f}".rstrip("0").replace(".", ",")
+
+
+def format_rate(value):
+    """'0,5' with one decimal, for amounts per day."""
+    return f"{Decimal(value):.1f}".replace(".", ",")
+
+
+def date_range(start, end, with_year=False):
+    """'1–31 Oktober' within a month, otherwise '16 Okt–15 Nov'."""
+    year = f" {end.year}" if with_year else ""
+    if (start.year, start.month) == (end.year, end.month):
+        return f"{start.day}–{end.day} {MONTH_NAMES[end.month - 1]}{year}"
+    return f"{start.day} {MONTH_SHORT[start.month - 1]}–{end.day} {MONTH_SHORT[end.month - 1]}{year}"
+
+
+def relative_date(day, today):
+    """'Hari ini', 'Kemarin', otherwise '19 Okt'."""
+    if (today - day).days == 1:
+        return "Kemarin"
+    return short_date(day, today)
 
 
 def long_date(day):

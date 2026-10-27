@@ -6,7 +6,8 @@ urlpatterns = [
     path("", include("main.urls")),
     path("accounts/", include("accounts.urls")),
     path("carbon/", include("carbon.urls")),
-    path("habits/", include("habits.urls")),
+    # Habit & Goal pages live under /habit/ and /goal/ (prefixes set in the app).
+    path("", include("habits.urls")),
     path("community/", include("community.urls")),
     path("dashboard/", include("dashboard.urls")),
 ]

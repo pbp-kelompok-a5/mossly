@@ -1,0 +1,15 @@
+{% comment %}Delete confirmation content. Expects goal (model instance), title_id, in_dialog.{% endcomment %}
+<div class="confirm">
+  <span class="confirm-icon">{% include "habits/components/icon.html" with name="trash-2" %}</span>
+  <h2 class="sheet-title" id="{{ title_id }}">Hapus goal ini?</h2>
+  <p class="confirm-text">"{{ goal.title }}" beserta checklist dan riwayat progresnya akan dihapus. Pencapaian yang sudah terkirim ke Personal Dashboard tetap tersimpan.</p>
+  <form class="confirm-actions" method="post" action="{% url 'habits:goal_delete' goal.pk %}">
+    {% csrf_token %}
+    {% if in_dialog %}
+      <button class="btn btn-secondary" type="submit" formmethod="dialog" formnovalidate>Batal</button>
+    {% else %}
+      <a class="btn btn-secondary" href="{% url 'habits:goal_detail' goal.pk %}">Batal</a>
+    {% endif %}
+    <button class="btn confirm-danger" type="submit">Ya, hapus</button>
+  </form>
+</div>

@@ -71,9 +71,10 @@ main.container:has(> .habits-page) {
 
 .section-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-1) var(--space-4);
 }
 .section-title { font: var(--type-h3); }
 .section-note { font: var(--type-body-s); color: var(--color-text-tertiary); }
@@ -105,6 +106,8 @@ main.container:has(> .habits-page) {
   color: var(--color-text-on-brand);
   background: var(--color-bg-brand);
   border-radius: var(--radius-2xl);
+  /* Own stacking context so the hills can sit behind the other decorations. */
+  isolation: isolate;
 }
 .focus-panel > :not(.decor) { position: relative; z-index: 1; }
 .focus-panel .eyebrow { color: var(--color-text-on-inverse-muted); }
@@ -116,7 +119,7 @@ main.container:has(> .habits-page) {
 
 .focus-panel-soft {
   color: var(--color-text-primary);
-  background: var(--color-bg-muted);
+  background: var(--color-bg-brand-soft);
 }
 .focus-panel-soft .eyebrow { color: var(--color-text-brand); }
 .focus-panel-soft .focus-subtitle { color: var(--color-text-secondary); }
@@ -179,10 +182,19 @@ main.container:has(> .habits-page) {
   max-width: none;
   height: var(--space-12);
 }
-.focus-decor-leaf { top: var(--space-4); right: var(--space-4); width: var(--space-10); opacity: .9; }
-.focus-decor-flower { display: none; }
-.focus-decor-branch,
-.focus-decor-sprout { display: none; }
+/* Hidden on small screens, where long titles reach the corner it would sit in. */
+.focus-decor-leaf { display: none; top: var(--space-4); right: var(--space-4); width: var(--space-10); opacity: .9; }
+.focus-decor-hill { z-index: -1; }
+.focus-decor-flower,
+.focus-decor-leaf-sm,
+.focus-decor-seedling,
+.focus-decor-grass { display: none; }
+/* Empty-state scene: only on wide screens, where it sits beside the text. */
+
+.empty-decor-branch,
+.empty-decor-plant,
+.empty-decor-flower,
+.empty-decor-grass { display: none; }
 
 /* === Week strip and Day Chip === */
 .week-card { padding: var(--space-4); }
@@ -622,6 +634,240 @@ a.habit-row-name:hover { text-decoration: underline; text-underline-offset: .2em
 }
 .danger-link { --_fg: var(--color-text-danger); --_bg-hover: var(--color-bg-danger-soft); }
 
+/* === Shared bits for goals === */
+/* Elements that only work with JavaScript stay hidden without it. */
+html:not(.js) .js-only { display: none; }
+
+.arrow-right {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  background-color: currentColor;
+  -webkit-mask: var(--icon-arrow-right) center / contain no-repeat;
+          mask: var(--icon-arrow-right) center / contain no-repeat;
+}
+
+.link-button {
+  padding: 0;
+  font: var(--type-body-s);
+  color: var(--color-text-tertiary);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.link-button:hover { color: var(--color-text-danger); }
+
+.checkbox-box {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--space-6);
+  height: var(--space-6);
+  color: var(--color-text-on-brand);
+  background: var(--color-bg-surface);
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.empty-note { font: var(--type-body-m); color: var(--color-text-secondary); }
+
+/* === Goal list and Card Goal === */
+.goal-section { display: grid; gap: var(--space-4); }
+.goal-grid { display: grid; gap: var(--space-5); }
+
+.goal-card,
+.goal-placeholder {
+  position: relative;
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-xl);
+}
+.goal-card {
+  align-content: start;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+.goal-card-head { display: flex; align-items: flex-start; gap: var(--space-4); }
+.goal-card-head .tag { flex: none; margin-left: auto; }
+.goal-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--space-12);
+  height: var(--space-12);
+  color: var(--color-icon-brand);
+  background: var(--color-bg-brand-soft);
+  border-radius: var(--radius-lg);
+}
+.goal-card-titles { display: grid; gap: var(--space-1); min-width: 0; }
+.goal-card-title { font: var(--type-h4); overflow-wrap: anywhere; }
+.goal-card-sub { font: var(--type-body-s); color: var(--color-text-secondary); }
+
+.goal-progress { display: grid; gap: var(--space-2); }
+.goal-progress-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font: var(--type-label-m);
+}
+.goal-progress-row span:last-child { color: var(--color-text-brand); }
+
+.goal-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+  padding: 0;
+  font: var(--type-body-s);
+  color: var(--color-text-secondary);
+  list-style: none;
+}
+.goal-card-meta li { display: inline-flex; align-items: center; gap: var(--space-2); }
+
+.goal-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.goal-placeholder {
+  justify-items: center;
+  align-content: center;
+  overflow: hidden;
+  text-align: center;
+  background: var(--color-bg-muted);
+  border: 1.5px dashed var(--color-border-strong);
+}
+.goal-placeholder > :not(.decor) { position: relative; z-index: 1; }
+.goal-placeholder-icon {
+  display: grid;
+  place-items: center;
+  width: var(--space-12);
+  height: var(--space-12);
+  color: var(--color-text-brand);
+  background: var(--color-bg-brand-soft);
+  border-radius: var(--radius-full);
+}
+.placeholder-decor-left { left: var(--space-8); bottom: 0; width: var(--space-10); opacity: .8; }
+.placeholder-decor-right { right: var(--space-8); bottom: 0; width: var(--space-16); opacity: .8; }
+
+/* === Log progress === */
+.progress-form,
+.goal-form { display: grid; gap: var(--space-6); }
+
+.stepper-panel {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  text-align: center;
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-xl);
+}
+.stepper { display: flex; align-items: center; gap: var(--space-4); }
+.stepper-input {
+  width: calc(var(--space-20) + var(--space-4));
+  padding: var(--space-1);
+  font: var(--type-h1);
+  text-align: center;
+  color: var(--color-text-primary);
+  background: transparent;
+  border: 0;
+  border-bottom: 1.5px solid transparent;
+  -moz-appearance: textfield;
+}
+.stepper-input::-webkit-inner-spin-button,
+.stepper-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.stepper-input:focus-visible { outline: none; border-bottom-color: var(--color-border-focus); }
+.stepper-preview { font: var(--type-body-s); color: var(--color-text-brand); }
+
+/* === Goal form === */
+.field-grid { display: grid; gap: var(--space-5); }
+/* Fields without a hint must not stretch to their neighbour's height. */
+.field-grid .field { align-content: start; }
+.target-input { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); }
+.goal-form select.input { cursor: pointer; }
+
+.checklist-legend {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+.checklist-edit-list { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.checklist-edit-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-bg-surface);
+  border: 1.5px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+}
+.checklist-edit-row:focus-within { border-color: var(--color-border-focus); }
+.checklist-edit-input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) 0;
+  font: var(--type-body-m);
+  background: transparent;
+  border: 0;
+}
+.checklist-edit-input:focus-visible { outline: none; }
+.checklist-editor [data-checklist-add] { justify-self: start; margin-top: var(--space-2); }
+
+/* === Goal detail === */
+.checklist { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.checklist-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-4) var(--space-5);
+  text-align: left;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+}
+.checklist-toggle:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
+.checklist-label { flex: 1; font: var(--type-body-m); overflow-wrap: anywhere; }
+.checklist-date { font: var(--type-body-s); color: var(--color-text-tertiary); }
+.checklist-item.is-done .checklist-toggle { background: var(--color-bg-muted); }
+.checklist-item.is-done .checklist-label { color: var(--color-text-secondary); }
+.checklist-item.is-done .checkbox-box { background: var(--color-bg-brand); border-color: var(--color-bg-brand); }
+
+.log-list { display: grid; gap: var(--space-5); margin: 0; list-style: none; }
+.log-item { display: flex; align-items: center; gap: var(--space-4); }
+.log-check {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--space-12);
+  height: var(--space-12);
+  color: var(--color-text-primary);
+  background: var(--color-bg-sage);
+  border-radius: var(--radius-full);
+}
+.log-body { display: grid; gap: var(--space-1); flex: 1; min-width: 0; }
+.log-title { font: var(--type-label-l); overflow-wrap: anywhere; }
+.log-day { font: var(--type-body-s); color: var(--color-text-secondary); }
+.log-time { font: var(--type-body-s); color: var(--color-text-tertiary); }
+
+.pace-list { display: grid; gap: var(--space-3); margin: 0; }
+.pace-list div { display: flex; justify-content: space-between; gap: var(--space-4); align-items: baseline; }
+.pace-list dt { font: var(--type-body-m); color: var(--color-text-secondary); }
+.pace-list dd { margin: 0; font: var(--type-h4); }
+.side-card .tag { justify-self: start; }
+
+.finish-list { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; font: var(--type-body-m); }
+.finish-list li { display: flex; align-items: center; gap: var(--space-3); }
+.finish-list .icon { color: var(--color-icon-brand); }
+.finish-actions { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+
 /* ==========================================================
    md (768): content stretches fluidly; roomier spacing
    ========================================================== */
@@ -634,8 +880,10 @@ a.habit-row-name:hover { text-decoration: underline; text-underline-offset: .2em
   .focus-title { font: var(--type-h2); }
   .progress-ring { --_size: calc(var(--space-30) + var(--space-8)); }
   .progress-ring::before { inset: var(--space-4); }
-  .progress-ring-value { font: var(--type-h1); }
-  .focus-decor-hill { height: var(--space-16); }
+  .progress-ring-value { font: var(--type-stat-l); }
+  .focus-panel { padding-bottom: var(--space-16); }
+  .focus-decor-hill { height: var(--space-20); }
+  .focus-decor-leaf { display: block; }
 
   .week-card { padding: var(--space-5) var(--space-6); }
 
@@ -651,6 +899,10 @@ a.habit-row-name:hover { text-decoration: underline; text-underline-offset: .2em
   .sheet-actions .btn { width: auto; }
 
   .form-page { padding: var(--space-10) var(--space-12); }
+
+  .goal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+  .goal-card, .goal-placeholder { padding: var(--space-6); }
+  .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* ==========================================================
@@ -673,10 +925,39 @@ a.habit-row-name:hover { text-decoration: underline; text-underline-offset: .2em
   .focus-panel-text { max-width: 36rem; }
   .focus-stats { gap: var(--space-10); }
 
-  .focus-decor-leaf { top: var(--space-6); right: auto; left: 58%; width: var(--space-16); }
-  .focus-decor-flower { display: block; top: var(--space-16); left: 64%; width: var(--space-10); }
-  .focus-decor-branch { display: block; right: 22%; bottom: var(--space-10); width: 22rem; }
-  .focus-decor-sprout { display: block; right: var(--space-10); bottom: var(--space-6); width: var(--space-20); }
+  /* Taller hills: the call-to-action sits on the back hill, as in the design. */
+  .focus-decor-hill { height: calc(var(--space-30) + var(--space-6)); }
+  .progress-ring { --_size: calc(var(--space-30) + var(--space-16)); }
+  .progress-ring::before { inset: var(--space-5); }
+
+  .focus-decor-leaf { top: var(--space-6); right: auto; left: 54%; width: var(--space-16); }
+  .focus-decor-flower { display: block; top: var(--space-12); left: 60%; width: var(--space-10); }
+  .focus-decor-leaf-sm {
+    display: block;
+    top: 46%;
+    left: 57%;
+    width: var(--space-10);
+    transform: rotate(25deg);
+    opacity: .9;
+  }
+  /* The asset shares the hills' greens; lighten it so it reads against them. */
+  .focus-decor-seedling { display: block; bottom: var(--space-1); left: 49%; width: var(--space-12); filter: brightness(1.5); }
+  .focus-decor-grass { display: block; bottom: var(--space-12); width: var(--space-8); opacity: .5; }
+  .focus-decor-grass-left { left: 24%; }
+  .focus-decor-grass-right { right: 6%; }
+
+  .empty-decor-branch,
+  .empty-decor-plant,
+  .empty-decor-flower,
+  .empty-decor-grass { display: block; }
+  .empty-decor-branch { left: 50%; bottom: var(--space-12); width: calc(var(--space-30) * 2 + var(--space-20)); }
+  .empty-decor-plant { right: 9%; bottom: 0; width: calc(var(--space-30) + var(--space-6)); }
+  .empty-decor-flower { width: var(--space-8); }
+  .empty-decor-flower-1 { top: var(--space-10); left: 65%; width: var(--space-10); }
+  .empty-decor-flower-2 { top: var(--space-12); right: 4%; }
+  .empty-decor-flower-3 { top: 44%; right: 7%; }
+  /* Lightened so the tufts read in front of the same-colored hill. */
+  .empty-decor-grass { right: var(--space-2); bottom: 0; width: var(--space-20); filter: brightness(1.25); }
 
   .side-card { padding: var(--space-8); }
 

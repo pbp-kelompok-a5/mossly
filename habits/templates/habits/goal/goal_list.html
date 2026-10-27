@@ -1,0 +1,114 @@
+{% extends "habits/layout.html" %}
+{% load static %}
+
+{% block title %}Goal · Mossly{% endblock %}
+
+{% block page_top %}{% include "habits/components/tabs.html" with active="goal" %}{% endblock %}
+
+{% block page %}
+  {% if active %}
+    <section class="focus-panel" aria-labelledby="focus-title">
+      <div class="focus-panel-text">
+        <p class="eyebrow">Goal bulan {{ month_name }}</p>
+        <h1 class="focus-title" id="focus-title">{{ active|length }} goal sedang berjalan{% if near_count %}, {{ near_count }} hampir mencapai deadline{% endif %}</h1>
+        <p class="focus-subtitle">{{ nearest.title }} tinggal {{ nearest.remaining_text }} lagi {{ nearest.time_left }}. Kamu pasti bisa.</p>
+        <a class="btn btn-accent focus-cta" href="{% url 'habits:goal_create' %}" data-dialog-open="goal-create-dialog">
+          {% include "habits/components/icon.html" with name="plus" %}Buat goal
+        </a>
+      </div>
+
+      <div class="focus-stats">
+        <div class="progress-ring" style="--value: {{ nearest.percent }}" role="img"
+             aria-label="Goal terdekat {{ nearest.percent }} persen">
+          <span class="progress-ring-value">{{ nearest.percent }}%</span>
+          <span class="progress-ring-label">goal terdekat</span>
+        </div>
+        <div class="focus-streak">
+          <span class="focus-streak-icon">{% include "habits/components/icon.html" with name="calendar" %}</span>
+          <p class="focus-streak-value">{% if nearest.days_left %}{{ nearest.days_left }} hari{% else %}Hari ini{% endif %}</p>
+          <p class="focus-streak-label">Deadline terdekat</p>
+        </div>
+      </div>
+
+      <img class="decor focus-decor-leaf" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
+      <img class="decor focus-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+      <img class="decor focus-decor-leaf-sm" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
+      <img class="decor focus-decor-seedling" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
+      <img class="decor focus-decor-grass focus-decor-grass-left" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
+      <img class="decor focus-decor-grass focus-decor-grass-right" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
+      <svg class="decor decor-hill focus-decor-hill" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <path class="decor-hill-back" d="M0 60C160 10 320 90 520 50C720 10 900 80 1200 30V120H0V60Z"/>
+        <path class="decor-hill-front" d="M0 92C200 52 380 112 600 82C820 52 1000 102 1200 72V120H0V92Z"/>
+      </svg>
+    </section>
+
+    <section class="goal-section" aria-labelledby="active-title">
+      <div class="section-head">
+        <h2 class="section-title" id="active-title">Goal aktif</h2>
+        <p class="section-note">Diurutkan dari deadline terdekat</p>
+      </div>
+      <div class="goal-grid">
+        {% for goal in active %}{% include "habits/components/goal_card.html" %}{% endfor %}
+        <article class="goal-placeholder">
+          <span class="goal-placeholder-icon">{% include "habits/components/icon.html" with name="plus" %}</span>
+          <h3 class="goal-card-title">Buat goal baru</h3>
+          <p class="goal-card-sub">Tentukan target, deadline, dan checklist. Progresnya dipantau otomatis.</p>
+          <a class="btn btn-secondary btn-m" href="{% url 'habits:goal_create' %}" data-dialog-open="goal-create-dialog">
+            {% include "habits/components/icon.html" with name="plus" class="icon-sm" %}Buat goal
+          </a>
+          <img class="decor placeholder-decor-left" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
+          <img class="decor placeholder-decor-right" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
+        </article>
+      </div>
+    </section>
+  {% else %}
+    {# Nothing active: invite a new goal; past goals sit between the hero and the examples. #}
+    {% include "habits/components/goal_empty.html" with part="hero" %}
+  {% endif %}
+
+  {% if completed %}
+    <section class="goal-section" aria-labelledby="completed-title">
+      <div class="section-head">
+        <h2 class="section-title" id="completed-title">Selesai baru-baru ini</h2>
+        <p class="section-note">Otomatis dikirim ke Personal Dashboard</p>
+      </div>
+      <div class="goal-grid">
+        {% for goal in completed %}{% include "habits/components/goal_card.html" %}{% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if expired %}
+    <section class="goal-section" aria-labelledby="expired-title">
+      <div class="section-head">
+        <h2 class="section-title" id="expired-title">Lewat deadline</h2>
+        <p class="section-note">Perpanjang deadline lewat Edit goal untuk melanjutkan</p>
+      </div>
+      <div class="goal-grid">
+        {% for goal in expired %}{% include "habits/components/goal_card.html" %}{% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if not active %}{% include "habits/components/goal_empty.html" with part="examples" %}{% endif %}
+
+  {% for goal in active %}
+    <dialog class="sheet" id="{{ goal.progress_dialog_id }}" aria-labelledby="{{ goal.progress_title_id }}">
+      <span class="sheet-handle" aria-hidden="true"></span>
+      <form method="dialog">
+        <button class="sheet-close" type="submit" aria-label="Tutup">{% include "habits/components/icon.html" with name="x" %}</button>
+      </form>
+      {% url 'habits:goal_list' as list_url %}
+      {% include "habits/components/goal_progress_fields.html" with form=goal.progress_form title_id=goal.progress_title_id in_dialog=True next_url=list_url %}
+    </dialog>
+  {% endfor %}
+
+  <dialog class="sheet" id="goal-create-dialog" aria-labelledby="goal-create-title">
+    <span class="sheet-handle" aria-hidden="true"></span>
+    <form method="dialog">
+      <button class="sheet-close" type="submit" aria-label="Tutup">{% include "habits/components/icon.html" with name="x" %}</button>
+    </form>
+    {% url 'habits:goal_create' as create_url %}
+    {% include "habits/components/goal_form_fields.html" with action=create_url title_id="goal-create-title" in_dialog=True is_edit=False %}
+  </dialog>
+{% endblock %}

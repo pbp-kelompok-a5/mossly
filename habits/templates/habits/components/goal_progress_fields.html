@@ -1,0 +1,59 @@
+{% load l10n %}
+{% comment %}
+Log progress form, used in the sheet dialog and on the standalone page.
+Expects: goal (card dict), form, title_id, in_dialog, next_url (optional).
+The stepper and the "after saving" preview work without JavaScript too: the
+number field can be typed in, and the preview starts at the default of +1.
+{% endcomment %}
+<form class="progress-form" method="post" action="{% url 'habits:goal_log_progress' goal.pk %}"
+      data-progress-form data-progress="{{ goal.progress|unlocalize }}" data-target="{{ goal.target|unlocalize }}" data-unit="{{ goal.unit_short }}">
+  {% csrf_token %}
+  {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+
+  <header class="sheet-header">
+    <h2 class="sheet-title" id="{{ title_id }}">Catat progres</h2>
+    <p class="sheet-subtitle">{{ goal.title }}</p>
+  </header>
+
+  <div class="goal-progress">
+    <p class="goal-progress-row"><span>Sekarang {{ goal.progress_text }}</span><span>{{ goal.percent }}%</span></p>
+    <progress class="progress" value="{{ goal.percent }}" max="100">{{ goal.percent }}%</progress>
+  </div>
+
+  <div class="stepper-panel">
+    <label class="field-label" for="{{ title_id }}-amount">{{ goal.amount_prompt }}</label>
+    <div class="stepper">
+      <button class="btn btn-icon btn-secondary" type="button" data-step="-1" aria-label="Kurangi">
+        {% include "habits/components/icon.html" with name="minus" %}
+      </button>
+      <input class="stepper-input" type="number" name="amount" id="{{ title_id }}-amount" required
+             value="{{ form.amount.value|default_if_none:''|unlocalize }}"
+             min="{{ form.amount.field.widget.attrs.min }}" step="{{ form.amount.field.widget.attrs.step }}"{% if form.amount.errors %} aria-invalid="true"{% endif %}>
+      <button class="btn btn-icon" type="button" data-step="1" aria-label="Tambah">
+        {% include "habits/components/icon.html" with name="plus" %}
+      </button>
+    </div>
+    <p class="stepper-preview" data-progress-preview aria-live="polite">Setelah disimpan: {{ goal.preview_text }}</p>
+    {% if form.amount.errors %}<p class="field-error">{{ form.amount.errors.0 }}</p>{% endif %}
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="{{ title_id }}-note">Catatan <span class="field-hint">(opsional)</span></label>
+    <input class="input" type="text" name="note" id="{{ title_id }}-note" maxlength="200"
+           value="{{ form.note.value|default_if_none:'' }}" aria-describedby="{{ title_id }}-note-hint">
+    {% if form.note.errors %}
+      <p class="field-error" id="{{ title_id }}-note-hint">{{ form.note.errors.0 }}</p>
+    {% else %}
+      <p class="field-hint" id="{{ title_id }}-note-hint">Muncul di log riwayatmu</p>
+    {% endif %}
+  </div>
+
+  <div class="sheet-actions">
+    {% if in_dialog %}
+      <button class="btn btn-ghost" type="submit" formmethod="dialog" formnovalidate>Batal</button>
+    {% else %}
+      <a class="btn btn-ghost" href="{% url 'habits:goal_detail' goal.pk %}">Batal</a>
+    {% endif %}
+    <button class="btn" type="submit">Simpan progres</button>
+  </div>
+</form>
