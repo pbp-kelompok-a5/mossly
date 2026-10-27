@@ -2,11 +2,12 @@
 {% block title %}Dashboard · Mossly{% endblock %}
 {% block content %}
   <section class="card" aria-labelledby="dashboard-title">
-    <h1 id="dashboard-title" class="text-h2">Halo, {{ user.get_username }}!</h1>
+    <h1 id="dashboard-title" class="text-h2">Halo, {{ user.profile.display_name|default:user.get_username }}!</h1>
     <p class="text-body-m" style="margin-block: var(--space-6); color: var(--color-text-secondary);">Kamu sudah masuk ke Mossly. Dashboard lengkap sedang disiapkan.</p>
     <form action="{% url 'accounts:logout' %}" method="post">
       {% csrf_token %}
       <button class="btn" type="submit">Keluar dari akun</button>
     </form>
+    <p style="margin-top: var(--space-6);"><a class="text-label-m" href="{% url 'accounts:profile' %}">Lihat dan edit profil</a></p>
   </section>
 {% endblock %}
