@@ -32,6 +32,25 @@ class Reply (models.Model):
     class Meta: ordering = ["-created_at", "pk"]
     def __str__(self):
         return f"Reply {self.pk} on thread {self.thread_id}"
+    
+class AchievementEvent(models.Model):
+    event_id = models.CharField(max_length=100, unique=True)
+    achievement_id = models.CharField(max_length=100)
+    earned_at = models.DateTimeField()
+    processed_at = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    thread = models.OneToOneField(
+        Thread,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self):
+        return self.event_id
 # Create your models here.
 
 
