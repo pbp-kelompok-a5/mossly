@@ -1,0 +1,94 @@
+<svg width="760" height="650" viewBox="0 0 760 650" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="apple-red" x1="2" y1="3" x2="31" y2="39" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E34B38"/>
+      <stop offset=".55" stop-color="#C92F26"/>
+      <stop offset="1" stop-color="#9F211C"/>
+    </linearGradient>
+    <filter id="apple-shadow" x="-30%" y="-30%" width="170%" height="180%">
+      <feDropShadow dx="1" dy="3" stdDeviation="2.5" flood-color="#25351D" flood-opacity=".2"/>
+    </filter>
+    <g id="hanging-apple">
+      <path d="M16 8C16 0 17-9 22-17" stroke="#68442A" stroke-width="3" stroke-linecap="round"/>
+      <path d="M20-10C26-17 35-18 40-14C36-6 28-3 20-10Z" fill="#607849"/>
+      <path d="M16 7C10 2 2 4-1 11C-6 22 0 37 12 41C15 42 18 42 20 40C24 42 27 42 30 40C41 35 46 20 40 10C36 3 27 2 20 7C19 8 17 8 16 7Z"
+            fill="url(#apple-red)" filter="url(#apple-shadow)"/>
+      <path d="M5 11C1 17 2 25 6 29" stroke="#F58E7B" stroke-width="3.2" stroke-linecap="round" opacity=".9"/>
+      <ellipse cx="27" cy="34" rx="3" ry="2" fill="#801B18" opacity=".45"/>
+    </g>
+  </defs>
+  <!-- Latar lembut agar fokus tetap pada pohon utama -->
+  <circle cx="414" cy="250" r="215" fill="#DFE7D8"/>
+  <circle cx="493" cy="156" r="79" fill="#EADDBF"/>
+
+  <!-- Pohon latar dibuat tetap lembut, tetapi bentuknya terbaca jelas -->
+  <g opacity=".68">
+    <path d="M703 523C712 471 708 388 709 294C710 250 714 207 720 171H739C738 217 737 261 738 305C739 393 742 474 752 523H703Z" fill="#AEBE98"/>
+    <path d="M723 303C704 275 686 252 661 231" stroke="#AEBE98" stroke-width="17" stroke-linecap="round"/>
+    <path d="M730 276C749 244 767 221 788 205" stroke="#AEBE98" stroke-width="16" stroke-linecap="round"/>
+    <path d="M635 149C619 122 628 91 655 78C654 45 681 20 714 24C735-1 776 1 794 29C824 29 847 53 845 83C867 100 864 134 840 148C832 177 798 188 774 173C754 197 715 197 696 172C671 186 643 175 635 149Z" fill="#CBD5BC"/>
+    <path d="M658 125C666 98 690 85 716 93C729 70 761 66 779 85C803 75 830 91 832 118C807 109 788 115 774 132C753 119 733 121 718 138C699 123 678 120 658 125Z" fill="#D7DFCC"/>
+  </g>
+
+  <g opacity=".7">
+    <path d="M105 526C115 478 111 422 112 358C112 327 115 298 120 274H138C139 309 138 344 139 379C140 437 144 487 152 526H105Z" fill="#AEBE98"/>
+    <path d="M124 395C105 367 88 345 65 329" stroke="#AEBE98" stroke-width="15" stroke-linecap="round"/>
+    <path d="M133 374C151 348 171 329 192 317" stroke="#AEBE98" stroke-width="14" stroke-linecap="round"/>
+    <path d="M44 285C30 259 40 232 65 220C64 189 89 166 119 170C140 145 177 149 193 175C222 176 242 198 240 226C261 243 257 274 234 288C224 315 190 324 168 307C146 330 111 328 92 304C70 315 51 305 44 285Z" fill="#CBD5BC"/>
+    <path d="M65 261C73 236 96 224 119 232C132 209 162 207 179 226C202 217 225 233 226 258C205 250 186 255 174 270C154 258 136 260 122 275C104 261 84 257 65 261Z" fill="#D7DFCC"/>
+  </g>
+
+  <g stroke="#DFCDAB" stroke-width="3" stroke-linecap="round">
+    <path d="M287 105L272 86"/>
+    <path d="M505 72L520 49"/>
+    <path d="M653 225L676 222"/>
+  </g>
+
+  <!-- Tanah dan bayangan -->
+  <ellipse cx="420" cy="554" rx="233" ry="39" fill="#BECCA9"/>
+  <ellipse cx="421" cy="551" rx="112" ry="18" fill="#A8BA91" opacity=".72"/>
+
+  <!-- Cabang berada di belakang kanopi -->
+  <path d="M394 430C367 386 334 350 294 316" stroke="#985E28" stroke-width="25" stroke-linecap="round"/>
+  <path d="M412 435C450 391 489 355 533 320" stroke="#7B4B31" stroke-width="23" stroke-linecap="round"/>
+  <path d="M404 426C406 380 422 339 451 303" stroke="#8A5428" stroke-width="17" stroke-linecap="round"/>
+
+  <!-- Batang utama: satu bentuk organik, melebar ke akar -->
+  <path d="M362 556C383 521 383 478 380 436C377 398 376 362 389 326H429C438 365 432 404 431 441C430 488 444 527 475 558C451 561 431 557 414 548C397 559 379 562 362 556Z" fill="#9D6227"/>
+  <path d="M389 326C385 385 389 456 385 506C384 524 378 541 368 554" stroke="#C98030" stroke-width="11" stroke-linecap="round"/>
+  <path d="M420 330C426 389 415 455 423 511" stroke="#70432C" stroke-width="8" stroke-linecap="round"/>
+  <path d="M361 556C380 545 394 533 406 515C413 534 428 548 450 558C419 563 387 562 361 556Z" fill="#80501F"/>
+  <path d="M418 548C433 541 447 531 459 517C461 535 468 548 480 558C455 561 434 558 418 548Z" fill="#875321"/>
+
+  <!-- Siluet kanopi yang utuh -->
+  <path d="M158 285C143 246 166 210 207 202C205 161 238 132 279 136C299 100 345 84 381 105C414 72 471 80 495 121C535 108 577 130 588 169C631 171 660 207 652 247C686 269 685 318 654 341C642 382 592 400 557 380C528 414 476 418 441 387C410 423 353 423 321 385C283 406 233 389 220 351C180 353 149 322 158 285Z" fill="#496538"/>
+
+  <!-- Lapisan daun tengah, tetap mengikuti satu kanopi -->
+  <path d="M179 278C170 247 193 218 226 218C225 183 257 159 290 168C313 132 359 126 389 151C419 117 468 126 486 164C524 144 570 168 573 210C610 204 639 231 638 265C617 257 594 260 576 276C551 263 525 267 506 286C477 268 446 273 427 296C399 271 366 272 341 294C313 273 284 274 258 293C231 276 203 272 179 278Z" fill="#77925E"/>
+
+  <!-- Sorotan daun menyatu di bagian atas -->
+  <path d="M224 221C235 191 269 177 296 191C313 157 355 149 383 174C407 143 452 151 467 185C496 165 535 181 542 216C565 214 585 226 596 245C570 239 547 247 531 264C503 251 477 256 458 276C431 257 402 258 380 278C355 259 328 258 304 274C280 256 251 254 227 267C217 252 216 236 224 221Z" fill="#99AF78"/>
+
+  <!-- Massa daun bawah memberi kedalaman tanpa memecah siluet -->
+  <path d="M174 296C196 287 220 291 240 309C266 291 294 293 318 315C345 292 376 295 399 319C426 293 460 295 482 318C508 296 540 298 560 319C583 301 614 299 641 310C637 344 606 363 573 352C552 386 503 397 470 370C441 400 391 403 360 372C330 397 284 390 264 359C226 368 190 343 174 296Z" fill="#506D3F"/>
+
+  <!-- Apel menggantung dari tangkai, dengan daun dan volume warna -->
+  <g>
+    <use href="#hanging-apple" transform="translate(268 268) scale(.9)"/>
+    <use href="#hanging-apple" transform="translate(500 215) scale(.82)"/>
+    <use href="#hanging-apple" transform="translate(378 315) scale(.74)"/>
+    <use href="#hanging-apple" transform="translate(555 306) scale(.96)"/>
+  </g>
+
+  <!-- Rumput dan daun jatuh -->
+  <g transform="translate(326 525)">
+    <path d="M0 27C12 2 29 0 40 19C50 2 69 5 78 29H0V27Z" fill="#547044"/>
+    <circle cx="27" cy="22" r="5" fill="#9BAF7F"/>
+    <circle cx="57" cy="21" r="5" fill="#9BAF7F"/>
+  </g>
+  <g transform="translate(579 508)">
+    <path d="M4 37C-1 20 1 7 12 0C19 11 19 23 14 35C27 16 42 9 61 12C51 32 34 42 9 43L4 37Z" fill="#718B5C"/>
+    <path d="M10 40C25 29 38 21 54 15" stroke="#40583A" stroke-width="2"/>
+    <path d="M10 40C10 26 11 14 13 4" stroke="#40583A" stroke-width="2"/>
+  </g>
+</svg>
