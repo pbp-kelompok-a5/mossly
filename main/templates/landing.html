@@ -10,6 +10,48 @@
 {% endblock %}
 
 {% block content %}
+<!-- ===== Hero / Landing Intro ===== -->
+<section class="landing-hero" aria-labelledby="landing-hero-title">
+  <div class="landing-hero__inner">
+    <div class="landing-hero__copy">
+      <p class="landing-hero__eyebrow">Jejak lebih ringan. Hidup lebih hijau.</p>
+      <h1 class="landing-hero__title" id="landing-hero-title">
+        Setiap langkah<br>kecil, terhitung.
+      </h1>
+      <p class="landing-hero__desc">
+        Catat perjalanan, rawat kebiasaan hijau, dan tumbuh bersama komunitas.
+        Mulai dari hal kecil yang kamu lakukan hari ini.
+      </p>
+
+      <div class="landing-hero__actions">
+        <a href="{% url 'accounts:register' %}" class="landing-hero__button landing-hero__button--primary">
+          Mulai langkahmu <span aria-hidden="true">→</span>
+        </a>
+        <a href="#cara-kerja" class="landing-hero__button landing-hero__button--secondary">
+          Lihat cara kerja
+        </a>
+      </div>
+
+      <p class="landing-hero__note">Gratis untuk mulai</p>
+    </div>
+
+    <div class="landing-hero__visual" aria-hidden="true">
+      <img src="{% static 'img/landing-hero-tree.svg' %}" alt="">
+
+
+      <p class="landing-hero__quote">Satu langkah kecil hari ini,<br>cerita yang lebih hijau esok hari.</p>
+    </div>
+  </div>
+
+  <svg class="landing-hero__hills" viewBox="0 0 1440 130" preserveAspectRatio="none"
+       aria-hidden="true" focusable="false">
+    <path class="landing-hero__hill landing-hero__hill--back"
+          d="M0 52C175 16 344 13 526 52C613 71 660 87 721 70C913 16 1098 0 1440 44V130H0Z"/>
+    <path class="landing-hero__hill landing-hero__hill--front"
+          d="M0 93C196 53 359 48 548 77C636 91 672 108 745 98C961 67 1194 69 1440 94V130H0Z"/>
+  </svg>
+</section>
+
 <!-- ===== Habit & Goal Tracker ===== -->
 <section class="habit" id="habit" aria-labelledby="habit-title">
   <!-- Kolom kiri: preview kartu habit -->
