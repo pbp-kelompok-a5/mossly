@@ -7,7 +7,6 @@ from django.views.decorators.http import require_POST
 from .forms import ReplyForm, ThreadForm
 from .models import Thread
 
-
 def threads_for(user):
     return Thread.objects.select_related("author").annotate(
         like_count=Count("liked_by", distinct=True),
@@ -16,7 +15,7 @@ def threads_for(user):
     ).order_by("-created_at", "pk")
 
 
-
+@login_required
 def index(request):
     category = request.GET.get("category", "")
     threads = threads_for(request.user)
@@ -33,7 +32,7 @@ def index(request):
     })
 
 
-
+@login_required
 def detail(request, pk):
     thread = get_object_or_404(threads_for(request.user), pk=pk)
     form = ReplyForm(request.POST or None)
@@ -47,7 +46,7 @@ def detail(request, pk):
         "replies": thread.replies.select_related("author").order_by("created_at", "pk")})
 
 
-
+@login_required
 def thread_form(request, pk=None):
     thread = get_object_or_404(Thread, pk=pk, author=request.user, achievement_event_id__isnull=True) if pk else None
     form = ThreadForm(request.POST or None, instance=thread)
@@ -59,7 +58,7 @@ def thread_form(request, pk=None):
         return redirect("community:detail", pk=thread.pk)
     return render(request, "community/form.html", {"form": form, "thread": thread})
 
-
+@login_required
 def delete(request, pk):
     thread = get_object_or_404(Thread, pk=pk, author=request.user)
     if request.method == "POST":
@@ -68,7 +67,7 @@ def delete(request, pk):
         return redirect("community:index")
     return render(request, "community/delete.html", {"thread": thread})
 
-
+@login_required
 @require_POST
 def like(request, pk):
     thread = get_object_or_404(Thread, pk=pk)
