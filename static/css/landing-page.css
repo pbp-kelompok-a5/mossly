@@ -1,8 +1,313 @@
 /* ============================================
+  Hero / Landing Intro
+  ============================================ */
+
+.landing-hero {
+  --hero-ink: #2f3a25;
+  --hero-muted: #66705c;
+  --hero-green: #546b41;
+  position: relative;
+  width: 100vw;
+  min-height: 44rem;
+  margin: -2rem 0 0 calc(50% - 50vw);
+  overflow: hidden;
+  background: #fff8ec;
+  font-family: var(--font-body);
+  color: var(--hero-ink);
+}
+
+.landing-hero__inner {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 34rem) minmax(32rem, 47rem);
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1rem, 3vw, 4rem);
+  width: min(88%, 84rem);
+  min-height: 40rem;
+  margin: 0 auto;
+  padding: 3.5rem 0 5rem;
+}
+
+.landing-hero__copy {
+  position: relative;
+  z-index: 3;
+  padding-bottom: 1rem;
+}
+
+.landing-hero__eyebrow {
+  margin: 0 0 2rem;
+  font-size: .75rem;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--color-moss-600);
+}
+
+.landing-hero__title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: clamp(4rem, 5.2vw, 5.25rem);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -.045em;
+  color: var(--hero-ink);
+}
+
+.landing-hero__desc {
+  max-width: 34rem;
+  margin: 2rem 0 0;
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: var(--hero-muted);
+}
+
+.landing-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.75rem;
+}
+
+.landing-hero__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.5rem;
+  padding: 0 2rem;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  transition: background-color .2s ease, border-color .2s ease, transform .15s ease;
+}
+
+.landing-hero__button--primary {
+  gap: .55rem;
+  background: var(--hero-green);
+  color: #fff8ec;
+}
+
+.landing-hero__button--primary:hover { background: #45583a; }
+
+.landing-hero__button--primary span { transition: transform .2s ease; }
+.landing-hero__button--primary:hover span { transform: translateX(3px); }
+
+.landing-hero__button--secondary {
+  border-color: #dcccac;
+  background: rgba(255, 255, 255, .72);
+  color: var(--hero-ink);
+}
+
+.landing-hero__button--secondary:hover {
+  border-color: #c8b48c;
+  background: #fff;
+}
+
+.landing-hero__button:active { transform: translateY(1px); }
+
+.landing-hero__button:focus-visible {
+  outline: 2px solid var(--hero-ink);
+  outline-offset: 3px;
+}
+
+.landing-hero__note {
+  margin: 1.75rem 0 0;
+  font-size: .75rem;
+  color: #78806f;
+}
+
+.landing-hero__visual {
+  position: relative;
+  align-self: stretch;
+  min-height: 34rem;
+}
+
+.landing-hero__visual > img {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: min(51vw, 47.5rem);
+  max-width: none;
+  transform: translate(-48%, -50%);
+}
+
+.landing-hero__stat {
+  position: absolute;
+  z-index: 2;
+  bottom: 3.1rem;
+  left: 0;
+  width: 14.25rem;
+  padding: 1.35rem 1.4rem 1.25rem;
+  border: 1px solid #ebdfc6;
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 16px 38px rgba(47, 58, 37, .1);
+}
+
+.landing-hero__stat p { margin: 0; }
+
+.landing-hero__stat-label {
+  font-size: .75rem;
+  color: var(--hero-muted);
+}
+
+.landing-hero__stat-value {
+  margin-top: .2rem !important;
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -.025em;
+  color: var(--hero-ink);
+}
+
+.landing-hero__stat-value span { font-size: 1.55rem; }
+
+.landing-hero__stat-hint {
+  max-width: 8rem;
+  margin-top: .25rem !important;
+  font-size: .625rem;
+  line-height: 1.25;
+  color: var(--hero-green);
+}
+
+.landing-hero__quote {
+  position: absolute;
+  right: .25rem;
+  bottom: 1.5rem;
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: .9rem;
+  font-style: italic;
+  line-height: 1.3;
+  color: #526044;
+}
+
+.landing-hero__hills {
+  position: absolute;
+  z-index: 1;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 8.5rem;
+}
+
+.landing-hero__hill--back { fill: #e3eadb; }
+.landing-hero__hill--front { fill: #c6d3b2; }
+
+@media (max-width: 1120px) {
+  .landing-hero__inner {
+    grid-template-columns: minmax(0, 30rem) minmax(27rem, 1fr);
+    width: min(92%, 68rem);
+  }
+
+  .landing-hero__title { font-size: clamp(3.5rem, 6vw, 4.5rem); }
+
+  .landing-hero__visual > img {
+    width: min(58vw, 43rem);
+    transform: translate(-45%, -50%);
+  }
+}
+
+@media (max-width: 860px) {
+  .landing-hero { min-height: auto; }
+
+  .landing-hero__inner {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    width: min(90%, 40rem);
+    padding: 4rem 0 6rem;
+  }
+
+  .landing-hero__copy { text-align: center; }
+  .landing-hero__eyebrow { margin-bottom: 1.5rem; }
+  .landing-hero__desc { margin-inline: auto; }
+  .landing-hero__actions { justify-content: center; }
+
+  .landing-hero__visual {
+    min-height: 35rem;
+    margin-top: -1rem;
+  }
+
+  .landing-hero__visual > img {
+    width: min(47rem, 115vw);
+    transform: translate(-50%, -50%);
+  }
+
+  .landing-hero__stat { left: 3%; }
+  .landing-hero__quote { right: 3%; }
+}
+
+@media (max-width: 560px) {
+  .landing-hero__inner {
+    width: min(90%, 32rem);
+    padding-top: 3rem;
+  }
+
+  .landing-hero__eyebrow {
+    margin-bottom: 1.25rem;
+    font-size: .65rem;
+  }
+
+  .landing-hero__title {
+    font-size: clamp(3rem, 14vw, 4rem);
+    line-height: 1.02;
+  }
+
+  .landing-hero__desc {
+    margin-top: 1.5rem;
+    font-size: 1rem;
+  }
+
+  .landing-hero__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .landing-hero__button { width: 100%; }
+
+  .landing-hero__visual {
+    min-height: 29rem;
+    margin-top: 0;
+  }
+
+  .landing-hero__visual > img { width: 38rem; }
+
+  .landing-hero__stat {
+    bottom: 2.25rem;
+    left: 0;
+    width: 11.5rem;
+    padding: 1rem;
+  }
+
+  .landing-hero__quote {
+    right: 0;
+    bottom: .3rem;
+    font-size: .75rem;
+    text-align: right;
+  }
+
+  .landing-hero__hills { height: 6rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-hero *,
+  .landing-hero *::before,
+  .landing-hero *::after {
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ============================================
   Cara Kerja (landing page)
   ============================================ */
 
 .steps {
+  scroll-margin-top: 6rem;
   padding: 5rem 0 8rem;
 }
 
@@ -466,7 +771,14 @@
    scroll horizontal. `clip` memotongnya tanpa membuat scroll container baru,
    sehingga navbar sticky tetap berfungsi. */
 html {
+  scroll-behavior: smooth;
   overflow-x: clip;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 /* --- Layar menengah: rapatkan jarak sebelum kolom ditumpuk --------------- */
