@@ -4,13 +4,14 @@ from unittest.mock import Mock, patch
 
 import requests
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db.models.deletion import ProtectedError
-from django.test import Client, SimpleTestCase, TestCase
+from django.test import Client, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
 from .dates import at_start_of_day, today
-from .models import EmissionFactor, TransportMode, Trip
+from .models import ApiUsage, EmissionFactor, TransportMode, Trip
 from .services import (
     GeoapifyError, calculate_emission, calculate_route, coordinate,
     geocode_search, location_token, reverse_geocode, verify_location,
@@ -27,6 +28,22 @@ def route_response(**overrides):
 
 
 class ServiceTests(SimpleTestCase):
+    def setUp(self):
+        cache.clear()
+
+    @patch('carbon.services._request')
+    def test_geocode_cache_reuses_locations_and_does_not_cache_errors(self, request):
+        request.return_value = [{'properties': {**ORIGIN, 'formatted': ORIGIN['name'], 'country_code': 'id'}}]
+        self.assertEqual(geocode_search('  Universitas   Indonesia '), [ORIGIN])
+        self.assertEqual(geocode_search('universitas indonesia'), [ORIGIN])
+        request.assert_called_once()
+        request.side_effect = GeoapifyError('Gagal sementara')
+        with self.assertRaises(GeoapifyError):
+            geocode_search('Depok')
+        request.side_effect = None
+        self.assertEqual(geocode_search('Depok'), [ORIGIN])
+        self.assertEqual(request.call_count, 3)
+
     def response(self, data, status=200):
         result = Mock(status_code=status)
         result.json.return_value = data
@@ -48,7 +65,7 @@ class ServiceTests(SimpleTestCase):
                 coordinate(value, 90)
 
     @patch('carbon.services.requests.get')
-    @patch.dict('os.environ', {'GEOAPIFY_API_KEY': 'test-secret'})
+    @override_settings(GEOAPIFY_API_KEY='test-secret')
     def test_routing_uses_total_and_metric_units(self, get):
         data = route_response()
         data['features'][0]['properties']['legs'] = [{'distance': 5, 'time': 2}]
@@ -58,7 +75,7 @@ class ServiceTests(SimpleTestCase):
         self.assertEqual(get.call_args.kwargs['timeout'], 10)
 
     @patch('carbon.services.requests.get')
-    @patch.dict('os.environ', {'GEOAPIFY_API_KEY': 'test-secret'})
+    @override_settings(GEOAPIFY_API_KEY='test-secret')
     def test_invalid_provider_results(self, get):
         malformed = [None, [], {}, {'features': {}}, {'features': [None]}, route_response(distance='NaN'),
                      route_response(distance=-1), route_response(time=-1), route_response(distance_units='Miles'),
@@ -72,7 +89,7 @@ class ServiceTests(SimpleTestCase):
                 self.assertEqual(error.exception.status, 502)
 
     @patch('carbon.services.requests.get')
-    @patch.dict('os.environ', {'GEOAPIFY_API_KEY': 'test-secret'})
+    @override_settings(GEOAPIFY_API_KEY='test-secret')
     def test_empty_route_and_provider_status(self, get):
         cases = [(200, {'features': []}, 404), (429, {}, 503), (403, {}, 503), (401, {}, 503), (500, {}, 502),
                  (400, {'message': 'Route could not be found'}, 404)]
@@ -85,7 +102,7 @@ class ServiceTests(SimpleTestCase):
                 self.assertNotIn('test-secret', str(error.exception))
 
     @patch('carbon.services.requests.get')
-    @patch.dict('os.environ', {'GEOAPIFY_API_KEY': 'test-secret'})
+    @override_settings(GEOAPIFY_API_KEY='test-secret')
     def test_network_errors_and_invalid_json(self, get):
         for exception, expected in [(requests.Timeout(), 504), (requests.ConnectionError('test-secret'), 502)]:
             get.side_effect = exception
@@ -100,7 +117,7 @@ class ServiceTests(SimpleTestCase):
             geocode_search('Depok')
 
     @patch('carbon.services.requests.get')
-    @patch.dict('os.environ', {'GEOAPIFY_API_KEY': ''})
+    @override_settings(GEOAPIFY_API_KEY='')
     def test_missing_key_does_not_call_provider(self, get):
         with self.assertRaises(GeoapifyError) as error:
             geocode_search('Depok')
@@ -108,7 +125,7 @@ class ServiceTests(SimpleTestCase):
         get.assert_not_called()
 
     @patch('carbon.services.requests.get')
-    @patch.dict('os.environ', {'GEOAPIFY_API_KEY': 'test-secret'})
+    @override_settings(GEOAPIFY_API_KEY='test-secret')
     def test_geocode_filter_and_selection_token(self, get):
         get.return_value = self.response({'features': [
             {'properties': {'formatted': ORIGIN['name'], 'lat': ORIGIN['lat'], 'lon': ORIGIN['lon'], 'country_code': 'id'}},
@@ -157,7 +174,149 @@ class CarbonTests(TestCase):
         cls.other = get_user_model().objects.create_user('other')
 
     def setUp(self):
+        cache.clear()
         self.client.force_login(self.user)
+
+    def close_factor(self, mode='mobil'):
+        factor = EmissionFactor.objects.get(mode__code=mode, valid_to__isnull=True)
+        factor.valid_to = today() - timedelta(days=1)
+        factor.save()
+        return factor
+
+    @patch('carbon.services.time', return_value=120000)
+    @patch('carbon.views.geocode_search', return_value=[ORIGIN])
+    def test_burst_stops_at_limit_and_does_not_block_other_users(self, search, clock):
+        url = reverse('carbon:api_geocode')
+        statuses = [self.client.get(url, {'q': 'Depok'}).status_code for _ in range(200)]
+        self.assertEqual(statuses.count(200), 30)
+        self.assertEqual(statuses.count(429), 170)
+        self.assertEqual(search.call_count, 30)
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.get(url, {'q': 'Depok'}).status_code, 200)
+        self.client.force_login(self.user)
+        clock.return_value += 60
+        self.assertEqual(self.client.get(url, {'q': 'Depok'}).status_code, 200)
+
+    @patch('carbon.services.time', return_value=120000)
+    @patch('carbon.views.geocode_search', return_value=[ORIGIN])
+    @patch('carbon.views.calculate_route', return_value=ROUTE)
+    @patch('carbon.views.reverse_geocode', return_value=ORIGIN)
+    def test_limits_cover_all_geoapify_endpoints_and_save(self, reverse_lookup, route, search, clock):
+        ApiUsage.objects.create(user=self.user, day=today(), daily_count=30, minute=2000, minute_count=30)
+        for name in ('api_geocode', 'api_reverse_geocode', 'api_route'):
+            response = self.client.get(reverse('carbon:' + name))
+            self.assertEqual(response.status_code, 429)
+            self.assertEqual(response.json()['code'], 'rate_limited')
+        response = self.client.post(reverse('carbon:add_trip'), self.payload())
+        self.assertContains(response, 'Batas pencarian/perhitungan tercapai')
+        self.assertFalse(Trip.objects.exists())
+        search.assert_not_called()
+        route.assert_not_called()
+        reverse_lookup.assert_not_called()
+        # Kuota lokasi tidak menghalangi riwayat, edit catatan, dan hapus.
+        trip = self.trip()
+        self.assertEqual(self.client.get(reverse('carbon:index')).status_code, 200)
+        self.assertEqual(self.client.get(reverse('carbon:api_history')).status_code, 200)
+        self.assertEqual(self.client.post(reverse('carbon:edit_trip', args=[trip.pk]), self.payload(note='Catatan')).status_code, 302)
+        self.assertEqual(self.client.post(reverse('carbon:delete_trip', args=[trip.pk])).status_code, 302)
+
+    @patch('carbon.services.time', return_value=120000)
+    @patch('carbon.views.geocode_search', return_value=[ORIGIN])
+    def test_daily_limit_survives_cache_clear_and_resets_next_day(self, search, clock):
+        ApiUsage.objects.create(user=self.user, day=today(), daily_count=150, minute=1999, minute_count=0)
+        cache.clear()
+        url = reverse('carbon:api_geocode')
+        self.assertEqual(self.client.get(url, {'q': 'Depok'}).status_code, 429)
+        search.assert_not_called()
+        with patch('carbon.services.today', return_value=today() + timedelta(days=1)):
+            clock.return_value += 86400
+            self.assertEqual(self.client.get(url, {'q': 'Depok'}).status_code, 200)
+        self.assertEqual(ApiUsage.objects.get(user=self.user).daily_count, 1)
+
+    @override_settings(GEOAPIFY_API_KEY='test-key')
+    @patch('carbon.services.requests.get')
+    def test_cached_geocode_still_signs_for_each_user(self, get):
+        get.return_value = Mock(status_code=200)
+        get.return_value.json.return_value = {'features': [{'properties': {
+            **ORIGIN, 'formatted': ORIGIN['name'], 'country_code': 'id',
+        }}]}
+        url = reverse('carbon:api_geocode')
+        first = self.client.get(url, {'q': 'Depok'}).json()['results'][0]
+        self.client.force_login(self.other)
+        second = self.client.get(url, {'q': 'Depok'}).json()['results'][0]
+        get.assert_called_once()
+        self.assertNotEqual(first['location_token'], second['location_token'])
+        self.assertFalse(verify_location(first['location_token'], ORIGIN['name'], ORIGIN['lat'], ORIGIN['lon'], self.other.pk))
+
+    def test_history_pagination_and_geometry_are_bounded(self):
+        for _ in range(101):
+            self.trip(route_geometry={'type': 'LineString', 'coordinates': [[106, -6], [107, -7]]})
+        self.trip(user=self.other)
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        with CaptureQueriesContext(connection) as queries:
+            first = self.client.get(reverse('carbon:api_history')).json()
+        trip_selects = [q['sql'] for q in queries if 'FROM "carbon_trip"' in q['sql']]
+        self.assertTrue(trip_selects)
+        self.assertTrue(all('route_geometry' not in sql for sql in trip_selects))
+        self.assertEqual(len(first['trips']), 100)
+        self.assertEqual(first['summary']['total_trips'], 101)
+        self.assertEqual(first['pagination']['next_page'], 2)
+        self.assertNotIn('route_geometry', first['trips'][0])
+        second = self.client.get(reverse('carbon:api_history'), {'page': 2, 'include_geometry': 1}).json()
+        self.assertEqual(len(second['trips']), 1)
+        self.assertIsNone(second['pagination']['next_page'])
+        self.assertIn('route_geometry', second['trips'][0])
+        self.assertNotIn(second['trips'][0]['id'], [row['id'] for row in first['trips']])
+        response = self.client.get(reverse('carbon:index'))
+        self.assertEqual(len(response.context['trips']), 20)
+        self.assertEqual(response.context['summary']['total_trips'], 101)
+        self.assertContains(response, '?page=2')
+        self.assertNotContains(response, 'onsubmit=')
+        for value in ('invalid', '99999', '-1'):
+            self.assertEqual(self.client.get(reverse('carbon:api_history'), {'page': value}).status_code, 200)
+
+    def test_factor_periods_cannot_overlap(self):
+        old = EmissionFactor.objects.get(mode__code='mobil')
+        data = dict(mode=old.mode, kg_co2e_per_km='.1', source='Test', version='new', valid_from=today())
+        with self.assertRaises(ValidationError):
+            EmissionFactor.objects.create(**data)
+        old.valid_to = today()
+        old.save()
+        with self.assertRaises(ValidationError):
+            EmissionFactor.objects.create(**data)  # Batas akhir juga termasuk masa berlaku.
+        old.valid_to = today() - timedelta(days=1)
+        old.save()
+        new = EmissionFactor.objects.create(**data)
+        self.assertEqual(get_emission_factor(old.mode), new)
+        old.valid_to = None
+        with self.assertRaises(ValidationError):
+            old.save()
+
+    @patch('carbon.views.calculate_route', return_value=ROUTE)
+    def test_edit_date_matches_preview_for_new_factor_and_failure_keeps_trip(self, route):
+        self.close_factor()
+        factor = EmissionFactor.objects.create(mode=TransportMode.objects.get(code='mobil'),
+            kg_co2e_per_km='.1', version='new', source='Test', valid_from=today())
+        trip = self.trip(trip_date=today() - timedelta(days=1))
+        trip.emission_factor = EmissionFactor.objects.get(mode=trip.mode, version='DESNZ-2023-v1.1')
+        trip.save()
+        preview = self.client.get(reverse('carbon:api_route'), {
+            'olat': ORIGIN['lat'], 'olon': ORIGIN['lon'], 'dlat': DESTINATION['lat'],
+            'dlon': DESTINATION['lon'], 'mode': 'mobil', 'date': today().isoformat(),
+        }).json()
+        url = reverse('carbon:edit_trip', args=[trip.pk])
+        self.assertEqual(self.client.post(url, self.payload()).status_code, 302)
+        trip.refresh_from_db()
+        self.assertEqual(trip.emission_factor, factor)
+        self.assertEqual(float(trip.emission_kg), preview['co2e_kg'])
+        route.side_effect = GeoapifyError('API gagal')
+        response = self.client.post(url, self.payload(trip_date=(today() - timedelta(days=1)).isoformat()))
+        self.assertContains(response, 'API gagal')
+        self.assertIsNone(response.context['trip_state']['preview'])
+        trip.refresh_from_db()
+        self.assertEqual(trip.trip_date, today())
+        self.assertEqual(trip.emission_factor, factor)
 
     def payload(self, **overrides):
         data = {'origin_label': ORIGIN['name'], 'origin_lat': str(ORIGIN['lat']), 'origin_lng': str(ORIGIN['lon']),
@@ -234,8 +393,9 @@ class CarbonTests(TestCase):
         self.assertIsNone(response.context['trip_state']['preview'])
         self.assertFalse(Trip.objects.exists())
 
-    @patch('carbon.views.calculate_route')
-    def test_note_and_date_update_keeps_old_results_and_factors(self, route):
+    @patch('carbon.views.calculate_route', return_value=ROUTE)
+    def test_date_update_reselects_factor_and_recalculates(self, route):
+        self.close_factor()
         factor = EmissionFactor.objects.create(mode=TransportMode.objects.get(code='mobil'), kg_co2e_per_km='.2',
                                                 source='Test factor', version='old-version', valid_from=today())
         trip = self.trip(emission_factor=factor)
@@ -244,8 +404,8 @@ class CarbonTests(TestCase):
         trip.refresh_from_db()
         self.assertEqual(trip.note, 'Diperbaiki')
         self.assertEqual(trip.emission_kg, Decimal('2.0747'))
-        self.assertEqual(trip.emission_factor.version, 'old-version')
-        route.assert_not_called()
+        self.assertEqual(trip.emission_factor.version, 'DESNZ-2023-v1.1')
+        route.assert_called_once()
 
     @patch('carbon.views.calculate_route', return_value={'distance_km': Decimal('3.500'), 'duration_minutes': 8.0, 'duration_s': 480, 'route_geometry': None})
     def test_mode_and_location_updates_recalculate(self, route):
@@ -306,7 +466,7 @@ class CarbonTests(TestCase):
 
     def test_empty_history_and_summary(self):
         data = self.client.get(reverse('carbon:api_history')).json()
-        self.assertEqual(data, {'trips': [], 'emission_metric': 'CO2e', 'summary': {'total_trips': 0, 'total_distance_km': 0.0, 'total_co2e_kg': 0.0}})
+        self.assertEqual(data, {'trips': [], 'emission_metric': 'CO2e', 'pagination': {'page': 1, 'pages': 1, 'next_page': None}, 'summary': {'total_trips': 0, 'total_distance_km': 0.0, 'total_co2e_kg': 0.0}})
         self.assertContains(self.client.get(reverse('carbon:index')), 'Belum ada perjalanan')
 
     def test_templates_render_script_and_prefill_edit(self):
@@ -431,7 +591,7 @@ class CarbonTests(TestCase):
         with self.assertRaises(ValidationError):
             trip.full_clean()
 
-    @patch.dict('os.environ', {'GEOAPIFY_API_KEY': 'integration-test-secret'})
+    @override_settings(GEOAPIFY_API_KEY='integration-test-secret')
     @patch('carbon.services.requests.get')
     def test_full_proxy_to_crud_flow(self, get):
         """Gunakan service asli, hanya transport HTTP Geoapify yang diganti."""
@@ -475,7 +635,7 @@ class CarbonTests(TestCase):
         calls_before_edit = get.call_count
         data.update(note='Hanya tanggal dan catatan', trip_date=(today() - timedelta(days=1)).isoformat())
         self.assertEqual(self.client.post(reverse('carbon:edit_trip', args=[trip.pk]), data).status_code, 302)
-        self.assertEqual(get.call_count, calls_before_edit)
+        self.assertEqual(get.call_count, calls_before_edit + 1)
         selected = self.client.get(geocode_url, {'q': 'Tujuan baru'}).json()['results'][0]
         data.update(destination_label=selected['name'], destination_lat=selected['lat'],
                     destination_lng=selected['lon'], destination_token=selected['location_token'], mode='jalan')
@@ -549,6 +709,7 @@ class CarbonTests(TestCase):
             EmissionFactor.objects.filter(pk=factor.pk).update(kg_co2e_per_km='.01')
         factor.refresh_from_db()
         self.assertEqual(factor.kg_co2e_per_km, original_value)
+        self.close_factor()
         new = EmissionFactor.objects.create(mode=factor.mode, kg_co2e_per_km='.1', version='new-test-version',
                                            source='Controlled test reference', valid_from=today())
         self.assertEqual(get_emission_factor(factor.mode), new)
@@ -558,6 +719,7 @@ class CarbonTests(TestCase):
     def test_old_factor_stays_until_route_changes(self, route):
         trip = self.trip()
         old_factor_id = trip.emission_factor_id
+        self.close_factor()
         new = EmissionFactor.objects.create(mode=trip.mode, kg_co2e_per_km='.1', version='new-test-version',
                                            source='Controlled test reference', valid_from=today())
         url = reverse('carbon:edit_trip', args=[trip.pk])
@@ -608,7 +770,7 @@ class CarbonTests(TestCase):
         self.assertEqual(trip.duration_s, 1500)
         self.assertEqual(trip.distance_source, 'routing')
         self.assertEqual(trip.route_geometry['type'], 'LineString')
-        row = self.client.get(reverse('carbon:api_history')).json()['trips'][0]
+        row = self.client.get(reverse('carbon:api_history'), {'include_geometry': '1'}).json()['trips'][0]
         self.assertEqual(row['route_geometry'], trip.route_geometry)
         self.assertEqual(row['mode_code'], 'mobil')
         self.assertEqual(row['emission_kg'], 2.0747)
@@ -616,6 +778,7 @@ class CarbonTests(TestCase):
 
     @patch('carbon.views.calculate_route', return_value=ROUTE)
     def test_preview_uses_factor_for_selected_date(self, route):
+        self.close_factor()
         mode = TransportMode.objects.get(code='mobil')
         EmissionFactor.objects.create(mode=mode, kg_co2e_per_km='.1', version='new-test-version',
                                       source='Controlled test reference', valid_from=today())

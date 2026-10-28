@@ -7,7 +7,7 @@ from .services import get_primary_mode, verify_location
 
 LOCATION_FIELDS = ('origin_label', 'origin_lat', 'origin_lng',
                    'destination_label', 'destination_lat', 'destination_lng')
-ROUTE_FIELDS = (*LOCATION_FIELDS, 'mode')
+ROUTE_FIELDS = (*LOCATION_FIELDS, 'mode', 'trip_date')
 
 
 class TripForm(forms.ModelForm):
@@ -33,7 +33,7 @@ class TripForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.user = user
         allowed = Q(is_active=True, geoapify_profile__in=SUPPORTED_PROFILES)
-        # Riwayat moda yang dinonaktifkan tetap dapat diedit tanggal/catatannya.
+        # Riwayat moda yang dinonaktifkan tetap dapat diedit catatannya.
         if self.instance.pk:
             allowed |= Q(pk=self.instance.mode_id)
             self.initial['trip_date'] = self.instance.trip_date

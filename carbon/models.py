@@ -4,11 +4,20 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 
 from .dates import local_date, today
 
 SUPPORTED_PROFILES = ('drive', 'motorcycle', 'bicycle', 'walk')
+
+
+class ApiUsage(models.Model):
+    """Counter internal pembatas API; bukan bagian dari riwayat perjalanan."""
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    day = models.DateField(default=today)
+    daily_count = models.PositiveIntegerField(default=0)
+    minute = models.BigIntegerField(default=0)
+    minute_count = models.PositiveIntegerField(default=0)
 
 
 class TransportMode(models.Model):
@@ -57,13 +66,27 @@ class EmissionFactor(models.Model):
     def __str__(self):
         return f'{self.mode.name} — {self.version}'
 
+    def clean(self):
+        if not self.mode_id or not self.valid_from:
+            return
+        overlaps = type(self).objects.filter(mode_id=self.mode_id).exclude(pk=self.pk)
+        overlaps = overlaps.filter(models.Q(valid_to__isnull=True) | models.Q(valid_to__gte=self.valid_from))
+        if self.valid_to:
+            overlaps = overlaps.filter(valid_from__lte=self.valid_to)
+        if overlaps.exists():
+            raise ValidationError('Masa berlaku faktor untuk moda ini bertumpang-tindih. Akhiri periode lama sebelum membuat versi baru.')
+
     def save(self, *args, **kwargs):
-        if self.pk:
-            previous = type(self).objects.get(pk=self.pk)
-            if any(getattr(previous, field.attname) != getattr(self, field.attname) for field in self._meta.fields):
-                raise ValidationError('Faktor emisi tidak boleh diubah. Buat versi baru.')
-        self.full_clean()
-        return super().save(*args, **kwargs)
+        with transaction.atomic():
+            # Serialize penambahan versi untuk moda yang sama di database produksi.
+            TransportMode.objects.select_for_update().get(pk=self.mode_id)
+            if self.pk:
+                previous = type(self).objects.get(pk=self.pk)
+                if any(getattr(previous, field.attname) != getattr(self, field.attname)
+                       for field in self._meta.fields if field.name != 'valid_to'):
+                    raise ValidationError('Nilai dan sumber faktor tidak boleh diubah. Buat versi baru.')
+            self.full_clean()
+            return super().save(*args, **kwargs)
 
 
 class Trip(models.Model):
