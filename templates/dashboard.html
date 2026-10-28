@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/dashboard-fildza.css' %}">
+
+<div class="dash-page">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
+    <symbol id="i-award" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-sprout" viewBox="0 0 24 24"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></symbol>
+  </svg>
+
+  <section class="dash-hero">
+    <p class="dash-hero-eyebrow">Personal Sustainability Dashboard</p>
+    <h1 class="dash-hero-title">Halo, Tania!</h1>
+    <p class="dash-hero-text">Hutan kecilmu bulan Oktober makin rimbun. Ini rekap emisi, kebiasaan, goal, dan pencapaianmu.</p>
+    <div class="dash-chips">
+      <span class="dash-chip"><svg class="dash-ico"><use href="#i-award"/></svg>6 badge diraih</span>
+      <span class="dash-chip"><svg class="dash-ico"><use href="#i-flame"/></svg>5 hari streak aktif</span>
+    </div>
+  </section>
+
+  <section class="dash-stats">
+    <article class="dash-stat">
+      <div class="dash-stat-icon dash-tint-clay"><svg class="dash-ico"><use href="#i-leaf"/></svg></div>
+      <div class="dash-stat-body">
+        <p class="dash-stat-label">Total emisi bulan ini</p>
+        <p class="dash-stat-value">42,6 kg CO₂e</p>
+        <p class="dash-stat-sub">turun 18% dari bulan lalu</p>
+      </div>
+    </article>
+    <article class="dash-stat">
+      <div class="dash-stat-icon dash-tint-moss"><svg class="dash-ico"><use href="#i-flame"/></svg></div>
+      <div class="dash-stat-body">
+        <p class="dash-stat-label">Streak aktif</p>
+        <p class="dash-stat-value">5 hari</p>
+        <p class="dash-stat-sub">rekor 21 hari</p>
+      </div>
+    </article>
+    <article class="dash-stat">
+      <div class="dash-stat-icon dash-tint-pink"><svg class="dash-ico"><use href="#i-target"/></svg></div>
+      <div class="dash-stat-body">
+        <p class="dash-stat-label">Goal selesai</p>
+        <p class="dash-stat-value">2 / 5</p>
+        <p class="dash-stat-sub">3 masih berjalan</p>
+      </div>
+    </article>
+    <article class="dash-stat">
+      <div class="dash-stat-icon dash-tint-sand"><svg class="dash-ico"><use href="#i-message"/></svg></div>
+      <div class="dash-stat-body">
+        <p class="dash-stat-label">Aksi komunitas</p>
+        <p class="dash-stat-value">9 aksi</p>
+        <p class="dash-stat-sub">2 thread · 4 reply · 3 like</p>
+      </div>
+    </article>
+  </section>
+
+  <section class="dash-emission">
+    <article class="dash-card">
+      <div class="dash-card-head">
+        <h2 class="dash-card-title">Jejak emisi bulan ini</h2>
+        <p class="dash-note">dari Carbon Tracker · kg CO₂e per minggu</p>
+      </div>
+      <div class="dash-chart-wrap">
+        <svg class="dash-chart" viewBox="0 0 770 250" role="img" aria-label="Grafik emisi per minggu">
+          <line class="dash-chart-grid" x1="0" x2="770" y1="44" y2="44"/>
+          <line class="dash-chart-grid" x1="0" x2="770" y1="122" y2="122"/>
+          <line class="dash-chart-grid" x1="0" x2="770" y1="200" y2="200"/>
+          <polygon class="dash-chart-area" points="44,61.5 271,75 499,108 726,140.5 726,200 44,200"/>
+          <polyline class="dash-chart-line" points="44,61.5 271,75 499,108 726,140.5"/>
+          <circle class="dash-chart-dot" cx="44" cy="61.5" r="6"/>
+          <circle class="dash-chart-dot" cx="271" cy="75" r="6"/>
+          <circle class="dash-chart-dot" cx="499" cy="108" r="6"/>
+          <circle class="dash-chart-dot dash-chart-dot-now" cx="726" cy="140.5" r="7"/>
+          <text class="dash-chart-value" x="44" y="42">14,2</text>
+          <text class="dash-chart-value" x="271" y="56">12,8</text>
+          <text class="dash-chart-value" x="499" y="89">9,4</text>
+          <text class="dash-chart-value dash-chart-value-now" x="726" y="122">6,2</text>
+          <text class="dash-chart-label" x="44" y="232">Mgg 1</text>
+          <text class="dash-chart-label" x="271" y="232">Mgg 2</text>
+          <text class="dash-chart-label" x="499" y="232">Mgg 3</text>
+          <text class="dash-chart-label dash-chart-label-now" x="726" y="232">Mgg 4</text>
+        </svg>
+      </div>
+      <p class="dash-summary">Emisimu turun 56% sejak minggu pertama. Minggu ke-4 masih berjalan.</p>
+    </article>
+
+    <article class="dash-card dash-donut-card">
+      <h2 class="dash-card-title">Emisi per moda</h2>
+      <div class="dash-donut" style="--a:60%; --b:88%" role="img" aria-label="Proporsi emisi per moda">
+        <span class="dash-donut-value">42,6</span>
+        <span class="dash-donut-unit">kg CO₂e</span>
+      </div>
+      <ul class="dash-legend">
+        <li class="dash-legend-item"><span class="dash-legend-dot" style="--_dot: var(--color-clay-300)"></span><span class="dash-legend-name">Motor / mobil</span><span class="dash-legend-pct">60%</span></li>
+        <li class="dash-legend-item"><span class="dash-legend-dot" style="--_dot: var(--color-moss-300)"></span><span class="dash-legend-name">Transportasi umum</span><span class="dash-legend-pct">28%</span></li>
+        <li class="dash-legend-item"><span class="dash-legend-dot" style="--_dot: var(--color-moss-700)"></span><span class="dash-legend-name">Jalan kaki / sepeda</span><span class="dash-legend-pct">12%</span></li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="dash-habit-goal">
+    <article class="dash-card">
+      <div class="dash-card-head">
+        <h2 class="dash-card-title">Habit minggu ini</h2>
+        <a class="dash-link" href="#">Buka <svg class="dash-ico"><use href="#i-arrow"/></svg></a>
+      </div>
+      <ul class="dash-week">
+        <li class="dash-day"><span class="dash-day-name">Sen</span><span class="dash-day-chip is-done"><svg class="dash-ico"><use href="#i-check"/></svg></span></li>
+        <li class="dash-day"><span class="dash-day-name">Sel</span><span class="dash-day-chip is-done"><svg class="dash-ico"><use href="#i-check"/></svg></span></li>
+        <li class="dash-day is-today"><span class="dash-day-name">Rab</span><span class="dash-day-chip is-today">21</span></li>
+        <li class="dash-day"><span class="dash-day-name">Kam</span><span class="dash-day-chip">22</span></li>
+        <li class="dash-day"><span class="dash-day-name">Jum</span><span class="dash-day-chip">23</span></li>
+        <li class="dash-day"><span class="dash-day-name">Sab</span><span class="dash-day-chip">24</span></li>
+        <li class="dash-day"><span class="dash-day-name">Min</span><span class="dash-day-chip">25</span></li>
+      </ul>
+      <ul class="dash-habits">
+        <li class="dash-habit"><span class="dash-habit-name">Naik transportasi umum</span><span class="dash-streak"><svg class="dash-ico"><use href="#i-flame"/></svg>5 hari</span></li>
+        <li class="dash-habit"><span class="dash-habit-name">Bawa tumbler</span><span class="dash-streak"><svg class="dash-ico"><use href="#i-flame"/></svg>12 hari</span></li>
+        <li class="dash-habit"><span class="dash-habit-name">Pilah sampah</span><span class="dash-streak"><svg class="dash-ico"><use href="#i-flame"/></svg>3 hari</span></li>
+      </ul>
+      <p class="dash-note">2 hari lagi menuju milestone streak 7 hari.</p>
+    </article>
+
+    <article class="dash-card">
+      <div class="dash-card-head">
+        <h2 class="dash-card-title">Goal yang sedang tumbuh</h2>
+        <a class="dash-link" href="#">Buka <svg class="dash-ico"><use href="#i-arrow"/></svg></a>
+      </div>
+      <div class="dash-goals">
+        <div class="dash-goal dash-goal-moss">
+          <div class="dash-ring" style="--p:75"><span class="dash-ring-value">75%</span></div>
+          <p class="dash-goal-title">Naik transportasi umum 20 kali</p>
+          <p class="dash-goal-meta">15 / 20 kali · 10 hari lagi</p>
+        </div>
+        <div class="dash-goal dash-goal-clay">
+          <div class="dash-ring" style="--p:50"><span class="dash-ring-value">50%</span></div>
+          <p class="dash-goal-title">30 hari tanpa beli botol plastik</p>
+          <p class="dash-goal-meta">15 / 30 hari · 25 hari lagi</p>
+        </div>
+        <div class="dash-goal dash-goal-pink">
+          <div class="dash-ring" style="--p:25"><span class="dash-ring-value">25%</span></div>
+          <p class="dash-goal-title">Kurangi emisi perjalanan 10 kg</p>
+          <p class="dash-goal-meta">2,5 / 10 kg · 10 hari lagi</p>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="dash-card">
+    <div class="dash-card-head">
+      <h2 class="dash-card-title">Koleksi badge</h2>
+      <p class="dash-note">6 dari 17 diraih · <a class="dash-link" href="#">Lihat semua <svg class="dash-ico"><use href="#i-arrow"/></svg></a></p>
+    </div>
+    <div class="dash-badges">
+      <div class="dash-badge dash-badge-clay">
+        <div class="dash-hex"><svg class="dash-ico"><use href="#i-pin"/></svg></div>
+        <p class="dash-badge-name">Langkah Pertama</p>
+        <p class="dash-badge-desc">Mencatat 1 perjalanan</p>
+      </div>
+      <div class="dash-badge dash-badge-moss">
+        <div class="dash-hex"><svg class="dash-ico"><use href="#i-sprout"/></svg></div>
+        <p class="dash-badge-name">Tunas</p>
+        <p class="dash-badge-desc">Streak 7 hari</p>
+      </div>
+      <div class="dash-badge dash-badge-pink dash-badge-new">
+        <div class="dash-hex"><svg class="dash-ico"><use href="#i-target"/></svg></div>
+        <p class="dash-badge-name">Target Pertama</p>
+        <p class="dash-badge-desc">Menyelesaikan 1 goal</p>
+        <span class="dash-tag">Baru diraih</span>
+      </div>
+      <div class="dash-badge dash-badge-locked">
+        <div class="dash-hex"><svg class="dash-ico"><use href="#i-lock"/></svg></div>
+        <p class="dash-badge-name">Penepat Janji</p>
+        <p class="dash-badge-desc">2 / 3 goal</p>
+        <div class="dash-bar"><span class="dash-bar-fill" style="--p:67"></span></div>
+      </div>
+      <div class="dash-badge dash-badge-locked">
+        <div class="dash-hex"><svg class="dash-ico"><use href="#i-lock"/></svg></div>
+        <p class="dash-badge-name">Hamparan Lumut</p>
+        <p class="dash-badge-desc">21 / 30 hari</p>
+        <div class="dash-bar"><span class="dash-bar-fill" style="--p:70"></span></div>
+      </div>
+      <div class="dash-badge dash-badge-locked">
+        <div class="dash-hex"><svg class="dash-ico"><use href="#i-lock"/></svg></div>
+        <p class="dash-badge-name">Jejak Ringan</p>
+        <p class="dash-badge-desc">6 / 10 perjalanan</p>
+        <div class="dash-bar"><span class="dash-bar-fill" style="--p:60"></span></div>
+      </div>
+    </div>
+    <div class="dash-share">
+      <p>Badge baru otomatis dikirim ke Komunitas saat kamu meraihnya.</p>
+      <label class="dash-share-label">Bagikan pencapaian <input class="dash-switch" type="checkbox" checked></label>
+    </div>
+  </section>
+
+  <section class="dash-bottom">
+    <article class="dash-card">
+      <div class="dash-card-head">
+        <h2 class="dash-card-title">Di komunitas</h2>
+        <a class="dash-link" href="#">Buka <svg class="dash-ico"><use href="#i-arrow"/></svg></a>
+      </div>
+      <div class="dash-post">
+        <div class="dash-avatar">T</div>
+        <div class="dash-bubble dash-bubble-clay">
+          <span class="dash-bubble-tag">Achievement</span>
+          <p class="dash-post-title">Tania meraih badge Target Pertama</p>
+          <p class="dash-post-meta">Diposting otomatis · 5 like · 2 reply</p>
+        </div>
+      </div>
+      <div class="dash-post">
+        <div class="dash-avatar">T</div>
+        <div class="dash-bubble dash-bubble-moss">
+          <span class="dash-bubble-tag">Tips</span>
+          <p class="dash-post-title">Cara hemat plastik saat jajan di kampus</p>
+          <p class="dash-post-meta">Threadmu · 8 like · 5 reply</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="dash-card">
+      <h2 class="dash-card-title">Jejak terbaru</h2>
+      <ul class="dash-timeline">
+        <li class="dash-timeline-item"><span class="dash-timeline-dot" style="--_dot: var(--color-bg-accent)"></span><div><span class="dash-timeline-text">Goal Naik transportasi umum naik ke 15/20</span><span class="dash-timeline-time">Hari ini, 07.45</span></div></li>
+        <li class="dash-timeline-item"><span class="dash-timeline-dot" style="--_dot: var(--color-bg-brand)"></span><div><span class="dash-timeline-text">Perjalanan Depok → Kampus UI dicatat: 1,9 kg CO₂e</span><span class="dash-timeline-time">Kemarin, 17.20</span></div></li>
+        <li class="dash-timeline-item"><span class="dash-timeline-dot" style="--_dot: var(--color-moss-300)"></span><div><span class="dash-timeline-text">Habit Bawa tumbler mencapai milestone 7 hari</span><span class="dash-timeline-time">Kemarin, 08.05</span></div></li>
+        <li class="dash-timeline-item"><span class="dash-timeline-dot" style="--_dot: var(--color-pink-500, #d97f9c)"></span><div><span class="dash-timeline-text">Kamu membalas thread Tips thrifting</span><span class="dash-timeline-time">2 hari lalu</span></div></li>
+      </ul>
+    </article>
+  </section>
+</div>
+{% endblock %}
