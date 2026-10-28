@@ -20,7 +20,7 @@
 
   <section class="dash-hero">
     <p class="dash-hero-eyebrow">Personal Sustainability Dashboard</p>
-    <h1 class="dash-hero-title">Halo, Tania!</h1>
+    <h1 class="dash-hero-title">Halo, {{ request.user.username }}!</h1>
     <p class="dash-hero-text">Hutan kecilmu bulan Oktober makin rimbun. Ini rekap emisi, kebiasaan, goal, dan pencapaianmu.</p>
     <div class="dash-chips">
       <span class="dash-chip"><svg class="dash-ico"><use href="#i-award"/></svg>6 badge diraih</span>
@@ -212,7 +212,7 @@
         <div class="dash-avatar">T</div>
         <div class="dash-bubble dash-bubble-clay">
           <span class="dash-bubble-tag">Achievement</span>
-          <p class="dash-post-title">Tania meraih badge Target Pertama</p>
+          <p class="dash-post-title">{{ request.user.username }} meraih badge Target Pertama</p>
           <p class="dash-post-meta">Diposting otomatis · 5 like · 2 reply</p>
         </div>
       </div>
