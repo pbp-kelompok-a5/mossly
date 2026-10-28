@@ -34,6 +34,7 @@
 
     <div class="focus-stats">
       <div class="progress-ring" style="--value: {{ goal.percent }}" role="img" aria-label="{{ goal.percent }} persen, {{ goal.progress_text }}">
+        <img class="progress-ring-seedling" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
         <span class="progress-ring-value">{{ goal.percent }}%</span>
         <span class="progress-ring-label">{{ goal.progress_text }}</span>
       </div>
@@ -57,7 +58,6 @@
     <img class="decor focus-decor-leaf" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
     <img class="decor focus-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
     <img class="decor focus-decor-leaf-sm" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
-    <img class="decor focus-decor-seedling" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
     <img class="decor focus-decor-grass focus-decor-grass-left" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
     <img class="decor focus-decor-grass focus-decor-grass-right" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
     <svg class="decor decor-hill focus-decor-hill" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">

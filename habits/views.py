@@ -603,16 +603,17 @@ def _activity_log(user, habits, checkins, today):
 
 
 def _history_hero(period, months, overall, today):
-    """Eyebrow, title, and subtitle for the selected period.
+    """Eyebrow and title for the selected period.
 
     With no habit scheduled in the period there is no consistency to show, so
-    the hero switches to a gentle invitation (no_habits) instead of 0%.
+    the hero switches to a gentle invitation (no_habits, with a subtitle)
+    instead of 0%.
     """
     current = months[-1]
     eyebrow = {
-        "month": f"Riwayat · {current['name']} {today.year}",
-        "3m": "Riwayat · 3 bulan terakhir",
-        "year": f"Riwayat · Tahun {today.year}",
+        "month": f"{current['name']} {today.year}",
+        "3m": " 3 bulan terakhir",
+        "year": f"Tahun {today.year}",
     }[period]
     if overall["percent"] is None:
         scope = "bulan ini" if period == "month" else "di periode ini"
@@ -623,41 +624,25 @@ def _history_hero(period, months, overall, today):
             "subtitle": "Tambahkan habit untuk melihat konsistensimu di sini. "
                         "Progres dan goal yang selesai tetap tercatat di log aktivitas.",
         }
-    first_step = "Satu check-in kecil hari ini sudah jadi awal yang baik."
 
     if period == "month":
         previous = months[-2]
         change = services.consistency_change(current["percent"], previous["percent"])
         if change and change > 0:
-            title = f"{current['percent']}% konsistensi bulan ini, naik {change}% dari {previous['name']}"
+            title = f"Konsistensimu {current['percent']}% bulan ini, naik {change}% dari {previous['name']}"
         else:
-            title = f"{current['percent']}% konsistensi bulan ini"
-        if current["done"]:
-            subtitle = (
-                f"Kamu sudah menyelesaikan {current['done']} check-in dan "
-                f"{current['perfect']} hari sempurna. Pertahankan ritmenya."
-            )
-        else:
-            subtitle = f"Belum ada check-in bulan ini. {first_step}"
-        return {"eyebrow": eyebrow, "title": title, "subtitle": subtitle}
-
-    known = [month for month in months if month["percent"] is not None]
-    best = max(known, key=lambda month: month["percent"])
-    if period == "3m":
+            title = f"Konsistensimu {current['percent']}% bulan ini"
+    elif period == "3m":
+        known = [month for month in months if month["percent"] is not None]
         if len(known) > 1 and current["percent"] is not None and current["percent"] > known[0]["percent"]:
             title = f"Konsistensimu naik dari {known[0]['percent']}% ke {current['percent']}%"
         elif current["percent"] is not None:
-            title = f"Konsistensimu {current['percent']}% bulan ini"
+            title = f"Konsistensimu {current['percent']}% tiga bulan ini"
         else:
             title = "Belum ada habit yang dicatat bulan ini"
-        average = services.consistency_percent(sum(m["percent"] for m in known), 100 * len(known))
-        subtitle = f"Rata-rata {average}% per bulan. {best['name']} adalah bulan terbaikmu sejauh ini."
     else:
         title = f"{overall['done']} check-in sejak Januari {today.year}"
-        subtitle = f"Kamu paling konsisten di bulan {best['name']}. Terus tumbuh."
-    if not overall["done"]:
-        subtitle = f"Belum ada check-in di periode ini. {first_step}"
-    return {"eyebrow": eyebrow, "title": title, "subtitle": subtitle}
+    return {"eyebrow": eyebrow, "title": title}
 
 
 @login_required
