@@ -18,8 +18,13 @@
 body {
   margin:0;
   background:var(--cream);
-  color:var(--ink);
-  font:14px/1.7 var(--body)
+  color:var(--ink)
+}
+main.container {
+  width:100%;
+  max-width:none;
+  margin:0;
+  padding-inline:36px;
 }
 a {
   color:inherit;
@@ -81,9 +86,11 @@ img {
   width:32px
 }
 .community-shell {
-  width:min(1168px,calc(100% - 72px));
-  margin:auto;
-  min-height:75vh
+  width:100%;
+  max-width:1168px;
+  margin-inline:auto;
+  min-height:75vh;
+  font:14px/1.7 var(--body)
 }
 .community-hero {
   display:grid;
@@ -599,12 +606,6 @@ img {
   color:#96763a;
   transform:rotate(15deg)
 }
-.sidebar-note {
-  text-align:center;
-  color:var(--muted);
-  font-size:10px;
-  line-height:1.9
-}
 .empty-state {
   text-align:center;
   background:var(--paper);
@@ -784,6 +785,39 @@ img {
 .field-errors ul {
   padding-left:20px
 }
+.field-errors--summary {
+  margin:0 0 20px;
+  color:#8f3022;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.5
+}
+.field-errors--summary ul {
+  margin:0;
+  padding:0;
+  list-style:none
+}
+.login-required-card {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  margin:18px 0;
+  padding:16px 18px;
+  border:1px solid #d9b893;
+  border-radius:14px;
+  background:#fff3e3;
+  color:#71491f;
+  font-size:12px
+}
+.login-required-card a {
+  flex:none;
+  padding:8px 14px;
+  border-radius:99px;
+  background:var(--moss);
+  color:#fff;
+  font-weight:700
+}
 .field [aria-invalid=true] {
   border-color:#a13d28
 }
@@ -857,8 +891,8 @@ img {
   }
 }
 @media(max-width:1000px) {
-  .community-shell {
-    width:calc(100% - 48px)
+  main.container {
+    padding-inline:24px
   }
   .community-layout {
     grid-template-columns:minmax(0,1fr) 250px;
@@ -884,8 +918,8 @@ img {
   }
 }
 @media(max-width:760px) {
-  .community-shell {
-    width:calc(100% - 36px)
+  main.container {
+    padding-inline:18px
   }
   .community-hero {
     grid-template-columns:1fr;
@@ -933,9 +967,6 @@ img {
     max-width:400px;
     width:calc(100% - 20px);
     justify-self:center
-  }
-  .sidebar-note {
-    grid-column:1/-1
   }
   .section-heading h2 {
     font-size:27px

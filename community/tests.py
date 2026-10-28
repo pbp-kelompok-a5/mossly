@@ -13,12 +13,37 @@ class CommunityTests(TestCase):
         self.thread = Thread.objects.create(author=self.owner, title='Bawa tumbler', content='Mulai dari kebiasaan kecil.', category='tips')
         self.client.force_login(self.owner)
 
-    def test_authentication_required(self):
+    def test_public_pages_and_protected_actions(self):
         self.client.logout()
-        for name, args in [('index', []), ('create', []), ('detail', [self.thread.pk]), ('edit', [self.thread.pk]), ('delete', [self.thread.pk]), ('like', [self.thread.pk])]:
+        for name, args in [('index', []), ('create', []), ('detail', [self.thread.pk])]:
+            response = self.client.get(reverse('community:' + name, args=args))
+            self.assertEqual(response.status_code, 200)
+        for name, args in [('edit', [self.thread.pk]), ('delete', [self.thread.pk]), ('like', [self.thread.pk])]:
             response = self.client.get(reverse('community:' + name, args=args))
             self.assertEqual(response.status_code, 302)
             self.assertIn('/accounts/login/', response.url)
+
+    def test_guest_must_login_before_publishing(self):
+        self.client.logout()
+        url = reverse('community:create')
+        response = self.client.post(url, {
+            'title': 'Cerita tamu',
+            'content': 'Belum boleh tersimpan.',
+            'category': 'general',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Masuk terlebih dahulu untuk mengirim cerita.')
+        self.assertContains(response, reverse('accounts:login'))
+        self.assertFalse(Thread.objects.filter(title='Cerita tamu').exists())
+
+    def test_guest_must_login_before_replying(self):
+        self.client.logout()
+        response = self.client.post(reverse('community:detail', args=[self.thread.pk]), {
+            'content': 'Balasan tamu',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Masuk terlebih dahulu untuk mengirim balasan.')
+        self.assertEqual(self.thread.replies.count(), 0)
 
     def test_feed_filters_and_pagination(self):
         Thread.objects.bulk_create([Thread(author=self.owner, title=f'Cerita {i}', content='Cerita', category='general') for i in range(10)])
