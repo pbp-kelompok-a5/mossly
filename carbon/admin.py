@@ -14,8 +14,9 @@ class EmissionFactorAdmin(admin.ModelAdmin):
     list_display = ('mode', 'kg_co2e_per_km', 'version', 'valid_from', 'valid_to')
     list_filter = ('mode',)
 
-    def has_change_permission(self, request, obj=None):
-        return False
+    def get_readonly_fields(self, request, obj=None):
+        # Admin boleh menutup periode lama, tetapi angka/sumber historis tetap utuh.
+        return ('mode', 'kg_co2e_per_km', 'source', 'version', 'valid_from') if obj else ()
 
     def has_delete_permission(self, request, obj=None):
         return False

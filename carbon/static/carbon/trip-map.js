@@ -28,6 +28,7 @@ function createTripMap(onPick) {
             }
         }
     }
+
     function setLocation(prefix, location) {
         if (!map) return;
         markers[prefix]?.remove();

@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% load static %}
 {% block title %}Carbon Tracker — Mossly{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="{% static 'carbon/trip.css' %}">{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'carbon/trip.css' %}">
+<script src="{% static 'carbon/history.js' %}" defer></script>
+{% endblock %}
 {% block content %}
 <section class="carbon-page" aria-labelledby="carbon-title">
     <header class="carbon-header">
@@ -47,7 +50,7 @@
             </div>
             <div class="carbon-actions">
                 <a href="{% url 'carbon:edit_trip' trip.pk %}" class="btn btn-secondary btn-m" title="Edit">✏️ Edit</a>
-                <form method="post" action="{% url 'carbon:delete_trip' trip.pk %}" onsubmit="return confirm('Yakin ingin menghapus perjalanan ini? Data yang dihapus tidak bisa dikembalikan.')">
+                <form method="post" action="{% url 'carbon:delete_trip' trip.pk %}" data-confirm-delete>
                     {% csrf_token %}
                     <button type="submit" class="btn btn-ghost btn-m" title="Hapus">🗑️ Hapus</button>
                 </form>
@@ -55,6 +58,13 @@
         </li>
         {% endfor %}
     </ul>
+    {% if trips.has_other_pages %}
+    <nav class="carbon-actions" aria-label="Halaman riwayat">
+        {% if trips.has_previous %}<a class="btn btn-secondary btn-m" href="?page={{ trips.previous_page_number }}">Sebelumnya</a>{% endif %}
+        <span class="text-body-s">Halaman {{ trips.number }} dari {{ trips.paginator.num_pages }}</span>
+        {% if trips.has_next %}<a class="btn btn-secondary btn-m" href="?page={{ trips.next_page_number }}">Berikutnya</a>{% endif %}
+    </nav>
+    {% endif %}
     {% else %}
     <div class="card carbon-empty carbon-section">
         <h2 class="text-h3">Belum ada perjalanan yang dicatat</h2>
