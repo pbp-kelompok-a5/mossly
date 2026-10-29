@@ -182,3 +182,28 @@ class GoalFilterTests(FrozenClockMixin, TestCase):
         response = self.client.get(reverse("habits:goal_list"), {"category": "xyz"})
         self.assertContains(response, "Bawa botol")
         self.assertContains(response, "Naik KRL")
+
+
+class JsonEndpointTests(FrozenClockMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = make_user()
+        self.client.force_login(self.user)
+        make_goal(self.user, title="Bawa botol", category="plastik")
+        make_goal(self.user, title="Naik KRL", category="transportasi")
+        make_goal(make_user("other"), title="Punya orang", category="plastik")
+
+    def test_goals_json_only_own_goals(self):
+        data = self.client.get(reverse("habits:goals_json")).json()
+        self.assertEqual({goal["title"] for goal in data}, {"Bawa botol", "Naik KRL"})
+        data = self.client.get(reverse("habits:goals_json"), {"category": "plastik"}).json()
+        self.assertEqual([goal["title"] for goal in data], ["Bawa botol"])
+
+    def test_habits_json(self):
+        make_habit(self.user, name="Pilah sampah")
+        data = self.client.get(reverse("habits:habits_json")).json()
+        self.assertEqual(data[0]["name"], "Pilah sampah")
+
+    def test_json_requires_login(self):
+        self.client.logout()
+        self.assertEqual(self.client.get(reverse("habits:goals_json")).status_code, 302)

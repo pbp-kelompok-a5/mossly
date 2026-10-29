@@ -5,7 +5,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -843,3 +843,34 @@ def habit_detail(request, pk):
         "milestone": _pop_milestone(request),
     }
     return render(request, "habits/habit/habit_detail.html", context)
+
+
+# --- JSON (data delivery, juga untuk Flutter di Proyek Akhir) ---------------------
+
+
+@login_required
+def habits_json(request):
+    data = list(request.user.habits.values("id", "name", "time_of_day", "start_date"))
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+def goals_json(request):
+    goals = request.user.goals.all()
+    category = request.GET.get("category")
+    if category in Goal.Category.values:
+        goals = goals.filter(category=category)
+    data = [
+        {
+            "id": goal.pk,
+            "title": goal.title,
+            "category": goal.category,
+            "target_value": float(goal.target_value),
+            "unit": goal.unit,
+            "progress": float(services.goal_progress_total(goal)),
+            "deadline": goal.deadline.isoformat(),
+            "status": goal.status,
+        }
+        for goal in goals
+    ]
+    return JsonResponse(data, safe=False)
