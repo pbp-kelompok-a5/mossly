@@ -3,6 +3,7 @@ from functools import wraps
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.db.models import Count, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -12,7 +13,7 @@ from .dates import today
 from .forms import TripForm
 from .models import Trip
 from .services import (
-    GeoapifyError, calculate_emission, calculate_route, geocode_search,
+    GeoapifyError, calculate_emission, calculate_route, check_api_limit, geocode_search,
     get_emission_factor, get_mode, location_token, reverse_geocode, validate_route_inputs,
 )
 
@@ -30,6 +31,17 @@ def _user_trips(user):
     return Trip.objects.filter(user=user).select_related('mode', 'emission_factor')
 
 
+def limited_geoapify(view):
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        try:
+            check_api_limit(request.user)
+        except GeoapifyError as error:
+            return _api_error(error)
+        return view(request, *args, **kwargs)
+    return wrapped
+
+
 def _summary(trips):
     values = trips.aggregate(total_trips=Count('pk'), total_distance_km=Sum('distance_km'), total_co2e_kg=Sum('emission_kg'))
     return {key: value if value is not None else Decimal('0') for key, value in values.items()}
@@ -38,8 +50,9 @@ def _summary(trips):
 @login_required
 @require_GET
 def index(request):
-    trips = _user_trips(request.user)
-    return render(request, 'carbon/index.html', {'trips': trips, 'summary': _summary(trips)})
+    trips = _user_trips(request.user).defer('route_geometry', 'legacy_calculation')
+    page = Paginator(trips, 20).get_page(request.GET.get('page'))
+    return render(request, 'carbon/index.html', {'trips': page, 'summary': _summary(trips)})
 
 
 def _form_context(form):
@@ -60,6 +73,7 @@ def _form_context(form):
                    'route_geometry': trip.route_geometry}
     return {'form': form, 'is_edit': bool(trip.pk), 'trip_state': {
         'locations': locations, 'preview': preview, 'original_mode': form.initial.get('mode'),
+        'original_date': form.initial.get('trip_date'),
     }}
 
 
@@ -73,10 +87,11 @@ def trip_form(request, pk=None):
         trip = form.save(commit=False)
         trip.user = request.user
         try:
-            # Edit tanggal/catatan saja mempertahankan hasil lama tanpa request API.
+            # Tanggal ikut menentukan versi faktor; edit catatan saja tetap tanpa API.
             if form.route_changed:
                 mode = get_mode(trip.mode.code)
                 factor = get_emission_factor(mode, trip.trip_date)
+                check_api_limit(request.user)
                 route = calculate_route(trip.origin_lat, trip.origin_lng, trip.destination_lat, trip.destination_lng, mode.geoapify_profile)
                 trip.distance_km = route['distance_km']
                 trip.distance_source = Trip.DistanceSource.ROUTING
@@ -110,6 +125,7 @@ def _api_error(error):
 
 @api_login_required
 @require_GET
+@limited_geoapify
 def api_geocode(request):
     query = request.GET.get('q', '').strip()
     if len(query) < 2:
@@ -125,6 +141,7 @@ def api_geocode(request):
 
 @api_login_required
 @require_GET
+@limited_geoapify
 def api_reverse_geocode(request):
     try:
         location = reverse_geocode(request.GET.get('lat'), request.GET.get('lon'))
@@ -137,6 +154,7 @@ def api_reverse_geocode(request):
 
 @api_login_required
 @require_GET
+@limited_geoapify
 def api_route(request):
     try:
         mode = get_mode(request.GET.get('mode'))
@@ -163,7 +181,12 @@ def api_route(request):
 @api_login_required
 @require_GET
 def api_history(request):
-    trips = _user_trips(request.user)
+    # Geometry besar hanya disertakan jika konsumen memintanya secara eksplisit.
+    include_geometry = request.GET.get('include_geometry') == '1'
+    trips = _user_trips(request.user).defer('legacy_calculation')
+    if not include_geometry:
+        trips = trips.defer('route_geometry')
+    page = Paginator(trips, 100).get_page(request.GET.get('page'))
     rows = [{
         'id': trip.pk, 'date': trip.trip_date.isoformat(), 'traveled_at': trip.traveled_at.isoformat(),
         'origin': trip.origin_label, 'destination': trip.destination_label,
@@ -171,14 +194,18 @@ def api_history(request):
         'destination_lat': float(trip.destination_lat), 'destination_lng': float(trip.destination_lng),
         'mode_id': trip.mode_id, 'mode': trip.mode.geoapify_profile, 'mode_code': trip.mode.code, 'mode_display': trip.mode.name,
         'distance_km': float(trip.distance_km), 'distance_source': trip.distance_source,
-        'duration_s': trip.duration_s, 'route_geometry': trip.route_geometry,
+        'duration_s': trip.duration_s,
+        **({'route_geometry': trip.route_geometry} if include_geometry else {}),
         'co2e_kg': float(trip.emission_kg), 'emission_kg': float(trip.emission_kg), 'note': trip.note,
         'emission_factor_id': trip.emission_factor_id,
         'emission_factor': float(trip.emission_factor.kg_co2e_per_km),
         'emission_factor_version': trip.emission_factor.version, 'emission_factor_source': trip.emission_factor.source,
-    } for trip in trips]
+    } for trip in page]
     totals = _summary(trips)
-    return JsonResponse({'trips': rows, 'emission_metric': 'CO2e', 'summary': {
+    return JsonResponse({'trips': rows, 'emission_metric': 'CO2e', 'pagination': {
+        'page': page.number, 'pages': page.paginator.num_pages,
+        'next_page': page.next_page_number() if page.has_next() else None,
+    }, 'summary': {
         'total_trips': totals['total_trips'], 'total_distance_km': float(totals['total_distance_km']),
         'total_co2e_kg': float(totals['total_co2e_kg']),
     }})

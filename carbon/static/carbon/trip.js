@@ -56,6 +56,7 @@
             return;
         }
         if (initial.preview && mode === initial.original_mode &&
+            document.getElementById('id_trip_date').value === initial.original_date &&
             ['origin', 'destination'].every(prefix =>
                 locations[prefix].name === initial.locations[prefix].name &&
                 Number(locations[prefix].lat) === Number(initial.locations[prefix].lat) &&

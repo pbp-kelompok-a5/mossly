@@ -1,0 +1,29 @@
+{% load static %}
+<dialog class="dash-modal" id="badge-modal" aria-labelledby="badge-modal-title">
+  <div class="dash-modal-band">
+    <img class="dash-decor dash-modal-leaf" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
+    <img class="dash-decor dash-modal-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+    <span class="dash-modal-trophy"><svg class="dash-ico"><use href="#i-trophy"/></svg></span>
+    <svg class="dash-decor dash-modal-hill" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path class="dash-hill-back" d="M0 60C160 10 320 90 520 50C720 10 900 80 1200 30V120H0V60Z"/>
+      <path class="dash-hill-front" d="M0 92C200 52 380 112 600 82C820 52 1000 102 1200 72V120H0V92Z"/>
+    </svg>
+    <button type="button" class="dash-modal-close" data-close aria-label="Tutup"><svg class="dash-ico"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="dash-modal-body">
+    <p class="dash-hero-eyebrow dash-modal-eyebrow">Badge baru diraih</p>
+    <h2 class="dash-modal-title" id="badge-modal-title">{{ new_badge.achievement.name }}</h2>
+    <p class="dash-modal-text">{{ new_badge.achievement.description }}. Badge ini sekarang ada di koleksimu.{% if new_badge.others %} Ada {{ new_badge.others }} badge baru lainnya di koleksi.{% endif %}</p>
+    <span class="dash-modal-pill dash-modal-pill-{{ new_badge.tone }}"><svg class="dash-ico"><use href="#{{ new_badge.achievement.icon }}"/></svg>{{ new_badge.achievement.name }}</span>
+    {% if new_badge.shared %}<p class="dash-modal-flow"><svg class="dash-ico"><use href="#i-check"/></svg>Dikirim ke Komunitas sebagai post otomatis</p>{% endif %}
+    <div class="dash-modal-actions">
+      {% if new_badge.shared %}<a class="btn" href="{% url 'community:detail' new_badge.thread_pk %}">Lihat di Komunitas <svg class="dash-ico"><use href="#i-arrow"/></svg></a>{% else %}<a class="btn" href="{% url 'dashboard:badges' %}">Lihat koleksi badge <svg class="dash-ico"><use href="#i-arrow"/></svg></a>{% endif %}
+      <button type="button" class="btn btn-ghost" data-close>Lanjutkan</button>
+    </div>
+  </div>
+</dialog>
+<script>
+  const badgeModal = document.getElementById('badge-modal');
+  badgeModal.showModal();
+  badgeModal.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', () => badgeModal.close()));
+</script>

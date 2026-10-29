@@ -33,7 +33,7 @@ class HabitTabTests(FrozenClockMixin, TestCase):
         response = self.client.get(self.url)
 
         self.assertContains(response, "1 dari 3 kebiasaan hijau sudah kamu selesaikan hari ini")
-        self.assertContains(response, "Tinggal 2 lagi untuk hari yang sempurna.")
+        self.assertNotContains(response, "untuk hari yang sempurna")
         self.assertContains(response, "Senin, 26 Oktober 2026")
         self.assertContains(response, "Selamat siang, tania")
         self.assertContains(response, 'class="habit-group-title"', count=3)

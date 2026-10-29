@@ -4,19 +4,25 @@ https://apidocs.geoapify.com/docs/geocoding/
 https://apidocs.geoapify.com/docs/routing/
 """
 
-import os
+from hashlib import sha256
+from time import time
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 import requests
 from django.apps import apps
+from django.conf import settings
 from django.core import signing
-from django.db.models import Q
+from django.core.cache import cache
+from django.db import transaction
+from django.db.models import F, Q
 
 from .dates import today
-from .models import EmissionFactor, SUPPORTED_PROFILES, TransportMode
+from .models import ApiUsage, EmissionFactor, SUPPORTED_PROFILES, TransportMode
 
 # Faktor aktif dibaca dari tabel EmissionFactor, bukan konstanta runtime.
 LOCATION_SALT = 'carbon.location.v1'
+API_MINUTE_LIMIT = 30
+API_DAILY_LIMIT = 150
 
 
 class GeoapifyError(Exception):
@@ -27,7 +33,31 @@ class GeoapifyError(Exception):
 
 
 def get_api_key():
-    return os.getenv('GEOAPIFY_API_KEY', '').strip()
+    return getattr(settings, 'GEOAPIFY_API_KEY', '').strip()
+
+
+def check_api_limit(user):
+    """Satu jatah untuk pencarian, pin, preview, dan penyimpanan rute.
+
+    Counter disimpan di DB agar tidak ter-reset saat server restart dan tetap
+    dipakai bersama oleh semua worker. Cache hanya untuk hasil pencarian.
+    """
+    day, minute = today(), int(time()) // 60
+    with transaction.atomic():
+        ApiUsage.objects.get_or_create(user=user)
+        usage = ApiUsage.objects.filter(user=user)
+        usage.exclude(day=day).update(day=day, daily_count=0)
+        usage.exclude(minute=minute).update(minute=minute, minute_count=0)
+        accepted = usage.filter(
+            day=day, minute=minute,
+            daily_count__lt=API_DAILY_LIMIT, minute_count__lt=API_MINUTE_LIMIT,
+        ).update(daily_count=F('daily_count') + 1, minute_count=F('minute_count') + 1)
+    if not accepted:
+        raise GeoapifyError(
+            'Batas pencarian/perhitungan tercapai (30 per menit, 150 per hari). '
+            'Coba setelah satu menit, atau besok jika jatah harian habis.',
+            'rate_limited', 429,
+        )
 
 
 def coordinate(value, limit):
@@ -83,6 +113,11 @@ def _request(endpoint, params):
 
 
 def geocode_search(query):
+    query = ' '.join(query.split())
+    key = 'carbon:geocode:v1:' + sha256(query.casefold().encode()).hexdigest()
+    cached = cache.get(key)
+    if cached is not None:
+        return cached
     features = _request('geocode/search', {'text': query, 'filter': 'countrycode:id', 'limit': 5})
     results = []
     for feature in features[:5]:
@@ -97,6 +132,8 @@ def geocode_search(query):
             continue
     if features and not results:
         raise GeoapifyError('Hasil lokasi tidak valid. Coba nama tempat yang lebih lengkap.')
+    # Hanya lokasi publik yang di-cache; token tetap dibuat untuk masing-masing user.
+    cache.set(key, results, 3600)
     return results
 
 

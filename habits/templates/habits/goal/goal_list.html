@@ -20,8 +20,7 @@
       <div class="focus-stats">
         <div class="progress-ring" style="--value: {{ nearest.percent }}" role="img"
              aria-label="Goal terdekat {{ nearest.percent }} persen">
-          <span class="progress-ring-value">{{ nearest.percent }}%</span>
-          <span class="progress-ring-label">goal terdekat</span>
+          <img class="progress-ring-seedling" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
         </div>
         <div class="focus-streak">
           <span class="focus-streak-icon">{% include "habits/components/icon.html" with name="calendar" %}</span>
@@ -33,7 +32,6 @@
       <img class="decor focus-decor-leaf" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
       <img class="decor focus-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
       <img class="decor focus-decor-leaf-sm" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
-      <img class="decor focus-decor-seedling" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
       <img class="decor focus-decor-grass focus-decor-grass-left" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
       <img class="decor focus-decor-grass focus-decor-grass-right" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
       <svg class="decor decor-hill focus-decor-hill" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">

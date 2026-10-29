@@ -103,18 +103,18 @@ main.container:has(> .habits-page) {
   gap: var(--space-6);
   overflow: hidden;
   padding: var(--space-6) var(--space-6) var(--space-16);
-  color: var(--color-text-on-brand);
-  background: var(--color-bg-brand);
+  color: var(--color-moss-900);
+  background: var(--color-bg-sage);
   border-radius: var(--radius-2xl);
   /* Own stacking context so the hills can sit behind the other decorations. */
   isolation: isolate;
 }
 .focus-panel > :not(.decor) { position: relative; z-index: 1; }
-.focus-panel .eyebrow { color: var(--color-text-on-inverse-muted); }
+.focus-panel .eyebrow { color: var(--color-text-primary); }
 
 .focus-panel-text { display: grid; gap: var(--space-3); justify-items: start; }
 .focus-title { font: var(--type-h3); }
-.focus-subtitle { font: var(--type-body-m); color: var(--color-text-on-inverse-muted); }
+.focus-subtitle { font: var(--type-body-m); color: var(--color-text-primary); }
 .focus-cta { margin-top: var(--space-3); }
 
 .focus-panel-soft {
@@ -132,6 +132,7 @@ main.container:has(> .habits-page) {
 
 .progress-ring {
   --_size: var(--space-24);
+  --_track: var(--space-3);
   position: relative;
   display: grid;
   place-content: center;
@@ -141,20 +142,31 @@ main.container:has(> .habits-page) {
   text-align: center;
   border-radius: var(--radius-full);
   background: conic-gradient(
-    var(--color-clay-300) calc(var(--value) * 1%),
-    var(--color-moss-700) 0
+    var(--color-clay-500) calc(var(--value) * 1%),
+    var(--color-moss-200) 0
   );
 }
 .progress-ring::before {
   content: "";
   position: absolute;
-  inset: var(--space-3);
+  inset: var(--_track);
   border-radius: var(--radius-full);
-  background: var(--color-bg-brand);
+  background: var(--color-bg-sage);
 }
 .progress-ring > * { position: relative; }
+/* Seedling behind the numbers, growing from the bottom of the inner circle.
+   The asset shares the sage greens, so lighten it to stay visible. */
+.progress-ring > .progress-ring-seedling {
+  position: absolute;
+  left: 50%;
+  bottom: var(--_track);
+  width: 55%;
+  transform: translateX(-50%);
+  opacity: .75;
+  filter: brightness(1.3);
+}
 .progress-ring-value { font: var(--type-h3); }
-.progress-ring-label { font: var(--type-label-s); color: var(--color-text-on-inverse-muted); }
+.progress-ring-label { font: var(--type-label-s); color: var(--color-text-primary); }
 
 .focus-streak { display: grid; gap: var(--space-1); justify-items: start; }
 .focus-streak-icon {
@@ -163,17 +175,19 @@ main.container:has(> .habits-page) {
   width: var(--space-12);
   height: var(--space-12);
   margin-bottom: var(--space-2);
-  color: var(--color-clay-800);
-  background: var(--color-clay-300);
+  color: var(--color-clay-700);
+  background: var(--color-bg-canvas);
   border-radius: var(--radius-full);
 }
 .focus-streak-value { font: var(--type-h3); }
-.focus-streak-label { font: var(--type-body-s); color: var(--color-text-on-inverse-muted); }
+.focus-streak-label { font: var(--type-body-s); color: var(--color-text-primary); }
 
 /* Inline hills stretch to the panel width; colors follow the panel. */
 .decor-hill { --_hill-back: var(--color-moss-400); --_hill-front: var(--color-moss-300); }
 .decor-hill-back { fill: var(--_hill-back); }
 .decor-hill-front { fill: var(--_hill-front); }
+/* The default front hill matches the sage panel, so go one step darker there. */
+.focus-panel .decor-hill { --_hill-back: var(--color-moss-400); --_hill-front: var(--color-moss-500); }
 .focus-panel-soft .decor-hill { --_hill-back: var(--color-moss-200); --_hill-front: var(--color-moss-300); }
 
 .focus-decor-hill {
@@ -187,7 +201,6 @@ main.container:has(> .habits-page) {
 .focus-decor-hill { z-index: -1; }
 .focus-decor-flower,
 .focus-decor-leaf-sm,
-.focus-decor-seedling,
 .focus-decor-grass { display: none; }
 /* Empty-state scene: only on wide screens, where it sits beside the text. */
 
@@ -1002,8 +1015,7 @@ html:not(.js) .js-only { display: none; }
 
   .focus-panel { padding: var(--space-10) var(--space-10) var(--space-20); }
   .focus-title { font: var(--type-h2); }
-  .progress-ring { --_size: calc(var(--space-30) + var(--space-8)); }
-  .progress-ring::before { inset: var(--space-4); }
+  .progress-ring { --_size: calc(var(--space-30) + var(--space-8)); --_track: var(--space-4); }
   .progress-ring-value { font: var(--type-stat-l); }
   .focus-panel { padding-bottom: var(--space-16); }
   .focus-decor-hill { height: var(--space-20); }
@@ -1056,8 +1068,7 @@ html:not(.js) .js-only { display: none; }
 
   /* Taller hills: the call-to-action sits on the back hill, as in the design. */
   .focus-decor-hill { height: calc(var(--space-30) + var(--space-6)); }
-  .progress-ring { --_size: calc(var(--space-30) + var(--space-16)); }
-  .progress-ring::before { inset: var(--space-5); }
+  .progress-ring { --_size: calc(var(--space-30) + var(--space-16)); --_track: var(--space-5); }
 
   .focus-decor-leaf { top: var(--space-6); right: auto; left: 54%; width: var(--space-16); }
   .focus-decor-flower { display: block; top: var(--space-12); left: 60%; width: var(--space-10); }
@@ -1069,8 +1080,6 @@ html:not(.js) .js-only { display: none; }
     transform: rotate(25deg);
     opacity: .9;
   }
-  /* The asset shares the hills' greens; lighten it so it reads against them. */
-  .focus-decor-seedling { display: block; bottom: var(--space-1); left: 49%; width: var(--space-12); filter: brightness(1.5); }
   .focus-decor-grass { display: block; bottom: var(--space-12); width: var(--space-8); opacity: .5; }
   .focus-decor-grass-left { left: 24%; }
   .focus-decor-grass-right { right: 6%; }

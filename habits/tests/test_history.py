@@ -129,7 +129,6 @@ class HistoryPageTests(FrozenClockMixin, TestCase):
         response = self.client.get(self.url)
         # October: 20 of 26 days (77%); September: 15 of 30 (50%).
         self.assertContains(response, "77% konsistensi bulan ini, naik 27% dari September")
-        self.assertContains(response, "Kamu sudah menyelesaikan 20 check-in dan 20 hari sempurna.")
         self.assertContains(response, "Kalender Oktober")
         self.assertContains(response, 'aria-current="page">Bulan ini')
 
@@ -153,13 +152,12 @@ class HistoryPageTests(FrozenClockMixin, TestCase):
                 self.assertNotContains(response, "progress-ring-value")
                 self.assertContains(response, "Progres: Naik transportasi umum 20 kali")
 
-    def test_habit_without_check_ins_this_month_gets_a_gentle_subtitle(self):
+    def test_habit_without_check_ins_this_month_shows_zero_without_subtitle(self):
         make_habit(self.user, start_date=date(2026, 10, 1))
         services.log_goal_progress(make_goal(self.user), Decimal("3"))
         response = self.client.get(self.url)
         self.assertContains(response, "0% konsistensi bulan ini")
-        self.assertContains(response, "Satu check-in kecil hari ini sudah jadi awal yang baik.")
-        self.assertNotContains(response, "Pertahankan ritmenya")
+        self.assertNotContains(response, "focus-subtitle")
 
     def test_three_month_view(self):
         self.seed_two_months()
@@ -174,7 +172,6 @@ class HistoryPageTests(FrozenClockMixin, TestCase):
         self.seed_two_months()
         response = self.client.get(self.url, {"period": "year"})
         self.assertContains(response, "35 check-in sejak Januari 2026")
-        self.assertContains(response, "Kamu paling konsisten di bulan Oktober. Terus tumbuh.")
         self.assertContains(response, "35 check-in · 35 hari sempurna")
         self.assertContains(response, "Kalender 2026")
 
