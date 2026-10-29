@@ -1,9 +1,11 @@
 from datetime import date, datetime, timedelta
+from functools import wraps
 from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -212,7 +214,30 @@ def habit_delete(request, pk):
     return render(request, "habits/habit/habit_confirm_delete.html", {"habit": habit})
 
 
-@login_required
+def htmx_login_required(view):
+    """Seperti @login_required, tapi request HTMX dibalas header HX-Redirect.
+
+    Redirect biasa akan diikuti HTMX, lalu halaman login ikut terpasang di dalam
+    baris habit (lihat catatan @login_required pada Tutorial 05).
+    """
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        if not request.user.is_authenticated and request.headers.get("HX-Request"):
+            response = HttpResponse(status=401)
+            response["HX-Redirect"] = f"{reverse('accounts:login')}?next={reverse('habits:index')}"
+            return response
+        return login_required(view)(request, *args, **kwargs)
+    return wrapped
+
+
+def _row_partial(request, habit):
+    """Satu baris habit untuk HTMX: hanya <li> ini yang diganti, tanpa reload."""
+    today = services.local_today()
+    dates = set(habit.checkins.values_list("checkin_date", flat=True))
+    return render(request, "habits/components/habit_row.html", {"row": _habit_row(habit, dates, today)})
+
+
+@htmx_login_required
 @require_POST
 def habit_check_in(request, pk):
     habit = get_object_or_404(Habit, pk=pk, user=request.user)
@@ -225,14 +250,23 @@ def habit_check_in(request, pk):
             # Celebrate the highest milestone when several are crossed at once.
             top = max(events, key=lambda event: event.milestone_days)
             request.session[MILESTONE_SESSION_KEY] = top.pk
+            if request.headers.get("HX-Request"):
+                # Muat ulang penuh supaya dialog milestone tampil.
+                response = HttpResponse()
+                response["HX-Refresh"] = "true"
+                return response
+    if request.headers.get("HX-Request"):
+        return _row_partial(request, habit)
     return _redirect_back(request, "habits:index")
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def habit_undo_check_in(request, pk):
     habit = get_object_or_404(Habit, pk=pk, user=request.user)
     services.undo_check_in(habit)
+    if request.headers.get("HX-Request"):
+        return _row_partial(request, habit)
     return _redirect_back(request, "habits:index")
 
 

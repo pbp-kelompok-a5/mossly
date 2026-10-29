@@ -16,14 +16,16 @@
   </div>
   {% if not hide_check %}
     {% if row.is_done %}
-      <form method="post" action="{% url 'habits:habit_undo_check_in' row.pk %}">
+      <form method="post" action="{% url 'habits:habit_undo_check_in' row.pk %}"
+            hx-post="{% url 'habits:habit_undo_check_in' row.pk %}" hx-target="closest li" hx-swap="outerHTML">
         {% csrf_token %}
         <button class="btn btn-icon check-button is-done" type="submit" aria-label="Batalkan check-in {{ row.name }}">
           {% include "habits/components/icon.html" with name="check" %}
         </button>
       </form>
     {% else %}
-      <form method="post" action="{% url 'habits:habit_check_in' row.pk %}">
+      <form method="post" action="{% url 'habits:habit_check_in' row.pk %}"
+            hx-post="{% url 'habits:habit_check_in' row.pk %}" hx-target="closest li" hx-swap="outerHTML">
         {% csrf_token %}
         <button class="btn btn-icon btn-secondary check-button" type="submit" aria-label="Check-in {{ row.name }}">
           {% include "habits/components/icon.html" with name="check" %}

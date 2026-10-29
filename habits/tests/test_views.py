@@ -132,3 +132,33 @@ class GoalActionTests(FrozenClockMixin, TestCase):
     def test_delete_goal(self):
         self.client.post(reverse("habits:goal_delete", args=[self.goal.pk]))
         self.assertFalse(Goal.objects.exists())
+
+
+class HtmxCheckInTests(TestCase):
+    def setUp(self):
+        self.user = make_user()
+        self.client.force_login(self.user)
+        self.habit = make_habit(self.user, name="Bawa tumbler")
+
+    def test_htmx_check_in_returns_only_the_row(self):
+        url = reverse("habits:habit_check_in", args=[self.habit.pk])
+        response = self.client.post(url, HTTP_HX_REQUEST="true")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "habits/components/habit_row.html")
+        self.assertNotContains(response, "<html")
+        self.assertContains(response, "is-done")
+        self.assertEqual(self.habit.checkins.count(), 1)
+
+    def test_htmx_anonymous_gets_hx_redirect(self):
+        self.client.logout()
+        response = self.client.post(
+            reverse("habits:habit_check_in", args=[self.habit.pk]), HTTP_HX_REQUEST="true"
+        )
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue(response["HX-Redirect"].startswith(reverse("accounts:login")))
+
+    def test_htmx_undo_returns_only_the_row(self):
+        self.client.post(reverse("habits:habit_check_in", args=[self.habit.pk]), HTTP_HX_REQUEST="true")
+        response = self.client.post(reverse("habits:habit_undo_check_in", args=[self.habit.pk]), HTTP_HX_REQUEST="true")
+        self.assertNotContains(response, "is-done")
+        self.assertEqual(self.habit.checkins.count(), 0)
