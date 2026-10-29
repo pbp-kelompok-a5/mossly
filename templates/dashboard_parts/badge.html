@@ -1,0 +1,6 @@
+<div class="dash-badge {% if b.earned %}dash-badge-{{ b.tone }}{% else %}dash-badge-locked{% endif %}{% if b.is_new %} dash-badge-new{% endif %}" data-status="{% if b.earned %}earned{% else %}locked{% endif %}">
+  <div class="dash-hex"><svg class="dash-ico"><use href="#{% if b.earned %}{{ b.icon }}{% else %}i-lock{% endif %}"/></svg></div>
+  <p class="dash-badge-name">{{ b.name }}</p>
+  <p class="dash-badge-desc">{% if b.earned %}{{ b.description }}{% else %}{{ b.progress }}{% endif %}</p>
+  {% if b.is_new %}<span class="dash-tag">Baru diraih</span>{% elif b.earned %}<span class="dash-tag dash-tag-soft">Diraih</span>{% else %}<div class="dash-bar"><span class="dash-bar-fill" style="--p:{{ b.percent }}"></span></div>{% endif %}
+</div>

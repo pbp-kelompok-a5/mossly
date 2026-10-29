@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Koleksi Badge · Mossly{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/dashboard-fildza.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dash-page">
+  {% include "dashboard_parts/icons.html" %}
+
+  <a class="dash-back" href="{% url 'dashboard:index' %}">
+    <svg class="dash-ico"><use href="#i-back"/></svg>Kembali ke Dashboard
+  </a>
+
+  <header class="dash-badges-head">
+    <h1 class="dash-badges-title">Koleksi badge</h1>
+    <p class="dash-hero-text">{{ earned_count }} dari {{ total_badges }} diraih. {% if share_on %}Badge dikirim otomatis ke Komunitas saat kamu meraihnya, kecuali kamu mematikannya.{% else %}Opsi berbagi ke Komunitas sedang mati, jadi badge baru tidak dikirim otomatis.{% endif %}</p>
+    <div class="dash-tabs" role="group" aria-label="Filter badge">
+      <button type="button" class="dash-tab" data-filter="all" aria-pressed="true">Semua · {{ total_badges }}</button>
+      {% for g in groups %}<button type="button" class="dash-tab" data-filter="{{ g.key }}" aria-pressed="false">{{ g.label }} · {{ g.total }}</button>{% endfor %}
+    </div>
+  </header>
+
+  {% for g in groups %}
+  <section class="dash-card" data-group="{{ g.key }}">
+    <div class="dash-card-head">
+      <h2 class="dash-card-title">{{ g.label }}</h2>
+      <p class="dash-note">{{ g.earned }} dari {{ g.total }} diraih</p>
+    </div>
+    <div class="dash-badges dash-badges-5">
+      {% for b in g.items %}{% include "dashboard_parts/badge.html" %}{% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
+
+<script>
+  const tabs = document.querySelectorAll('.dash-tab');
+  const groups = document.querySelectorAll('[data-group]');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.setAttribute('aria-pressed', t === tab));
+      groups.forEach(g => { g.hidden = tab.dataset.filter !== 'all' && g.dataset.group !== tab.dataset.filter; });
+    });
+  });
+</script>
+{% endblock %}

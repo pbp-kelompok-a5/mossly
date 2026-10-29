@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard · Mossly{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/dashboard-fildza.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dash-page">
+  {% include "dashboard_parts/icons.html" %}
+
+  {% if is_empty %}
+  <section class="dash-hero">
+    {% include "dashboard_parts/hero_decor.html" %}
+    <p class="dash-hero-eyebrow">Personal Sustainability Dashboard</p>
+    <h1 class="dash-hero-title">Halo, {{ display_name }}!</h1>
+    <p class="dash-hero-text">Kebun kecilmu baru ditanam. Mulai dari satu langkah kecil, dan rekapnya akan tumbuh di sini.</p>
+    <div class="dash-chips">
+      <span class="dash-chip"><svg class="dash-ico"><use href="#i-award"/></svg>{{ earned_count }} badge diraih</span>
+      <span class="dash-chip"><svg class="dash-ico"><use href="#i-flame"/></svg>Streak belum dimulai</span>
+    </div>
+  </section>
+
+  <section class="dash-stats">
+    <article class="dash-stat">
+      <div class="dash-stat-icon dash-tint-clay"><svg class="dash-ico"><use href="#i-leaf"/></svg></div>
+      <div class="dash-stat-body"><p class="dash-stat-label">Total emisi bulan ini</p><p class="dash-stat-value">0 kg CO₂e</p><p class="dash-stat-sub">belum ada perjalanan</p></div>
+    </article>
+    <article class="dash-stat">
+      <div class="dash-stat-icon dash-tint-moss"><svg class="dash-ico"><use href="#i-flame"/></svg></div>
+      <div class="dash-stat-body"><p class="dash-stat-label">Streak aktif</p><p class="dash-stat-value">0 hari</p><p class="dash-stat-sub">mulai dari habit pertama</p></div>
+    </article>
+    <article class="dash-stat">
+      <div class="dash-stat-icon dash-tint-pink"><svg class="dash-ico"><use href="#i-target"/></svg></div>
+      <div class="dash-stat-body"><p class="dash-stat-label">Goal selesai</p><p class="dash-stat-value">0 / 0</p><p class="dash-stat-sub">belum ada goal</p></div>
+    </article>
+    <article class="dash-stat">
+      <div class="dash-stat-icon dash-tint-sand"><svg class="dash-ico"><use href="#i-message"/></svg></div>
+      <div class="dash-stat-body"><p class="dash-stat-label">Aksi komunitas</p><p class="dash-stat-value">0 aksi</p><p class="dash-stat-sub">belum ada thread</p></div>
+    </article>
+  </section>
+
+  <section class="dash-card">
+    <div class="dash-card-head">
+      <h2 class="dash-card-title">Mulai dari sini</h2>
+      <p class="dash-note">Empat langkah kecil untuk mengisi dashboard-mu</p>
+    </div>
+    <ul class="dash-steps">
+      <li class="dash-step"><span class="dash-stat-icon dash-tint-clay"><svg class="dash-ico"><use href="#i-pin"/></svg></span><span class="dash-step-text"><strong>Catat perjalanan pertama</strong><span class="dash-note">Lihat jejak emisimu</span></span><a class="dash-link" href="{% url 'carbon:index' %}">Buka Carbon Tracker <svg class="dash-ico"><use href="#i-arrow"/></svg></a></li>
+      <li class="dash-step"><span class="dash-stat-icon dash-tint-moss"><svg class="dash-ico"><use href="#i-flame"/></svg></span><span class="dash-step-text"><strong>Tambah habit pertama</strong><span class="dash-note">Bangun streak harian</span></span><a class="dash-link" href="{% url 'habits:index' %}">Buka Habit <svg class="dash-ico"><use href="#i-arrow"/></svg></a></li>
+      <li class="dash-step"><span class="dash-stat-icon dash-tint-pink"><svg class="dash-ico"><use href="#i-target"/></svg></span><span class="dash-step-text"><strong>Buat goal pertama</strong><span class="dash-note">Tentukan target dan deadline</span></span><a class="dash-link" href="{% url 'habits:goal_list' %}">Buka Goal <svg class="dash-ico"><use href="#i-arrow"/></svg></a></li>
+      <li class="dash-step"><span class="dash-stat-icon dash-tint-sand"><svg class="dash-ico"><use href="#i-message"/></svg></span><span class="dash-step-text"><strong>Sapa komunitas</strong><span class="dash-note">Bagikan cerita pertamamu</span></span><a class="dash-link" href="{% url 'community:index' %}">Buka Komunitas <svg class="dash-ico"><use href="#i-arrow"/></svg></a></li>
+    </ul>
+  </section>
+
+  <section class="dash-card">
+    <div class="dash-card-head">
+      <h2 class="dash-card-title">Koleksi badge</h2>
+      <p class="dash-note">{{ earned_count }} dari {{ total_badges }} diraih · badge pertamamu hanya satu langkah lagi · <a class="dash-link" href="{% url 'dashboard:badges' %}">Lihat semua <svg class="dash-ico"><use href="#i-arrow"/></svg></a></p>
+    </div>
+    <div class="dash-badges dash-badges-4">
+      {% for b in starter_badges %}{% include "dashboard_parts/badge.html" %}{% endfor %}
+    </div>
+  </section>
+
+  {% else %}
+  <section class="dash-hero">
+    {% include "dashboard_parts/hero_decor.html" %}
+    <p class="dash-hero-eyebrow">Personal Sustainability Dashboard</p>
+    <h1 class="dash-hero-title">Halo, {{ display_name }}!</h1>
+    <p class="dash-hero-text">Rekap emisi, kebiasaan, goal, dan pencapaianmu bulan {{ month_name }}.</p>
+    <div class="dash-chips">
+      <span class="dash-chip"><svg class="dash-ico"><use href="#i-award"/></svg>{{ earned_count }} badge diraih</span>
+      <span class="dash-chip"><svg class="dash-ico"><use href="#i-flame"/></svg>{% if stats.streak %}{{ stats.streak }} hari streak aktif{% else %}Streak belum dimulai{% endif %}</span>
+    </div>
+  </section>
+
+  <section class="dash-stats">
+    <article class="dash-stat">
+      <div class="dash-stat-icon dash-tint-clay"><svg class="dash-ico"><use href="#i-leaf"/></svg></div>
+      <div class="dash-stat-body"><p class="dash-stat-label">Total emisi bulan ini</p><p class="dash-stat-value">{{ stats.emission }} kg CO₂e</p><p class="dash-stat-sub">{{ stats.emission_sub }}</p></div>
+    </article>
+    <article class="dash-stat">
+      <div class="dash-stat-icon dash-tint-moss"><svg class="dash-ico"><use href="#i-flame"/></svg></div>
+      <div class="dash-stat-body"><p class="dash-stat-label">Streak aktif</p><p class="dash-stat-value">{{ stats.streak }} hari</p><p class="dash-stat-sub">{% if stats.streak_best %}rekor {{ stats.streak_best }} hari{% else %}belum ada streak{% endif %}</p></div>
+    </article>
+    <article class="dash-stat">
+      <div class="dash-stat-icon dash-tint-pink"><svg class="dash-ico"><use href="#i-target"/></svg></div>
+      <div class="dash-stat-body"><p class="dash-stat-label">Goal selesai</p><p class="dash-stat-value">{{ stats.goals_done }} / {{ stats.goals_total }}</p><p class="dash-stat-sub">{{ stats.goals_active }} masih berjalan</p></div>
+    </article>
+    <article class="dash-stat">
+      <div class="dash-stat-icon dash-tint-sand"><svg class="dash-ico"><use href="#i-message"/></svg></div>
+      <div class="dash-stat-body"><p class="dash-stat-label">Aksi komunitas</p><p class="dash-stat-value">{{ stats.community }} aksi</p><p class="dash-stat-sub">{{ stats.threads }} thread · {{ stats.replies }} reply · {{ stats.likes }} like</p></div>
+    </article>
+  </section>
+
+  <section class="dash-emission">
+    <article class="dash-card">
+      <div class="dash-card-head">
+        <h2 class="dash-card-title">Jejak emisi bulan ini</h2>
+        <p class="dash-note">dari Carbon Tracker · kg CO₂e per minggu · <a class="dash-link" href="{% url 'carbon:index' %}">Buka <svg class="dash-ico"><use href="#i-arrow"/></svg></a></p>
+      </div>
+      <div class="dash-chart-wrap">
+        <svg class="dash-chart" viewBox="0 0 770 250" role="img" aria-label="Grafik emisi per minggu">
+          <line class="dash-chart-grid" x1="0" x2="770" y1="44" y2="44"/>
+          <line class="dash-chart-grid" x1="0" x2="770" y1="122" y2="122"/>
+          <line class="dash-chart-grid" x1="0" x2="770" y1="200" y2="200"/>
+          {% if chart.line %}
+          <polygon class="dash-chart-area" points="{{ chart.area }}"/>
+          <polyline class="dash-chart-line" points="{{ chart.line }}"/>
+          {% endif %}
+          {% for p in chart.points %}
+          <circle class="dash-chart-dot{% if p.now %} dash-chart-dot-now{% endif %}" cx="{{ p.x }}" cy="{{ p.y }}" r="{% if p.now %}7{% else %}6{% endif %}"/>
+          <text class="dash-chart-value{% if p.now %} dash-chart-value-now{% endif %}" x="{{ p.x }}" y="{{ p.label_y }}">{{ p.value }}</text>
+          <text class="dash-chart-label{% if p.now %} dash-chart-label-now{% endif %}" x="{{ p.x }}" y="232">{{ p.name }}</text>
+          {% endfor %}
+        </svg>
+      </div>
+      <p class="dash-summary">{{ chart.summary }}</p>
+    </article>
+
+    <article class="dash-card dash-donut-card">
+      <h2 class="dash-card-title">Emisi per moda</h2>
+      <div class="dash-donut{% if not modes.has_data %} dash-donut-empty{% endif %}" style="--a:{{ modes.a }}%; --b:{{ modes.b }}%" role="img" aria-label="Proporsi emisi per moda">
+        <span class="dash-donut-value">{{ modes.total }}</span>
+        <span class="dash-donut-unit">kg CO₂e</span>
+      </div>
+      <ul class="dash-legend">
+        {% for item in modes.legend %}
+        <li class="dash-legend-item"><span class="dash-legend-dot" style="--_dot: {{ item.color }}"></span><span class="dash-legend-name">{{ item.name }}</span><span class="dash-legend-pct">{{ item.percent }}%</span></li>
+        {% endfor %}
+      </ul>
+    </article>
+  </section>
+
+  <section class="dash-habit-goal">
+    <article class="dash-card">
+      <div class="dash-card-head">
+        <h2 class="dash-card-title">Habit minggu ini</h2>
+        <a class="dash-link" href="{% url 'habits:index' %}">Buka <svg class="dash-ico"><use href="#i-arrow"/></svg></a>
+      </div>
+      {% if habit.has_habits %}
+      <ul class="dash-week">
+        {% for d in habit.week %}
+        <li class="dash-day{% if d.today %} is-today{% endif %}"><span class="dash-day-name">{{ d.name }}</span><span class="dash-day-chip{% if d.done %} is-done{% endif %}{% if d.today and not d.done %} is-today{% endif %}">{% if d.done %}<svg class="dash-ico"><use href="#i-check"/></svg>{% else %}{{ d.number }}{% endif %}</span></li>
+        {% endfor %}
+      </ul>
+      <ul class="dash-habits">
+        {% for h in habit.rows %}
+        <li class="dash-habit"><span class="dash-habit-name">{{ h.name }}</span><span class="dash-streak"><svg class="dash-ico"><use href="#i-flame"/></svg>{{ h.streak }} hari</span></li>
+        {% endfor %}
+      </ul>
+      <p class="dash-note">{{ habit.note }}</p>
+      {% else %}
+      <p class="dash-note">Belum ada habit. Tambah satu kebiasaan kecil, lalu check-in setiap hari untuk membangun streak.</p>
+      <a class="dash-link" href="{% url 'habits:habit_create' %}">Tambah habit <svg class="dash-ico"><use href="#i-arrow"/></svg></a>
+      {% endif %}
+    </article>
+
+    <article class="dash-card">
+      <div class="dash-card-head">
+        <h2 class="dash-card-title">Goal yang sedang tumbuh</h2>
+        <a class="dash-link" href="{% url 'habits:goal_list' %}">Buka <svg class="dash-ico"><use href="#i-arrow"/></svg></a>
+      </div>
+      {% if goals %}
+      <div class="dash-goals">
+        {% for g in goals %}
+        <div class="dash-goal dash-goal-{{ g.tone }}">
+          <div class="dash-ring" style="--p:{{ g.percent }}"><span class="dash-ring-value">{{ g.percent }}%</span></div>
+          <p class="dash-goal-title">{{ g.title }}</p>
+          <p class="dash-goal-meta">{{ g.meta }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="dash-note">Belum ada goal yang berjalan. Buat target baru dengan deadline yang jelas.</p>
+      <a class="dash-link" href="{% url 'habits:goal_create' %}">Buat goal <svg class="dash-ico"><use href="#i-arrow"/></svg></a>
+      {% endif %}
+    </article>
+  </section>
+
+  <section class="dash-card">
+    <div class="dash-card-head">
+      <h2 class="dash-card-title">Koleksi badge</h2>
+      <p class="dash-note">{{ earned_count }} dari {{ total_badges }} diraih · <a class="dash-link" href="{% url 'dashboard:badges' %}">Lihat semua <svg class="dash-ico"><use href="#i-arrow"/></svg></a></p>
+    </div>
+    <div class="dash-badges">
+      {% for b in badges %}{% include "dashboard_parts/badge.html" %}{% endfor %}
+    </div>
+    <div class="dash-share">
+      <p>{% if share_on %}Badge baru otomatis dikirim ke Komunitas saat kamu meraihnya.{% else %}Pencapaian tidak dikirim ke Komunitas karena opsi berbagi sedang mati.{% endif %}</p>
+      <a class="dash-link" href="{% url 'accounts:profile' %}">Atur di profil <svg class="dash-ico"><use href="#i-arrow"/></svg></a>
+    </div>
+  </section>
+
+  <section class="dash-bottom">
+    <article class="dash-card">
+      <div class="dash-card-head">
+        <h2 class="dash-card-title">Di komunitas</h2>
+        <a class="dash-link" href="{% url 'community:index' %}">Buka <svg class="dash-ico"><use href="#i-arrow"/></svg></a>
+      </div>
+      {% for post in posts %}
+      <a class="dash-post" href="{% url 'community:detail' post.pk %}">
+        <div class="dash-avatar">{{ initial }}</div>
+        <div class="dash-bubble dash-bubble-{{ post.tone }}">
+          <span class="dash-bubble-tag">{{ post.tag }}</span>
+          <p class="dash-post-title">{{ post.title }}</p>
+          <p class="dash-post-meta">{{ post.meta }}</p>
+        </div>
+      </a>
+      {% empty %}
+      <p class="dash-note">Belum ada aktivitas. Sapa komunitas lewat thread atau balasan pertamamu.</p>
+      <a class="dash-link" href="{% url 'community:create' %}">Buat thread <svg class="dash-ico"><use href="#i-arrow"/></svg></a>
+      {% endfor %}
+    </article>
+
+    <article class="dash-card">
+      <h2 class="dash-card-title">Jejak terbaru</h2>
+      {% if timeline %}
+      <ul class="dash-timeline">
+        {% for item in timeline %}
+        <li class="dash-timeline-item"><span class="dash-timeline-dot" style="--_dot: {{ item.color }}"></span><div><span class="dash-timeline-text">{{ item.text }}</span><span class="dash-timeline-time">{{ item.when }}</span></div></li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="dash-note">Jejak aktivitasmu akan muncul di sini.</p>
+      {% endif %}
+    </article>
+  </section>
+  {% endif %}
+
+  {% if new_badge %}{% include "dashboard_parts/modal.html" %}{% endif %}
+</div>
+{% endblock %}
