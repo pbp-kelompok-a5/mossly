@@ -135,6 +135,20 @@
     </article>
   </section>
 
+  <section class="dash-card">
+    <div class="dash-card-head">
+      <h2 class="dash-card-title">Target emisi bulan ini</h2>
+      <a class="dash-link" href="{% url 'dashboard:targets' %}">Kelola <svg class="dash-ico"><use href="#i-arrow"/></svg></a>
+    </div>
+    {% if target.row %}
+    {% include "dashboard_parts/target_meter.html" with t=target.row %}
+    <a class="dash-link" href="{% url 'dashboard:target_edit' target.row.pk %}">Ubah target <svg class="dash-ico"><use href="#i-arrow"/></svg></a>
+    {% else %}
+    <p class="dash-note">Belum ada target untuk bulan ini. Tentukan batas emisimu, lalu pantau di sini.</p>
+    <a class="dash-link" href="{% url 'dashboard:target_create' %}">Atur target <svg class="dash-ico"><use href="#i-arrow"/></svg></a>
+    {% endif %}
+  </section>
+
   <section class="dash-habit-goal">
     <article class="dash-card">
       <div class="dash-card-head">

@@ -566,3 +566,43 @@ main.container:has(> .dash-page) {
 @media (min-width: 80rem) {
   .dash-page { --_margin-x: 5.5rem; }
 }
+
+/* === Target emisi, filter badge, form === */
+.dash-badge-browser { display: grid; gap: inherit; }
+a.dash-tab { display: inline-flex; text-decoration: none; }
+.dash-tab[aria-current="true"] { color: var(--color-text-on-brand); background: var(--color-bg-brand); }
+
+.dash-target { display: grid; gap: var(--space-2); }
+.dash-target-figures { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); }
+.dash-target-used { font: var(--type-h3); }
+.dash-meter { height: var(--space-3); overflow: hidden; background: var(--color-bg-disabled); border-radius: var(--radius-full); }
+.dash-meter-fill { display: block; width: calc(var(--p) * 1%); height: 100%; background: var(--color-moss-300); border-radius: var(--radius-full); }
+.dash-target-warn .dash-meter-fill { background: var(--color-clay-300); }
+.dash-target-over .dash-meter-fill { background: var(--color-bg-danger); }
+.dash-target-over .dash-target-used { color: var(--color-text-danger); }
+.dash-target-list { display: grid; gap: var(--space-4); }
+.dash-target-actions { display: flex; gap: var(--space-4); }
+.dash-link-danger { color: var(--color-text-danger); }
+
+.dash-form { display: grid; gap: var(--space-4); max-width: 28rem; }
+.dash-field { display: grid; gap: var(--space-2); }
+.dash-field-label { font: var(--type-label-m); color: var(--color-text-primary); }
+.dash-input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  font: var(--type-body-m);
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+}
+.dash-input:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
+.dash-field-error { font: var(--type-body-s); color: var(--color-text-danger); }
+.dash-form-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.dash-btn-danger {
+  --_bg: var(--color-bg-danger);
+  --_fg: var(--color-text-on-brand);
+  --_border: transparent;
+  --_bg-hover: var(--color-red-500);
+  --_filter: none;
+}

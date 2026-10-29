@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if mode == 'create' %}Tambah{% else %}Ubah{% endif %} Target Emisi · Mossly{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/dashboard-fildza.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dash-page">
+  {% include "dashboard_parts/icons.html" %}
+
+  <a class="dash-back" href="{% url 'dashboard:targets' %}">
+    <svg class="dash-ico"><use href="#i-back"/></svg>Kembali ke daftar target
+  </a>
+
+  <header class="dash-badges-head">
+    <h1 class="dash-badges-title">{% if mode == 'create' %}Tambah target emisi{% else %}Ubah target emisi{% endif %}</h1>
+  </header>
+
+  <section class="dash-card">
+    <form class="dash-form" method="post" novalidate>
+      {% csrf_token %}
+      {% if mode == 'create' %}
+      <div class="dash-field">
+        <label class="dash-field-label" for="{{ form.month.id_for_label }}">Bulan</label>
+        {{ form.month }}
+        {% if form.month.errors %}<p class="dash-field-error">{{ form.month.errors.0 }}</p>{% endif %}
+      </div>
+      {% else %}
+      <p class="dash-note">Bulan: <strong>{{ month_label }}</strong></p>
+      {% endif %}
+      <div class="dash-field">
+        <label class="dash-field-label" for="{{ form.target_kg.id_for_label }}">Target emisi (kg CO₂e)</label>
+        {{ form.target_kg }}
+        {% if form.target_kg.errors %}<p class="dash-field-error">{{ form.target_kg.errors.0 }}</p>{% else %}<p class="dash-note">Batas total emisi perjalananmu dalam satu bulan.</p>{% endif %}
+      </div>
+      <div class="dash-form-actions">
+        <button type="submit" class="btn">Simpan</button>
+        <a class="btn btn-ghost" href="{% url 'dashboard:targets' %}">Batal</a>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}
