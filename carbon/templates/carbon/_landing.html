@@ -1,0 +1,35 @@
+{% load static %}
+<section class="landing-carbon" id="carbon" aria-labelledby="landing-carbon-title">
+  <div class="landing-carbon__inner">
+    <div class="landing-carbon__copy">
+      <p class="landing-carbon__eyebrow">01 — Carbon Footprint Tracker</p>
+      <h2 id="landing-carbon-title">Jejak perjalananmu,<br>sekarang terlihat.</h2>
+      <p class="landing-carbon__description">Ke kampus, pulang, atau mampir sebentar. Catat titik asal dan tujuan—jarak rute dan estimasi emisi dihitung otomatis sesuai moda transportasimu.</p>
+      <ul class="landing-carbon__points">
+        <li><span aria-hidden="true">↗</span> Jarak rute nyata dari OpenStreetMap</li>
+        <li><span aria-hidden="true">↗</span> Pilih moda, lihat estimasi CO₂e</li>
+        <li><span aria-hidden="true">↗</span> Lihat dan filter riwayat perjalananmu</li>
+      </ul>
+      <a href="{% url 'carbon:index' %}" class="btn btn-secondary">Jelajahi Carbon Tracker <span aria-hidden="true">→</span></a>
+    </div>
+    <div class="landing-carbon__preview" role="group" aria-label="Ilustrasi contoh perjalanan, bukan data pengguna">
+      <div class="landing-carbon__map" aria-hidden="true">
+        <img src="{% static 'carbon/images/landing/route-map.svg' %}" alt="" width="684" height="518">
+        <span class="landing-carbon__origin">Gambir</span>
+        <span class="landing-carbon__destination">Blok M</span>
+      </div>
+      <div class="landing-carbon__map-heading">
+        <p class="landing-carbon__eyebrow">Pratinjau / Contoh perjalanan</p>
+        <h3>Satu rute. Dampak yang terukur.</h3>
+      </div>
+      <div class="card landing-carbon__trip">
+        <span class="tag">Mobil</span>
+        <div class="landing-carbon__trip-copy">
+          <p>Stasiun Gambir – Blok M</p>
+          <p>Mobil · 8,2 km · Contoh ilustrasi</p>
+        </div>
+        <p class="landing-carbon__emission">1,37 kg CO₂e</p>
+      </div>
+    </div>
+  </div>
+</section>

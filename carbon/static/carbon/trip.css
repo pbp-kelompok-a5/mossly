@@ -283,3 +283,11 @@
 .carbon-map-pin { display: block; inline-size: calc(var(--space-6) + var(--space-1)); block-size: calc(var(--space-6) + var(--space-1)); background: var(--color-bg-brand); border-radius: 50% 50% 0 50%; transform: rotate(45deg); box-shadow: var(--shadow-sm); }
 .carbon-map-pin::after { content: ''; position: absolute; inset: var(--space-2); background: var(--color-bg-canvas); border-radius: var(--radius-full); }
 .carbon-marker--destination .carbon-map-pin { background: var(--color-bg-accent); }
+
+/* Susunan filter memakai utilitas Tailwind; warna dan ukuran mengikuti token tim. */
+.carbon-filter { margin-block-end: var(--space-4); }
+.carbon-filter .field { flex: 1; min-inline-size: 0; }
+#riwayat { scroll-margin-block-start: calc(var(--space-30) + var(--space-8)); }
+@media (max-width: 48rem) {
+  .carbon-filter .field { flex-basis: 100%; }
+}

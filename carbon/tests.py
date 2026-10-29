@@ -469,6 +469,45 @@ class CarbonTests(TestCase):
         self.assertEqual(data, {'trips': [], 'emission_metric': 'CO2e', 'pagination': {'page': 1, 'pages': 1, 'next_page': None}, 'summary': {'total_trips': 0, 'total_distance_km': 0.0, 'total_co2e_kg': 0.0}})
         self.assertContains(self.client.get(reverse('carbon:index')), 'Belum ada perjalanan')
 
+    def test_mode_filter_matches_html_json_and_private_totals(self):
+        car = self.trip(mode='mobil', distance_km=10, emission_kg=2)
+        bike = self.trip(mode='sepeda', distance_km=3, emission_kg=0)
+        self.trip(user=self.other, mode='mobil', distance_km=999)
+        for mode, expected in [('mobil', [car]), ('sepeda', [bike]), ('motor', []), ('unknown', [])]:
+            with self.subTest(mode=mode):
+                response = self.client.get(reverse('carbon:index'), {'mode': mode})
+                self.assertEqual(list(response.context['trips']), expected)
+                data = self.client.get(reverse('carbon:api_history'), {'mode': mode}).json()
+                self.assertEqual([row['id'] for row in data['trips']], [trip.pk for trip in expected])
+                self.assertEqual(data['summary']['total_trips'], len(expected))
+                self.assertEqual(data['summary']['total_distance_km'], sum(float(t.distance_km) for t in expected))
+                self.assertEqual(data['summary']['total_co2e_kg'], sum(float(t.emission_kg) for t in expected))
+                if not expected:
+                    self.assertContains(response, 'Tidak ada perjalanan untuk moda ini')
+        self.assertEqual(self.client.get(reverse('carbon:api_history')).json()['summary']['total_trips'], 2)
+
+    def test_mode_filter_preserves_sort_and_pagination(self):
+        for i in range(21):
+            self.trip(mode='mobil', distance_km=i + 1)
+        self.trip(mode='motor', distance_km=999)
+        response = self.client.get(reverse('carbon:index'), {'mode': 'mobil', 'sort': 'distance'})
+        self.assertEqual(response.context['summary']['total_trips'], 21)
+        self.assertEqual(response.context['trips'][0].distance_km, 21)
+        self.assertContains(response, '?page=2&amp;sort=distance&amp;mode=mobil#riwayat')
+        second = self.client.get(reverse('carbon:index'), {'mode': 'mobil', 'sort': 'distance', 'page': 2})
+        self.assertEqual(len(second.context['trips']), 1)
+        self.assertEqual(second.context['trips'][0].distance_km, 1)
+        self.assertEqual(second.context['summary']['total_distance_km'], 231)
+
+    def test_filter_can_find_inactive_modes_from_own_history(self):
+        mode = TransportMode.objects.get(code='mobil')
+        trip = self.trip(mode=mode)
+        mode.is_active = False
+        mode.save()
+        response = self.client.get(reverse('carbon:index'), {'mode': 'mobil'})
+        self.assertIn(mode, response.context['filter_modes'])
+        self.assertEqual(list(response.context['trips']), [trip])
+
     def test_history_sorting_is_allowlisted_and_totals_stay_complete(self):
         oldest = self.trip(trip_date=today() - timedelta(days=2), distance_km=30, emission_kg=4)
         middle = self.trip(trip_date=today() - timedelta(days=1), distance_km=10, emission_kg=6)
