@@ -25,9 +25,10 @@
     }
 
     function showPreview(data) {
-        document.getElementById('preview-distance').textContent = `${Number(data.distance_km).toFixed(3)} km`;
-        document.getElementById('preview-co2').textContent = `${Number(data.co2e_kg).toFixed(4)} kg CO₂e`;
-        document.getElementById('preview-duration').textContent = data.duration_minutes == null ? '' : `Estimasi waktu: ${data.duration_minutes} menit`;
+        const format = (value, digits) => Number(value).toLocaleString('id-ID', {maximumFractionDigits: digits});
+        document.getElementById('preview-distance').textContent = `${format(data.distance_km, 3)} km`;
+        document.getElementById('preview-co2').textContent = `${format(data.co2e_kg, 4)} kg`;
+        document.getElementById('preview-duration').textContent = data.duration_minutes == null ? '' : `Estimasi waktu: ${format(data.duration_minutes, 1)} menit`;
         preview.hidden = false;
         submit.disabled = false;
         routeStatus.textContent = '';
@@ -92,7 +93,7 @@
         const lat = document.getElementById(`id_${prefix}_lat`);
         const lon = document.getElementById(`id_${prefix}_lng`);
         const token = document.getElementById(`id_${prefix}_token`);
-        let searchRequest, matches = [];
+        let searchRequest;
         input.setAttribute('aria-describedby', [input.getAttribute('aria-describedby'), status.id].filter(Boolean).join(' '));
 
         // Batalkan hasil lama agar tidak tersimpan setelah pilihan berubah.
@@ -102,6 +103,7 @@
             locations[prefix] = null;
             lat.value = lon.value = token.value = '';
             results.hidden = true;
+            input.setAttribute('aria-expanded', 'false');
             results.replaceChildren();
             tripMap.setLocation(prefix, null);
             clearPreview();
@@ -116,7 +118,8 @@
             token.value = location.location_token;
             locations[prefix] = location;
             results.hidden = true;
-            status.textContent = 'Lokasi dipilih.';
+            input.setAttribute('aria-expanded', 'false');
+            status.textContent = '';
             tripMap.setLocation(prefix, location);
             clearPreview();
         }
@@ -131,10 +134,25 @@
             try {
                 const data = await readJSON(form.dataset.geocodeUrl, {q: query}, request.signal);
                 if (request.signal.aborted) return;
-                matches = data.results;
-                results.add(new Option('Pilih hasil pencarian…', ''));
-                matches.forEach((location, index) => results.add(new Option(location.name, index)));
+                const matches = data.results;
+                matches.forEach(location => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'carbon-location-result';
+                    const icon = document.createElement('img');
+                    icon.src = form.dataset.pinIcon;
+                    icon.alt = '';
+                    const label = document.createElement('span');
+                    label.textContent = location.name;
+                    button.append(icon, label);
+                    button.addEventListener('click', () => {
+                        selectLocation(location);
+                        input.focus();
+                    });
+                    results.append(button);
+                });
                 results.hidden = matches.length === 0;
+                input.setAttribute('aria-expanded', String(matches.length > 0));
                 status.textContent = matches.length ? 'Pilih lokasi dari hasil pencarian.' : 'Lokasi tidak ditemukan. Coba nama yang lebih lengkap.';
             } catch (error) {
                 if (!request.signal.aborted) status.textContent = error.message;
@@ -149,8 +167,26 @@
             if (event.key === 'Enter') { event.preventDefault(); searchLocation(); }
         });
         document.getElementById(`${prefix}-search`).addEventListener('click', searchLocation);
-        results.addEventListener('change', () => {
-            if (results.value !== '') selectLocation(matches[Number(results.value)]);
+        results.addEventListener('keydown', event => {
+            const buttons = [...results.querySelectorAll('button')];
+            const index = buttons.indexOf(document.activeElement);
+            if (event.key === 'Escape') {
+                results.hidden = true;
+                input.setAttribute('aria-expanded', 'false');
+                input.focus();
+            } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                const next = (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length;
+                buttons[next]?.focus();
+            }
+        });
+        input.setAttribute('aria-controls', results.id);
+        input.setAttribute('aria-expanded', 'false');
+        input.addEventListener('keydown', event => {
+            if (event.key === 'ArrowDown' && !results.hidden) {
+                event.preventDefault();
+                results.querySelector('button')?.focus();
+            }
         });
     }
 

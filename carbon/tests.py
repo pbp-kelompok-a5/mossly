@@ -469,6 +469,40 @@ class CarbonTests(TestCase):
         self.assertEqual(data, {'trips': [], 'emission_metric': 'CO2e', 'pagination': {'page': 1, 'pages': 1, 'next_page': None}, 'summary': {'total_trips': 0, 'total_distance_km': 0.0, 'total_co2e_kg': 0.0}})
         self.assertContains(self.client.get(reverse('carbon:index')), 'Belum ada perjalanan')
 
+    def test_history_sorting_is_allowlisted_and_totals_stay_complete(self):
+        oldest = self.trip(trip_date=today() - timedelta(days=2), distance_km=30, emission_kg=4)
+        middle = self.trip(trip_date=today() - timedelta(days=1), distance_km=10, emission_kg=6)
+        newest = self.trip(distance_km=20, emission_kg=2)
+        expected = {
+            'newest': [newest.pk, middle.pk, oldest.pk],
+            'oldest': [oldest.pk, middle.pk, newest.pk],
+            'distance': [oldest.pk, newest.pk, middle.pk],
+            'emission': [middle.pk, oldest.pk, newest.pk],
+            'unknown': [newest.pk, middle.pk, oldest.pk],
+        }
+        for sort, ids in expected.items():
+            with self.subTest(sort=sort):
+                response = self.client.get(reverse('carbon:index'), {'sort': sort})
+                self.assertEqual([trip.pk for trip in response.context['trips']], ids)
+                self.assertEqual(response.context['summary']['total_distance_km'], 60)
+                self.assertEqual(response.context['summary']['total_co2e_kg'], 12)
+
+    @patch('carbon.views.calculate_route', return_value=ROUTE)
+    def test_success_dialog_uses_saved_data_and_only_appears_once(self, route):
+        self.client.post(reverse('carbon:add_trip'), self.payload())
+        response = self.client.get(reverse('carbon:index'))
+        self.assertEqual(response.context['saved_trip'].distance_km, ROUTE['distance_km'])
+        self.assertContains(response, 'id="success-dialog"')
+        self.assertNotContains(self.client.get(reverse('carbon:index')), 'id="success-dialog"')
+
+    def test_success_dialog_cannot_show_another_users_trip(self):
+        other_trip = self.trip(user=self.other)
+        session = self.client.session
+        session['carbon_saved_trip'] = {'id': other_trip.pk, 'updated': False}
+        session.save()
+        response = self.client.get(reverse('carbon:index'))
+        self.assertIsNone(response.context['saved_trip'])
+
     def test_templates_render_script_and_prefill_edit(self):
         trip = self.trip()
         trip.refresh_from_db()
@@ -486,7 +520,7 @@ class CarbonTests(TestCase):
         self.assertEqual(len(list(add.context['form']['mode'])), 4)
         edit = self.client.get(reverse('carbon:edit_trip', args=[trip.pk]))
         self.assertEqual(edit.status_code, 200)
-        self.assertContains(edit, 'Simpan Perubahan')
+        self.assertContains(edit, 'Simpan perubahan')
         self.assertEqual(edit.context['trip_state']['preview']['distance_km'], 12.45)
         self.assertEqual(edit.context['form']['trip_date'].value(), trip.trip_date)
 

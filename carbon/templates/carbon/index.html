@@ -1,77 +1,92 @@
-{% extends "base.html" %}
+{% extends 'carbon/base.html' %}
 {% load static %}
 {% block title %}Carbon Tracker — Mossly{% endblock %}
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'carbon/trip.css' %}">
-<script src="{% static 'carbon/history.js' %}" defer></script>
-{% endblock %}
+{% block page_class %}carbon-history-page{% endblock %}
+{% block flowers %}<img class="carbon-flowers carbon-flowers--left" src="{% static 'carbon/images/flowers.svg' %}" alt=""><img class="carbon-flowers carbon-flowers--right" src="{% static 'carbon/images/flowers.svg' %}" alt="">{% endblock %}
 {% block content %}
-<section class="carbon-page" aria-labelledby="carbon-title">
-    <header class="carbon-header">
-        <div class="carbon-heading">
-            <h1 id="carbon-title" class="text-h2">Carbon Footprint Tracker</h1>
-            <p class="text-body-m carbon-muted">Lacak jejak karbonmu dari setiap perjalanan.</p>
-        </div>
-        <a href="{% url 'carbon:add_trip' %}" class="btn">＋ Catat Perjalanan</a>
-    </header>
-    <div class="carbon-metrics" aria-label="Ringkasan perjalanan">
-        <div class="card carbon-heading">
-            <p class="text-stat-l carbon-brand">{{ summary.total_trips }}</p>
-            <p class="text-body-s carbon-muted">Total Perjalanan</p>
-        </div>
-        <div class="card carbon-heading">
-            <p class="text-stat-l carbon-brand">{{ summary.total_distance_km|floatformat:1 }} km</p>
-            <p class="text-body-s carbon-muted">Total Jarak</p>
-        </div>
-        <div class="card carbon-heading">
-            <p class="text-stat-l carbon-brand">{{ summary.total_co2e_kg|floatformat:2 }} kg</p>
-            <p class="text-body-s carbon-muted">Total Emisi CO₂e</p>
-        </div>
+<nav class="carbon-breadcrumb" aria-label="Breadcrumb"><a href="{% url 'main:landing' %}">Mossly</a><span>/</span><span>Carbon Tracker</span></nav>
+<section class="carbon-hero" aria-labelledby="carbon-title">
+    <div class="carbon-hero-copy">
+        <p class="carbon-overline">Carbon Footprint Tracker</p>
+        <h1 id="carbon-title">Setiap perjalanan punya jejak.</h1>
+        <p>Catat perjalananmu dan kenali estimasi emisi transportasi sehari-hari.</p>
+        <a href="{% url 'carbon:add_trip' %}" class="btn btn-inverse">{% include 'carbon/_icon.html' with name='plus' %} Catat perjalanan {% include 'carbon/_icon.html' with name='arrow-up' %}</a>
     </div>
-    <div class="alert">
-        <p class="alert-body">Emisi memakai faktor referensi UK DESNZ 2023 sebagai pendekatan, bukan faktor rata-rata Indonesia. Angka nol untuk sepeda/jalan kaki hanya mencakup emisi langsung.</p>
+    <img class="carbon-hero-art" src="{% static 'carbon/images/hero-desktop.svg' %}" alt="">
+    <img class="carbon-hero-art carbon-hero-art--mobile" src="{% static 'carbon/images/hero-mobile.svg' %}" alt="">
+</section>
+<section class="carbon-summary" aria-label="Ringkasan seluruh perjalanan">
+    <div class="card carbon-stat">
+        <div class="carbon-stat-heading"><span class="carbon-icon-tile">{% include 'carbon/_icon.html' with name='stat-route' %}</span><h2><span class="carbon-desktop-label">Jumlah perjalanan</span><span class="carbon-mobile-label">Jumlah</span></h2></div>
+        <p class="carbon-stat-value">{{ summary.total_trips }} <span>perjalanan</span></p><p class="carbon-stat-caption">Dari seluruh riwayat</p>
+    </div>
+    <div class="card carbon-stat">
+        <div class="carbon-stat-heading"><span class="carbon-icon-tile">{% include 'carbon/_icon.html' with name='stat-pin' %}</span><h2>Total jarak</h2></div>
+        <p class="carbon-stat-value">{{ summary.total_distance_km|floatformat:1 }} <span>km</span></p><p class="carbon-stat-caption">Jarak perjalanan tercatat</p>
+    </div>
+    <div class="card carbon-stat">
+        <div class="carbon-stat-heading"><span class="carbon-icon-tile carbon-icon-tile--accent">{% include 'carbon/_icon.html' with name='stat-leaf' %}</span><h2><span class="carbon-desktop-label">Total estimasi emisi</span><span class="carbon-mobile-label">Estimasi emisi</span></h2></div>
+        <p class="carbon-stat-value">{{ summary.total_co2e_kg|floatformat:2 }} <span>kg CO₂e</span></p><p class="carbon-stat-caption">Emisi langsung transportasi</p>
+    </div>
+</section>
+<section class="card carbon-history" aria-labelledby="history-title">
+    <div class="carbon-history-heading">
+        <div class="carbon-heading"><h2 id="history-title" class="text-h2">Riwayat perjalanan <span class="tag carbon-count">{{ summary.total_trips }}</span></h2><p class="carbon-muted">Jejak kecilmu, tercatat di sini.</p></div>
+        {% if trips %}<details class="dropdown carbon-sort">
+            <summary class="carbon-sort-trigger">{% include 'carbon/_icon.html' with name='sort-calendar' %} {{ sort_label }}</summary>
+            <div class="dropdown-menu carbon-sort-menu">
+                {% for key, label in sort_options %}<a href="?sort={{ key }}"{% if sort == key %} aria-current="true"{% endif %}>{{ label }}{% if sort == key %}{% include 'carbon/_icon.html' with name='sort-check' %}{% endif %}</a>{% endfor %}
+            </div>
+        </details>{% endif %}
     </div>
     {% if trips %}
+    <div class="carbon-table-heading" aria-hidden="true"><span>Perjalanan</span><span>Jarak</span><span>Estimasi emisi</span><span>Aksi</span></div>
     <ul class="carbon-trip-list" aria-label="Riwayat perjalanan">
-        {% for trip in trips %}
-        <li class="card carbon-trip">
-            <div class="carbon-trip-content carbon-section">
-                <div class="carbon-metadata">
-                    <span class="text-h3" aria-hidden="true">{{ trip.get_mode_emoji }}</span>
-                    <span class="tag tag-tips">{{ trip.mode.name }}</span>
-                    <time class="text-body-s carbon-muted" datetime="{{ trip.trip_date|date:'Y-m-d' }}">{{ trip.trip_date|date:"d M Y" }}</time>
-                </div>
-                <p class="text-h4">{{ trip.origin_label }} <span class="carbon-muted">→</span> {{ trip.destination_label }}</p>
-                <div class="carbon-metadata text-body-s carbon-muted">
-                    <span>Jarak: {{ trip.distance_km|floatformat:1 }} km</span>
-                    <span>Emisi: {{ trip.emission_kg|floatformat:2 }} kg CO₂e</span>
-                </div>
-                {% if trip.note %}<p class="text-body-s carbon-muted">{{ trip.note }}</p>{% endif %}
+    {% for trip in trips %}
+        <li class="carbon-trip">
+            <div class="carbon-trip-info">
+                <span class="carbon-transport-icon">{% if trip.mode.code == 'jalan' %}{% include 'carbon/_icon.html' with name='jalan' %}{% elif trip.mode.code == 'mobil' or trip.mode.code == 'motor' or trip.mode.code == 'sepeda' %}{% with 'history-'|add:trip.mode.code as mode_icon %}{% include 'carbon/_icon.html' with name=mode_icon %}{% endwith %}{% else %}{% include 'carbon/_icon.html' with name='route' %}{% endif %}</span>
+                <div class="carbon-trip-heading"><strong>{{ trip.mode.name }}</strong><span class="carbon-date-dot">·</span><time datetime="{{ trip.trip_date|date:'Y-m-d' }}">{{ trip.trip_date|date:'j F Y' }}</time></div>
+                <div class="carbon-trip-route"><p>{{ trip.origin_label }}</p><p>{{ trip.destination_label }}</p></div>
+                {% if trip.note %}<p class="carbon-trip-note">{{ trip.note }}</p>{% endif %}
             </div>
-            <div class="carbon-actions">
-                <a href="{% url 'carbon:edit_trip' trip.pk %}" class="btn btn-secondary btn-m" title="Edit">✏️ Edit</a>
-                <form method="post" action="{% url 'carbon:delete_trip' trip.pk %}" data-confirm-delete>
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-ghost btn-m" title="Hapus">🗑️ Hapus</button>
+            <div class="carbon-trip-metrics"><div class="carbon-trip-distance"><span class="carbon-mobile-label">Jarak</span><p><strong>{{ trip.distance_km|floatformat:1 }}</strong> <span>km</span></p></div>
+            <div class="carbon-trip-emission"><span class="carbon-mobile-label">Estimasi emisi</span><p><strong>{% if trip.emission_kg == 0 %}0{% else %}{{ trip.emission_kg|floatformat:2 }}{% endif %}</strong> <span>kg CO₂e</span></p></div>{% if trip.emission_kg == 0 %}<span class="tag carbon-zero">{% include 'carbon/_icon.html' with name='leaf' %} Nol emisi langsung</span>{% endif %}</div>
+            <div class="carbon-trip-actions">
+                <a href="{% url 'carbon:edit_trip' trip.pk %}" class="btn btn-secondary btn-icon btn-m btn-rounded" aria-label="Edit perjalanan {{ trip.mode.name }} {{ trip.trip_date|date:'j F Y' }}">{% include 'carbon/_icon.html' with name='edit' %}</a>
+                <form method="post" action="{% url 'carbon:delete_trip' trip.pk %}" data-confirm-delete data-trip-description="Perjalanan {{ trip.mode.name }} pada {{ trip.trip_date|date:'j F Y' }} ({{ trip.origin_label }} ke {{ trip.destination_label }}) akan dihapus. Ringkasan jarak dan emisi akan dihitung ulang.">
+                    {% csrf_token %}<button class="btn btn-secondary btn-icon btn-m btn-rounded" type="submit" aria-label="Hapus perjalanan {{ trip.mode.name }} {{ trip.trip_date|date:'j F Y' }}">{% include 'carbon/_icon.html' with name='trash' %}</button>
                 </form>
             </div>
         </li>
-        {% endfor %}
+    {% endfor %}
     </ul>
-    {% if trips.has_other_pages %}
-    <nav class="carbon-actions" aria-label="Halaman riwayat">
-        {% if trips.has_previous %}<a class="btn btn-secondary btn-m" href="?page={{ trips.previous_page_number }}">Sebelumnya</a>{% endif %}
-        <span class="text-body-s">Halaman {{ trips.number }} dari {{ trips.paginator.num_pages }}</span>
-        {% if trips.has_next %}<a class="btn btn-secondary btn-m" href="?page={{ trips.next_page_number }}">Berikutnya</a>{% endif %}
-    </nav>
-    {% endif %}
+    <div class="carbon-list-footer"><p>{% if trips.has_other_pages %}Menampilkan {{ trips.start_index }}–{{ trips.end_index }} dari {{ trips.paginator.count }} perjalanan{% else %}Menampilkan semua {{ trips.paginator.count }} perjalanan{% endif %}</p><p>Ringkasan dihitung dari seluruh riwayat di atas.</p></div>
+    {% if trips.has_other_pages %}<nav class="carbon-pagination" aria-label="Halaman riwayat">
+        {% if trips.has_previous %}<a class="btn btn-secondary btn-m" href="?page={{ trips.previous_page_number }}&amp;sort={{ sort }}">Sebelumnya</a>{% endif %}
+        <span>Halaman {{ trips.number }} dari {{ trips.paginator.num_pages }}</span>
+        {% if trips.has_next %}<a class="btn btn-secondary btn-m" href="?page={{ trips.next_page_number }}&amp;sort={{ sort }}">Berikutnya</a>{% endif %}
+    </nav>{% endif %}
     {% else %}
-    <div class="card carbon-empty carbon-section">
-        <h2 class="text-h3">Belum ada perjalanan yang dicatat</h2>
-        <p class="text-body-m carbon-muted">Yuk, mulai catat perjalananmu dan ketahui jejak karbonmu!</p>
-        <a href="{% url 'carbon:add_trip' %}" class="btn">＋ Catat Perjalanan Pertamamu</a>
+    <div class="carbon-empty">
+        <img src="{% static 'carbon/images/empty-trip.svg' %}" alt="">
+        <h3 class="text-h3">Belum ada perjalanan</h3>
+        <p>Catat perjalanan pertamamu untuk melihat estimasi emisi transportasi dan jejakmu dari waktu ke waktu.</p>
+        <a href="{% url 'carbon:add_trip' %}" class="btn">{% include 'carbon/_icon.html' with name='plus' %} Catat perjalanan pertama</a>
     </div>
     {% endif %}
-    {% include 'carbon/_attribution.html' %}
 </section>
+<p class="carbon-emission-note">{% include 'carbon/_icon.html' with name='info' %}<span>Angka di atas adalah estimasi emisi langsung transportasi, bukan seluruh jejak karbonmu. Sepeda dan jalan kaki dihitung nol emisi langsung.</span></p>
+{% endblock %}
+{% block dialogs %}
+{% include 'carbon/_delete_dialog.html' %}
+{% if saved_trip %}<dialog id="success-dialog" class="carbon-dialog carbon-dialog--success" aria-labelledby="success-title" data-open-dialog>
+    <div class="carbon-dialog-content">
+        <span class="carbon-dialog-icon">{% include 'carbon/_icon.html' with name='success' %}</span>
+        <h2 id="success-title" class="text-h3">{% if saved_is_edit %}Perubahan tersimpan!{% else %}Perjalanan tersimpan!{% endif %}</h2>
+        <p class="carbon-muted">{{ saved_trip.mode.name }} · {{ saved_trip.origin_label }} ke {{ saved_trip.destination_label }}, {{ saved_trip.trip_date|date:'j F Y' }}</p>
+        <dl class="carbon-success-metrics"><div><dt>Jarak</dt><dd>{{ saved_trip.distance_km|floatformat:2 }} km</dd></div><div><dt>Estimasi emisi</dt><dd>{{ saved_trip.emission_kg|floatformat:4 }} kg CO₂e</dd></div></dl>
+        <div class="carbon-dialog-actions"><a class="btn btn-secondary" href="{% url 'carbon:add_trip' %}">Catat lagi</a><button class="btn" type="button" data-close-dialog autofocus>Lihat riwayat {% include 'carbon/_icon.html' with name='arrow-right' %}</button></div>
+    </div>
+</dialog>{% endif %}
 {% endblock %}
