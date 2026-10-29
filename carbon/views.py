@@ -11,7 +11,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from .dates import today
 from .forms import TripForm
-from .models import Trip
+from .models import TransportMode, Trip
 from .services import (
     GeoapifyError, calculate_emission, calculate_route, check_api_limit, geocode_search,
     get_emission_factor, get_mode, location_token, reverse_geocode, validate_route_inputs,
@@ -29,6 +29,11 @@ def api_login_required(view):
 
 def _user_trips(user):
     return Trip.objects.filter(user=user).select_related('mode', 'emission_factor')
+
+
+def _filter_trips(trips, mode_code):
+    """Query parameter kosong berarti semua moda; kode asing memberi hasil kosong."""
+    return trips.filter(mode__code=mode_code) if mode_code else trips
 
 
 def limited_geoapify(view):
@@ -51,6 +56,10 @@ def _summary(trips):
 @require_GET
 def index(request):
     trips = _user_trips(request.user).defer('route_geometry', 'legacy_calculation')
+    selected_mode = request.GET.get('mode', '').strip()
+    # Sertakan moda nonaktif yang pernah dipakai agar riwayat lama tetap bisa dicari.
+    filter_modes = TransportMode.objects.filter(is_active=True) | TransportMode.objects.filter(trips__user=request.user)
+    trips = _filter_trips(trips, selected_mode)
     sort_options = {
         'newest': ('Terbaru lebih dulu', ('-traveled_at', '-pk')),
         'oldest': ('Terlama lebih dulu', ('traveled_at', 'pk')),
@@ -64,9 +73,10 @@ def index(request):
     page = Paginator(trips, 20).get_page(request.GET.get('page'))
     # Modal hanya muncul sekali setelah penyimpanan berhasil, memakai data milik user.
     saved = request.session.pop('carbon_saved_trip', None)
-    saved_trip = trips.filter(pk=saved['id']).first() if saved else None
+    saved_trip = _user_trips(request.user).filter(pk=saved['id']).first() if saved else None
     return render(request, 'carbon/index.html', {
         'trips': page, 'summary': _summary(trips), 'sort': sort,
+        'selected_mode': selected_mode, 'filter_modes': filter_modes.distinct(),
         'sort_label': sort_options[sort][0],
         'sort_options': [(key, value[0]) for key, value in sort_options.items()],
         'saved_trip': saved_trip, 'saved_is_edit': saved.get('updated', False) if saved else False,
@@ -202,7 +212,7 @@ def api_route(request):
 def api_history(request):
     # Geometry besar hanya disertakan jika konsumen memintanya secara eksplisit.
     include_geometry = request.GET.get('include_geometry') == '1'
-    trips = _user_trips(request.user).defer('legacy_calculation')
+    trips = _filter_trips(_user_trips(request.user), request.GET.get('mode', '').strip()).defer('legacy_calculation')
     if not include_geometry:
         trips = trips.defer('route_geometry')
     page = Paginator(trips, 100).get_page(request.GET.get('page'))

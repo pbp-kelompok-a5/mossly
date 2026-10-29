@@ -1,0 +1,10 @@
+/* Build dari folder carbon: npm ci lalu npm run build.
+   Output static/carbon/tailwind.css ikut Git; server Django tidak perlu Node.
+   Tanpa preflight agar komponen dan token tim tidak direset. */
+@layer theme, utilities;
+@import "tailwindcss/theme.css" layer(theme) prefix(tw);
+@import "tailwindcss/utilities.css" layer(utilities) prefix(tw) source(none);
+@source "./templates/carbon";
+@theme {
+  --spacing: var(--space-1);
+}
