@@ -612,7 +612,7 @@ def _history_hero(period, months, overall, today):
     current = months[-1]
     eyebrow = {
         "month": f"{current['name']} {today.year}",
-        "3m": " 3 bulan terakhir",
+        "3m": "3 bulan terakhir",
         "year": f"Tahun {today.year}",
     }[period]
     if overall["percent"] is None:
