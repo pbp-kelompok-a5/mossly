@@ -10,15 +10,15 @@
         <p class="carbon-overline">Carbon Footprint Tracker</p>
         <h1 id="carbon-title">Setiap perjalanan punya jejak.</h1>
         <p>Catat perjalananmu dan kenali estimasi emisi transportasi sehari-hari.</p>
-        <a href="{% url 'carbon:add_trip' %}" class="btn btn-inverse">{% include 'carbon/_icon.html' with name='plus' %} Catat perjalanan {% include 'carbon/_icon.html' with name='arrow-up' %}</a>
+        <a href="{% url 'carbon:add_trip' %}" class="btn btn-inverse tw:motion-safe:transition-transform tw:motion-safe:hover:-translate-y-0.5">{% include 'carbon/_icon.html' with name='plus' %} Catat perjalanan {% include 'carbon/_icon.html' with name='arrow-up' %}</a>
     </div>
     <img class="carbon-hero-art" src="{% static 'carbon/images/hero-desktop.svg' %}" alt="">
     <img class="carbon-hero-art carbon-hero-art--mobile" src="{% static 'carbon/images/hero-mobile.svg' %}" alt="">
 </section>
-<section class="carbon-summary" aria-label="Ringkasan seluruh perjalanan">
+<section class="carbon-summary" aria-label="Ringkasan perjalanan{% if selected_mode %} sesuai filter moda{% endif %}">
     <div class="card carbon-stat">
         <div class="carbon-stat-heading"><span class="carbon-icon-tile">{% include 'carbon/_icon.html' with name='stat-route' %}</span><h2><span class="carbon-desktop-label">Jumlah perjalanan</span><span class="carbon-mobile-label">Jumlah</span></h2></div>
-        <p class="carbon-stat-value">{{ summary.total_trips }} <span>perjalanan</span></p><p class="carbon-stat-caption">Dari seluruh riwayat</p>
+        <p class="carbon-stat-value">{{ summary.total_trips }} <span>perjalanan</span></p><p class="carbon-stat-caption">{% if selected_mode %}Sesuai filter moda{% else %}Dari seluruh riwayat{% endif %}</p>
     </div>
     <div class="card carbon-stat">
         <div class="carbon-stat-heading"><span class="carbon-icon-tile">{% include 'carbon/_icon.html' with name='stat-pin' %}</span><h2>Total jarak</h2></div>
@@ -29,16 +29,29 @@
         <p class="carbon-stat-value">{{ summary.total_co2e_kg|floatformat:2 }} <span>kg CO₂e</span></p><p class="carbon-stat-caption">Emisi langsung transportasi</p>
     </div>
 </section>
-<section class="card carbon-history" aria-labelledby="history-title">
+<section id="riwayat" class="card carbon-history" aria-labelledby="history-title">
     <div class="carbon-history-heading">
         <div class="carbon-heading"><h2 id="history-title" class="text-h2">Riwayat perjalanan <span class="tag carbon-count">{{ summary.total_trips }}</span></h2><p class="carbon-muted">Jejak kecilmu, tercatat di sini.</p></div>
         {% if trips %}<details class="dropdown carbon-sort">
             <summary class="carbon-sort-trigger">{% include 'carbon/_icon.html' with name='sort-calendar' %} {{ sort_label }}</summary>
             <div class="dropdown-menu carbon-sort-menu">
-                {% for key, label in sort_options %}<a href="?sort={{ key }}"{% if sort == key %} aria-current="true"{% endif %}>{{ label }}{% if sort == key %}{% include 'carbon/_icon.html' with name='sort-check' %}{% endif %}</a>{% endfor %}
+                {% for key, label in sort_options %}<a href="?sort={{ key }}&amp;mode={{ selected_mode|urlencode }}#riwayat"{% if sort == key %} aria-current="true"{% endif %}>{{ label }}{% if sort == key %}{% include 'carbon/_icon.html' with name='sort-check' %}{% endif %}</a>{% endfor %}
             </div>
         </details>{% endif %}
     </div>
+    <form method="get" action="{% url 'carbon:index' %}#riwayat" class="carbon-filter tw:flex tw:flex-wrap tw:items-end tw:gap-3">
+        <input type="hidden" name="sort" value="{{ sort }}">
+        <div class="field">
+            <label for="filter-mode" class="field-label">Filter transportasi</label>
+            <select id="filter-mode" name="mode" class="input">
+                <option value="">Semua moda</option>
+                {% for mode in filter_modes %}<option value="{{ mode.code }}"{% if selected_mode == mode.code %} selected{% endif %}>{{ mode.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-m tw:motion-safe:transition-transform tw:motion-safe:hover:-translate-y-0.5">Terapkan</button>
+        {% if selected_mode %}<a href="?sort={{ sort }}#riwayat" class="btn btn-secondary btn-m">Hapus filter</a>{% endif %}
+    </form>
+    {% if selected_mode %}<p class="field-hint">Menampilkan {{ trips.paginator.count }} perjalanan sesuai filter moda. Ringkasan di atas mengikuti filter.</p>{% endif %}
     {% if trips %}
     <div class="carbon-table-heading" aria-hidden="true"><span>Perjalanan</span><span>Jarak</span><span>Estimasi emisi</span><span>Aksi</span></div>
     <ul class="carbon-trip-list" aria-label="Riwayat perjalanan">
@@ -63,16 +76,22 @@
     </ul>
     <div class="carbon-list-footer"><p>{% if trips.has_other_pages %}Menampilkan {{ trips.start_index }}–{{ trips.end_index }} dari {{ trips.paginator.count }} perjalanan{% else %}Menampilkan semua {{ trips.paginator.count }} perjalanan{% endif %}</p><p>Ringkasan dihitung dari seluruh riwayat di atas.</p></div>
     {% if trips.has_other_pages %}<nav class="carbon-pagination" aria-label="Halaman riwayat">
-        {% if trips.has_previous %}<a class="btn btn-secondary btn-m" href="?page={{ trips.previous_page_number }}&amp;sort={{ sort }}">Sebelumnya</a>{% endif %}
+        {% if trips.has_previous %}<a class="btn btn-secondary btn-m" href="?page={{ trips.previous_page_number }}&amp;sort={{ sort }}&amp;mode={{ selected_mode|urlencode }}#riwayat">Sebelumnya</a>{% endif %}
         <span>Halaman {{ trips.number }} dari {{ trips.paginator.num_pages }}</span>
-        {% if trips.has_next %}<a class="btn btn-secondary btn-m" href="?page={{ trips.next_page_number }}&amp;sort={{ sort }}">Berikutnya</a>{% endif %}
+        {% if trips.has_next %}<a class="btn btn-secondary btn-m" href="?page={{ trips.next_page_number }}&amp;sort={{ sort }}&amp;mode={{ selected_mode|urlencode }}#riwayat">Berikutnya</a>{% endif %}
     </nav>{% endif %}
     {% else %}
     <div class="carbon-empty">
         <img src="{% static 'carbon/images/empty-trip.svg' %}" alt="">
+        {% if selected_mode %}
+        <h3 class="text-h3">Tidak ada perjalanan untuk moda ini</h3>
+        <p>Coba moda lain atau hapus filter untuk melihat semua perjalananmu.</p>
+        <a href="?sort={{ sort }}#riwayat" class="btn btn-secondary">Lihat semua perjalanan</a>
+        {% else %}
         <h3 class="text-h3">Belum ada perjalanan</h3>
         <p>Catat perjalanan pertamamu untuk melihat estimasi emisi transportasi dan jejakmu dari waktu ke waktu.</p>
         <a href="{% url 'carbon:add_trip' %}" class="btn">{% include 'carbon/_icon.html' with name='plus' %} Catat perjalanan pertama</a>
+        {% endif %}
     </div>
     {% endif %}
 </section>

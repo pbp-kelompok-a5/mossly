@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{% static 'css/global.css' %}">
 <link rel="stylesheet" href="{% static 'css/components.css' %}">
 <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+<link rel="stylesheet" href="{% static 'css/landing-callysta.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -51,6 +52,8 @@
           d="M0 93C196 53 359 48 548 77C636 91 672 108 745 98C961 67 1194 69 1440 94V130H0Z"/>
   </svg>
 </section>
+
+{% include 'carbon/_landing.html' %}
 
 <!-- ===== Habit & Goal Tracker ===== -->
 <section class="habit" id="habit" aria-labelledby="habit-title">
