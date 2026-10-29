@@ -35,7 +35,12 @@ function createTripMap(onPick) {
         delete markers[prefix];
         if (!location) return;
         const label = prefix === 'origin' ? 'Asal' : 'Tujuan';
-        markers[prefix] = L.marker([location.lat, location.lon], {title: label, alt: label})
+        const icon = L.divIcon({
+            className: `carbon-marker carbon-marker--${prefix}`,
+            html: '<span class="carbon-map-pin"></span>',
+            iconSize: [28, 36], iconAnchor: [14, 36],
+        });
+        markers[prefix] = L.marker([location.lat, location.lon], {title: label, alt: label, icon})
             .bindTooltip(label, {permanent: true, direction: prefix === 'origin' ? 'top' : 'bottom'}).addTo(map);
         const points = Object.values(markers).map(marker => marker.getLatLng());
         map.fitBounds(L.latLngBounds(points).pad(0.2), {maxZoom: 16});

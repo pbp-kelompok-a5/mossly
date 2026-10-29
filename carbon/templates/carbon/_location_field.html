@@ -1,0 +1,12 @@
+<div class="field carbon-location-field">
+    <label for="{{ field.id_for_label }}" class="field-label">{{ label }} <span class="required">*</span></label>
+    <div class="carbon-search">
+        {% include 'carbon/_icon.html' with name='pin' %}
+        {{ field }}
+        <button type="button" id="{{ prefix }}-search" class="btn btn-m btn-rounded" aria-label="Cari {{ label|lower }}" aria-controls="{{ prefix }}-results">Cari</button>
+    </div>
+    <div id="{{ prefix }}-results" class="carbon-location-results" role="group" aria-label="Pilihan lokasi {{ label|lower }}" hidden></div>
+    <p id="{{ prefix }}-status" class="field-hint" role="status"></p>
+    {% if field.errors %}<p id="{{ field.id_for_label }}_error" class="field-error">{{ field.errors.0 }}</p>{% endif %}
+    {{ latitude }}{{ longitude }}{{ token }}
+</div>

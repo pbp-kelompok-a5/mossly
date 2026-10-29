@@ -51,8 +51,26 @@ def _summary(trips):
 @require_GET
 def index(request):
     trips = _user_trips(request.user).defer('route_geometry', 'legacy_calculation')
+    sort_options = {
+        'newest': ('Terbaru lebih dulu', ('-traveled_at', '-pk')),
+        'oldest': ('Terlama lebih dulu', ('traveled_at', 'pk')),
+        'distance': ('Jarak terjauh', ('-distance_km', '-traveled_at', '-pk')),
+        'emission': ('Emisi tertinggi', ('-emission_kg', '-traveled_at', '-pk')),
+    }
+    sort = request.GET.get('sort', 'newest')
+    if sort not in sort_options:
+        sort = 'newest'
+    trips = trips.order_by(*sort_options[sort][1])
     page = Paginator(trips, 20).get_page(request.GET.get('page'))
-    return render(request, 'carbon/index.html', {'trips': page, 'summary': _summary(trips)})
+    # Modal hanya muncul sekali setelah penyimpanan berhasil, memakai data milik user.
+    saved = request.session.pop('carbon_saved_trip', None)
+    saved_trip = trips.filter(pk=saved['id']).first() if saved else None
+    return render(request, 'carbon/index.html', {
+        'trips': page, 'summary': _summary(trips), 'sort': sort,
+        'sort_label': sort_options[sort][0],
+        'sort_options': [(key, value[0]) for key, value in sort_options.items()],
+        'saved_trip': saved_trip, 'saved_is_edit': saved.get('updated', False) if saved else False,
+    })
 
 
 def _form_context(form):
@@ -106,6 +124,7 @@ def trip_form(request, pk=None):
             form.add_error(None, ' '.join(error.messages))
         else:
             trip.save()
+            request.session['carbon_saved_trip'] = {'id': trip.pk, 'updated': pk is not None}
             return redirect('carbon:index')
     template = 'carbon/edit.html' if pk is not None else 'carbon/add.html'
     return render(request, template, _form_context(form))

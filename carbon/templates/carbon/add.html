@@ -1,104 +1,70 @@
-{% extends "base.html" %}
+{% extends 'carbon/base.html' %}
 {% load static %}
 {% block title %}Catat Perjalanan — Mossly{% endblock %}
+{% block page_class %}carbon-form-page{% endblock %}
+{% block map_head %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">{% endblock %}
 {% block extra_head %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<link rel="stylesheet" href="{% static 'carbon/trip.css' %}">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
 <script src="{% static 'carbon/trip-map.js' %}" defer></script>
 <script src="{% static 'carbon/trip.js' %}" defer></script>
 {% endblock %}
 {% block content %}
-<section class="carbon-page carbon-page--form" aria-labelledby="carbon-form-title">
-    <a href="{% url 'carbon:index' %}" class="btn btn-ghost btn-m carbon-back">← Kembali ke Riwayat</a>
-    <header class="carbon-heading">
-        <h1 id="carbon-form-title" class="text-h2">{% block form_heading %}Catat Perjalanan Baru{% endblock %}</h1>
-        <p class="text-body-m carbon-muted">Pilih asal, tujuan, dan moda transportasi, lalu tekan Hitung estimasi sebelum menyimpan.</p>
-    </header>
-    <form method="post" id="trip-form" class="carbon-stack" data-geocode-url="{% url 'carbon:api_geocode' %}" data-reverse-url="{% url 'carbon:api_reverse_geocode' %}" data-route-url="{% url 'carbon:api_route' %}">
-        {% csrf_token %}
-        {% if form.errors %}
-        <div class="alert alert-error" role="alert" tabindex="-1">
-            <div class="alert-body carbon-heading">
-                <strong>Perjalanan belum disimpan. Periksa kembali isian berikut:</strong>
-                <ul class="carbon-error-list">
-                    {% for field in form %}{% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}{% endfor %}
-                    {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
-                </ul>
-            </div>
+<nav class="carbon-breadcrumb" aria-label="Breadcrumb"><a href="{% url 'main:landing' %}">Mossly</a><span>/</span><a href="{% url 'carbon:index' %}">Carbon Tracker</a><span>/</span><span>{% if is_edit %}Edit perjalanan{% else %}Catat perjalanan{% endif %}</span></nav>
+<a href="{% url 'carbon:index' %}" class="carbon-back">{% include 'carbon/_icon.html' with name='back' %} Kembali ke riwayat</a>
+<header class="carbon-heading carbon-form-heading">
+    <h1 id="carbon-form-title">{% block form_heading %}Catat perjalanan baru.{% endblock %}</h1>
+    <p class="carbon-muted">{% if is_edit %}Ubah detail perjalananmu, lalu hitung ulang estimasinya sebelum menyimpan.{% else %}Pilih lokasi dan transportasi, lalu hitung estimasinya sebelum menyimpan.{% endif %}</p>
+</header>
+<form method="post" id="trip-form" class="carbon-form-grid" aria-labelledby="carbon-form-title" data-geocode-url="{% url 'carbon:api_geocode' %}" data-reverse-url="{% url 'carbon:api_reverse_geocode' %}" data-route-url="{% url 'carbon:api_route' %}" data-pin-icon="{% static 'carbon/images/pin.svg' %}">
+    {% csrf_token %}
+    {% if form.errors %}<div class="alert alert-error carbon-form-errors" role="alert" tabindex="-1">
+        <div class="alert-body"><strong>Perjalanan belum disimpan. Periksa kembali isian berikut:</strong>
+            <ul class="carbon-error-list">{% for field in form %}{% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}{% endfor %}{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>
         </div>
-        {% endif %}
-        <section class="carbon-section" aria-labelledby="map-title">
-            <h2 id="map-title" class="text-h4">Pilih lokasi perjalanan</h2>
-            <div class="carbon-actions">
-                <button type="button" id="use-my-location" class="btn btn-secondary btn-m">Gunakan lokasi saya sebagai asal</button>
-                <button type="button" class="btn btn-ghost btn-m" data-map-pick="origin" aria-pressed="false">Pilih asal di peta</button>
-                <button type="button" class="btn btn-ghost btn-m" data-map-pick="destination" aria-pressed="true">Pilih tujuan di peta</button>
-            </div>
-            <p id="map-help" class="field-hint">Ketuk peta untuk memilih tujuan, atau cari alamat di bawah. Lokasi saya memerlukan izin browser; periksa kembali posisi pin.</p>
-            <div id="trip-map" class="carbon-map" role="region" aria-label="Peta asal dan tujuan perjalanan" aria-describedby="map-help"></div>
-            <p id="map-status" class="field-hint" role="status"></p>
-        </section>
-        <div class="field">
-            <label for="id_origin_label" class="field-label">Asal <span class="required">*</span></label>
-            <div class="carbon-search">
-                {{ form.origin_label }}
-                <button type="button" id="origin-search" class="btn btn-secondary btn-m" aria-label="Cari asal">Cari</button>
-            </div>
-            <select id="origin-results" class="input" aria-label="Pilihan lokasi asal" hidden></select>
-            <p id="origin-status" class="field-hint" role="status"></p>
-            {% if form.origin_label.errors %}<p id="id_origin_label_error" class="field-error">{{ form.origin_label.errors.0 }}</p>{% endif %}
-            {{ form.origin_lat }}{{ form.origin_lng }}{{ form.origin_token }}
+    </div>{% endif %}
+    <section class="card carbon-map-card" aria-label="Pilih lokasi perjalanan">
+        <div class="carbon-map-actions">
+            <button type="button" id="use-my-location" class="btn btn-secondary btn-m">{% include 'carbon/_icon.html' with name='location' %} Gunakan lokasi saya sebagai asal</button>
+            <button type="button" class="btn btn-secondary btn-m" data-map-pick="origin" aria-pressed="false">{% include 'carbon/_icon.html' with name='pin' %} Pilih asal di peta</button>
+            <button type="button" class="btn btn-secondary btn-m" data-map-pick="destination" aria-pressed="true">{% include 'carbon/_icon.html' with name='pin' %} Pilih tujuan di peta</button>
         </div>
-        <div class="field">
-            <label for="id_destination_label" class="field-label">Tujuan <span class="required">*</span></label>
-            <div class="carbon-search">
-                {{ form.destination_label }}
-                <button type="button" id="destination-search" class="btn btn-secondary btn-m" aria-label="Cari tujuan">Cari</button>
-            </div>
-            <select id="destination-results" class="input" aria-label="Pilihan lokasi tujuan" hidden></select>
-            <p id="destination-status" class="field-hint" role="status"></p>
-            {% if form.destination_label.errors %}<p id="id_destination_label_error" class="field-error">{{ form.destination_label.errors.0 }}</p>{% endif %}
-            {{ form.destination_lat }}{{ form.destination_lng }}{{ form.destination_token }}
-        </div>
+        <p id="map-help" class="field-hint">Ketuk peta untuk memilih tujuan, atau cari alamat di bawah. Lokasi saya memerlukan izin browser; periksa kembali posisi pin.</p>
+        <div id="trip-map" class="carbon-map" role="region" aria-label="Peta asal dan tujuan perjalanan" aria-describedby="map-help"></div>
+        <p id="map-status" class="field-hint" role="status"></p>
+        {% include 'carbon/_attribution.html' %}
+    </section>
+    <section class="card carbon-detail-card" aria-labelledby="detail-title">
+        <h2 id="detail-title" class="text-h3 carbon-detail-title"><span class="carbon-icon-tile">{% include 'carbon/_icon.html' with name='route' %}</span> Detail perjalanan</h2>
+        {% include 'carbon/_location_field.html' with prefix='origin' label='Asal' field=form.origin_label latitude=form.origin_lat longitude=form.origin_lng token=form.origin_token %}
+        {% include 'carbon/_location_field.html' with prefix='destination' label='Tujuan' field=form.destination_label latitude=form.destination_lat longitude=form.destination_lng token=form.destination_token %}
         <fieldset class="field carbon-mode-field"{% if form.mode.errors %} aria-describedby="id_mode_error"{% endif %}>
-            <legend class="field-label">Moda Transportasi <span class="required">*</span></legend>
-            <div class="carbon-modes">{% for radio in form.mode %}<label class="card carbon-mode-option text-label-m">{{ radio.tag }} {{ radio.choice_label }}</label>{% endfor %}</div>
+            <legend class="field-label">Transportasi <span class="required">*</span></legend>
+            <div class="carbon-modes">{% for radio in form.mode %}
+                <label class="carbon-mode-option">{{ radio.tag }}{% with radio.data.value|stringformat:'s' as mode_icon %}{% if mode_icon == 'mobil' or mode_icon == 'motor' or mode_icon == 'sepeda' or mode_icon == 'jalan' %}{% include 'carbon/_icon.html' with name=mode_icon %}{% else %}{% include 'carbon/_icon.html' with name='route' %}{% endif %}{% endwith %}<span>{{ radio.choice_label }}</span></label>
+            {% endfor %}</div>
             {% if form.mode.errors %}<p id="id_mode_error" class="field-error">{{ form.mode.errors.0 }}</p>{% endif %}
         </fieldset>
-        <div class="field">
-            <label for="id_trip_date" class="field-label">Tanggal Perjalanan <span class="required">*</span></label>
-            {{ form.trip_date }}
-            {% if form.trip_date.errors %}<p id="id_trip_date_error" class="field-error">{{ form.trip_date.errors.0 }}</p>{% endif %}
-        </div>
-        <div class="field">
-            <label for="id_note" class="field-label">Catatan</label>
-            {{ form.note }}
-            <p id="note-hint" class="field-hint">Opsional, maksimal 200 karakter.</p>
-            {% if form.note.errors %}<p id="id_note_error" class="field-error">{{ form.note.errors.0 }}</p>{% endif %}
-        </div>
-        <div class="carbon-actions"><button type="button" id="calculate-route" class="btn btn-secondary">Hitung estimasi</button></div>
-        <section id="preview-box" class="card carbon-preview carbon-section" role="status" aria-live="polite" aria-labelledby="preview-title" hidden>
-            <h2 id="preview-title" class="text-h4">Estimasi Perjalanan</h2>
-            <dl class="carbon-metrics">
-                <div class="carbon-heading"><dt class="text-body-s carbon-muted">Jarak</dt><dd id="preview-distance" class="text-h3"></dd></div>
-                <div class="carbon-heading"><dt class="text-body-s carbon-muted">Estimasi emisi CO₂e</dt><dd id="preview-co2" class="text-h3"></dd></div>
-            </dl>
-            <p id="preview-duration" class="text-body-s carbon-muted"></p>
+        <div class="field"><label for="id_trip_date" class="field-label">Tanggal perjalanan <span class="required">*</span></label><div class="carbon-date-input">{{ form.trip_date }}{% include 'carbon/_icon.html' with name='calendar' %}</div>{% if form.trip_date.errors %}<p id="id_trip_date_error" class="field-error">{{ form.trip_date.errors.0 }}</p>{% endif %}</div>
+        <div class="field"><label for="id_note" class="field-label">Catatan</label>{{ form.note }}<p id="note-hint" class="field-hint">Opsional, maksimal 200 karakter.</p>{% if form.note.errors %}<p id="id_note_error" class="field-error">{{ form.note.errors.0 }}</p>{% endif %}</div>
+        <button type="button" id="calculate-route" class="btn btn-secondary carbon-calculate">Hitung estimasi</button>
+        <section id="preview-box" class="carbon-preview" role="status" aria-live="polite" aria-labelledby="preview-title" hidden>
+            <h3 id="preview-title" class="text-h4">Estimasi perjalanan</h3>
+            <dl class="carbon-preview-metrics"><div><dt>Jarak</dt><dd id="preview-distance"></dd></div><div><dt>Estimasi emisi CO₂e</dt><dd id="preview-co2"></dd></div></dl>
+            <p class="carbon-preview-time">{% include 'carbon/_icon.html' with name='clock' %}<span id="preview-duration"></span></p>
         </section>
-        <p id="route-status" class="field-hint" role="status"></p>
-        <div id="api-error" class="alert alert-error" role="alert" hidden>
-            <div class="alert-body carbon-section">
-                <p id="api-error-message"></p>
-            </div>
+        <p id="route-status" class="field-hint" role="status">Jarak dan estimasi emisi akan muncul di sini setelah kamu menekan Hitung estimasi.</p>
+        <div id="api-error" class="alert alert-error" role="alert" hidden><p id="api-error-message" class="alert-body"></p></div>
+        <div class="alert alert-warning carbon-estimate-warning">
+            {% include 'carbon/_icon.html' with name='alert' %}
+            <div class="alert-body"><h3 class="text-label-m">Ini estimasi, bukan angka pasti</h3><p>Estimasi emisi langsung memakai faktor referensi UK DESNZ 2023 sebagai pendekatan, bukan faktor rata-rata Indonesia. Sepeda dan jalan kaki dihitung nol emisi langsung; emisi siklus hidup tidak dihitung.</p></div>
         </div>
-        <div class="alert alert-warning">
-            <p class="alert-body">Estimasi emisi langsung memakai faktor referensi UK DESNZ 2023 sebagai pendekatan, bukan faktor rata-rata Indonesia. Sepeda dan jalan kaki dihitung nol emisi langsung; emisi siklus hidup tidak dihitung.</p>
-        </div>
-        <div class="carbon-actions"><button type="submit" id="submit-btn" class="btn" disabled>{% if is_edit %}Simpan Perubahan{% else %}Simpan Perjalanan{% endif %}</button></div>
+        <div class="carbon-form-actions"><button type="submit" id="submit-btn" class="btn" disabled>{% include 'carbon/_icon.html' with name='check' %}{% if is_edit %}Simpan perubahan{% else %}Simpan perjalanan{% endif %}</button>{% if is_edit %}<a class="btn btn-secondary" href="{% url 'carbon:index' %}">Batal</a>{% endif %}</div>
+        {% if is_edit %}<button type="submit" form="delete-trip-form" class="carbon-delete-link">{% include 'carbon/_icon.html' with name='trash' %} Hapus perjalanan ini</button>{% endif %}
         <noscript><div class="alert alert-error"><p class="alert-body">Aktifkan JavaScript untuk memilih lokasi dan menghitung jarak otomatis.</p></div></noscript>
-        {% include 'carbon/_attribution.html' %}
-    </form>
-    {{ trip_state|json_script:'carbon-trip-state' }}
-</section>
+    </section>
+</form>
+<p class="carbon-factor-reference">Referensi faktor kendaraan: <a href="https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2023" target="_blank" rel="noopener">UK DESNZ/Defra 2023, versi Juni 2023</a>. Sepeda dan jalan kaki menggunakan asumsi nol emisi transportasi langsung.</p>
+{{ trip_state|json_script:'carbon-trip-state' }}
+{% if is_edit %}<form id="delete-trip-form" method="post" action="{% url 'carbon:delete_trip' form.instance.pk %}" data-confirm-delete data-trip-description="Perjalanan {{ form.instance.mode.name }} pada {{ form.instance.trip_date|date:'j F Y' }} ({{ form.instance.origin_label }} ke {{ form.instance.destination_label }}) akan dihapus. Ringkasan jarak dan emisi akan dihitung ulang.">{% csrf_token %}</form>{% endif %}
 {% endblock %}
+{% block dialogs %}{% if is_edit %}{% include 'carbon/_delete_dialog.html' %}{% endif %}{% endblock %}

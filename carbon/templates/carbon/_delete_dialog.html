@@ -1,0 +1,11 @@
+<dialog id="delete-dialog" class="carbon-dialog" aria-labelledby="delete-title" aria-describedby="delete-description">
+    <div class="carbon-dialog-content">
+        <span class="carbon-dialog-icon carbon-dialog-icon--danger">{% include 'carbon/_icon.html' with name='delete' %}</span>
+        <h2 id="delete-title" class="text-h3">Hapus perjalanan ini?</h2>
+        <p id="delete-description" class="carbon-muted"></p>
+        <div class="carbon-dialog-actions">
+            <button type="button" class="btn btn-secondary" data-close-dialog autofocus>Batal</button>
+            <button type="button" id="confirm-delete" class="btn carbon-btn-danger">Ya, hapus</button>
+        </div>
+    </div>
+</dialog>

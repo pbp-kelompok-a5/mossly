@@ -1,0 +1,94 @@
+{% load static i18n %}
+{% language 'id' %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Carbon Tracker — Mossly{% endblock %}</title>
+    <link rel="icon" href="{% static 'img/logo/logo-standalone.svg' %}" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=Plus+Jakarta+Sans:wght@400;600;700&family=Red+Hat+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+    <link rel="stylesheet" href="{% static 'css/global.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'css/footer.css' %}">
+    {% block map_head %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'carbon/trip.css' %}">
+    <script src="{% static 'carbon/history.js' %}" defer></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="carbon-app {% block page_class %}{% endblock %}">
+    <a href="#carbon-main" class="carbon-skip">Langsung ke konten</a>
+  <header class="navbar carbon-site-navbar">
+    <a href="{% url 'main:landing' %}" class="brand">
+      <img src="{% static 'img/logo/logo.svg' %}" alt="Mossly" width="197" height="53">
+    </a>
+    <nav aria-label="Navigasi utama">
+      <a href="{% url 'community:index' %}">Community</a>
+      <a href="{% url 'carbon:index' %}" aria-current="page">Carbon</a>
+      <a href="{% url 'habits:index' %}">Habits</a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'dashboard:index' %}">Me</a>
+        <a href="{% url 'accounts:logout' %}" class="btn btn-secondary btn-m">Logout</a>
+      {% else %}
+        <a href="{% url 'accounts:login' %}">Login</a>
+        <a href="{% url 'accounts:register' %}" class="btn">Daftar</a>
+      {% endif %}
+    </nav>
+  </header>
+
+    <div class="carbon-decor" aria-hidden="true">
+        <img class="carbon-tree carbon-tree--left" src="{% static 'carbon/images/tree-left.svg' %}" alt="">
+        <img class="carbon-tree carbon-tree--right" src="{% static 'carbon/images/tree-right.svg' %}" alt="">
+        <img class="carbon-fern carbon-fern--left" src="{% static 'carbon/images/fern-left.svg' %}" alt="">
+        <img class="carbon-fern carbon-fern--right" src="{% static 'carbon/images/fern-right.svg' %}" alt="">
+        {% block flowers %}{% endblock %}
+    </div>
+    <main id="carbon-main" class="carbon-container carbon-page">{% block content %}{% endblock %}</main>
+  <footer class="landing-footer carbon-site-footer">
+    <div class="container">
+      <div class="landing-footer__top">
+        <p class="landing-footer__tagline">
+          Langkah kecil setiap hari,<br>untuk bumi yang lebih hijau.
+        </p>
+
+        <nav class="landing-footer__col" aria-label="Jelajahi">
+          <h2 class="landing-footer__heading">Jelajahi</h2>
+          <ul class="landing-footer__links">
+            <li><a href="{% url 'carbon:index' %}">Carbon Tracker</a></li>
+            <li><a href="{% url 'habits:index' %}">Habit &amp; Goal</a></li>
+            <li><a href="{% url 'dashboard:index' %}">Personal Dashboard</a></li>
+            <li><a href="{% url 'community:index' %}">Komunitas</a></li>
+          </ul>
+        </nav>
+
+        <nav class="landing-footer__col" aria-label="Akun">
+          <h2 class="landing-footer__heading">Akun</h2>
+          <ul class="landing-footer__links">
+            <li><a href="{% url 'accounts:login' %}">Masuk</a></li>
+            <li><a href="{% url 'accounts:register' %}">Daftar gratis</a></li>
+            <li><span class="carbon-unavailable" title="Fitur reset password belum tersedia">Reset password (segera)</span></li>
+            <li><a href="{% url 'accounts:profile' %}">Edit profil</a></li>
+          </ul>
+        </nav>
+      </div>
+
+      
+      <img class="landing-footer__logo" src="{% static 'img/logo/logo.svg' %}"
+           alt="Mossly">
+     
+    </div>
+  </footer>
+    <img src="{% static 'carbon/images/footer-hills.svg' %}" alt="" class="carbon-footer-hills">
+    <nav class="carbon-bottom-nav" aria-label="Navigasi mobile">
+        <a href="{% url 'dashboard:index' %}">{% include 'carbon/_icon.html' with name='nav-dashboard' %}<span>Dashboard</span></a>
+        <a href="{% url 'carbon:index' %}" aria-current="page">{% include 'carbon/_icon.html' with name='nav-carbon' %}<span>Carbon</span></a>
+        <a href="{% url 'habits:index' %}">{% include 'carbon/_icon.html' with name='nav-habits' %}<span>Habit &amp; Goal</span></a>
+        <a href="{% url 'community:index' %}">{% include 'carbon/_icon.html' with name='nav-community' %}<span>Komunitas</span></a>
+    </nav>
+    {% block dialogs %}{% endblock %}
+</body>
+</html>
+{% endlanguage %}
