@@ -128,7 +128,7 @@ class HistoryPageTests(FrozenClockMixin, TestCase):
         self.seed_two_months()
         response = self.client.get(self.url)
         # October: 20 of 26 days (77%); September: 15 of 30 (50%).
-        self.assertContains(response, "77% konsistensi bulan ini, naik 27% dari September")
+        self.assertContains(response, "Konsistensimu 77% bulan ini, naik 27% dari September")
         self.assertContains(response, "Kalender Oktober")
         self.assertContains(response, 'aria-current="page">Bulan ini')
 
@@ -138,7 +138,7 @@ class HistoryPageTests(FrozenClockMixin, TestCase):
             habit.checkins.create(checkin_date=date(2026, 9, day))
         habit.checkins.create(checkin_date=date(2026, 10, 1))
         response = self.client.get(self.url)
-        self.assertContains(response, "4% konsistensi bulan ini")
+        self.assertContains(response, "Konsistensimu 4% bulan ini")
         self.assertNotContains(response, "naik")
         self.assertNotContains(response, "turun")
 
@@ -156,13 +156,13 @@ class HistoryPageTests(FrozenClockMixin, TestCase):
         make_habit(self.user, start_date=date(2026, 10, 1))
         services.log_goal_progress(make_goal(self.user), Decimal("3"))
         response = self.client.get(self.url)
-        self.assertContains(response, "0% konsistensi bulan ini")
+        self.assertContains(response, "Konsistensimu 0% bulan ini")
         self.assertNotContains(response, "focus-subtitle")
 
     def test_three_month_view(self):
         self.seed_two_months()
         response = self.client.get(self.url, {"period": "3m"})
-        self.assertContains(response, "Riwayat · 3 bulan terakhir")
+        self.assertContains(response, "3 bulan terakhir")
         self.assertContains(response, "Konsistensimu naik dari 50% ke 77%")
         self.assertContains(response, "Agustus – Oktober")
         self.assertContains(response, "Belum ada data")  # August had no habit yet

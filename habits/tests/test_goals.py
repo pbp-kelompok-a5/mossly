@@ -392,3 +392,41 @@ class GoalProgressPageTests(FrozenClockMixin, TestCase):
         url = reverse("habits:goal_log_progress", args=[goal.pk])
         response = self.client.post(url, {"amount": "1"}, follow=True)
         self.assertContains(response, "Progres hanya bisa dicatat untuk goal yang masih aktif.")
+
+
+class GoalPastDeadlineTests(FrozenClockMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = make_user()
+        self.client.force_login(self.user)
+
+    def test_new_goal_with_past_deadline_is_rejected(self):
+        response = self.client.post(reverse("habits:goal_create"), {
+            "title": "Telat", "category": "plastik", "target_value": "5", "unit": "kali",
+            "start_date": days_ago(10).isoformat(), "deadline": days_ago(1).isoformat(),
+        })
+        self.assertContains(response, "Deadline tidak boleh di masa lalu.")
+        self.assertFalse(Goal.objects.exists())
+
+
+class StripTagsTests(FrozenClockMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = make_user()
+        self.client.force_login(self.user)
+
+    def test_habit_name_tags_are_removed(self):
+        self.client.post(reverse("habits:habit_create"), {
+            "name": "<b>Bawa</b> tumbler", "icon": "leaf", "time_of_day": "pagi",
+            "weekdays": [str(d) for d in range(7)],
+        })
+        self.assertEqual(self.user.habits.get().name, "Bawa tumbler")
+
+    def test_goal_title_only_tags_is_rejected(self):
+        response = self.client.post(reverse("habits:goal_create"), {
+            "title": '<img src="x" onerror="alert(1)">', "category": "plastik",
+            "target_value": "5", "unit": "kali",
+            "start_date": TODAY.isoformat(), "deadline": TODAY.isoformat(),
+        })
+        self.assertContains(response, "Nama goal tidak boleh hanya berisi tag HTML.")
+        self.assertFalse(Goal.objects.exists())
