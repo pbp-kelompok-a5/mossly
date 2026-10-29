@@ -162,3 +162,23 @@ class HtmxCheckInTests(TestCase):
         response = self.client.post(reverse("habits:habit_undo_check_in", args=[self.habit.pk]), HTTP_HX_REQUEST="true")
         self.assertNotContains(response, "is-done")
         self.assertEqual(self.habit.checkins.count(), 0)
+
+
+class GoalFilterTests(FrozenClockMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = make_user()
+        self.client.force_login(self.user)
+        make_goal(self.user, title="Bawa botol", category="plastik")
+        make_goal(self.user, title="Naik KRL", category="transportasi")
+
+    def test_category_filter(self):
+        response = self.client.get(reverse("habits:goal_list"), {"category": "plastik"})
+        self.assertContains(response, "Bawa botol")
+        self.assertNotContains(response, "Naik KRL")
+        self.assertContains(response, 'aria-current="page">Plastik')
+
+    def test_unknown_category_shows_all(self):
+        response = self.client.get(reverse("habits:goal_list"), {"category": "xyz"})
+        self.assertContains(response, "Bawa botol")
+        self.assertContains(response, "Naik KRL")

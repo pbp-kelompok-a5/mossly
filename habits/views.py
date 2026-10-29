@@ -360,8 +360,17 @@ def _owned_goal(request, pk):
 def goal_list(request):
     today = services.local_today()
     services.expire_overdue_goals(request.user.goals.all(), today)
-    goals = list(request.user.goals.prefetch_related("checklist_items", "progress_logs"))
+    goals = request.user.goals.prefetch_related("checklist_items", "progress_logs")
+    # Filter kategori lewat query string, mis. /goal/?category=plastik
+    category = request.GET.get("category", "")
+    if category in Goal.Category.values:
+        goals = goals.filter(category=category)
+    else:
+        category = ""
+    goals = list(goals)
     context = {
+        "category": category,
+        "categories": Goal.Category.choices,
         "month_name": display.MONTH_NAMES[today.month - 1],
         # Example goals show whenever nothing is active, with or without history.
         "suggestions": [
@@ -370,7 +379,7 @@ def goal_list(request):
         ],
         **_goal_form_context(GoalForm(initial=_goal_initial(request, today)), today),
     }
-    if not goals:
+    if not goals and not category:
         context.update(has_history=False)
         return render(request, "habits/goal/goal_list.html", context)
 

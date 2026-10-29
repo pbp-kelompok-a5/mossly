@@ -6,6 +6,14 @@
 {% block page_top %}{% include "habits/components/tabs.html" with active="goal" %}{% endblock %}
 
 {% block page %}
+  {% if has_history %}
+    <nav class="tabs tabs-pill goal-filter" aria-label="Filter kategori goal">
+      <a class="tab" href="?"{% if not category %} aria-current="page"{% endif %}>Semua</a>
+      {% for value, label in categories %}
+        <a class="tab" href="?category={{ value }}"{% if category == value %} aria-current="page"{% endif %}>{{ label }}</a>
+      {% endfor %}
+    </nav>
+  {% endif %}
   {% if active %}
     <section class="focus-panel" aria-labelledby="focus-title">
       <div class="focus-panel-text">
