@@ -67,16 +67,6 @@ Expects: form, action, title_id, in_dialog, is_edit, milestone_list.
     {% if form.weekdays.errors %}<p class="field-error">{{ form.weekdays.errors.0 }}</p>{% endif %}
   </fieldset>
 
-  <div class="field">
-    <label class="field-label" for="{{ form.reminder_time.id_for_label }}">Pengingat <span class="field-hint">(opsional)</span></label>
-    {{ form.reminder_time }}
-    {% if form.reminder_time.errors %}
-      <p class="field-error">{{ form.reminder_time.errors.0 }}</p>
-    {% else %}
-      <p class="field-hint">Pengingat akan aktif di aplikasi mobile nanti. Untuk sekarang, jamnya disimpan dulu.</p>
-    {% endif %}
-  </div>
-
   {% if not is_edit %}
     <div class="alert">
       <div>

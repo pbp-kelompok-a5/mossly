@@ -9,7 +9,6 @@ from .models import Goal, GoalChecklistItem, GoalProgressLog, Habit
 
 ALL_WEEKDAYS = [str(i) for i in range(7)]
 
-
 class HabitForm(forms.ModelForm):
     # One control for the schedule: every day is checked by default and the
     # user unchecks the days to skip. frequency_type is derived from it.
@@ -25,13 +24,10 @@ class HabitForm(forms.ModelForm):
 
     class Meta:
         model = Habit
-        fields = ["name", "icon", "time_of_day", "weekdays", "reminder_time"]
+        fields = ["name", "icon", "time_of_day", "weekdays"]
         widgets = {
             "icon": forms.RadioSelect,
             "time_of_day": forms.RadioSelect,
-            "reminder_time": forms.TimeInput(
-                attrs={"type": "time", "class": "input"}, format="%H:%M"
-            ),
         }
         error_messages = {
             "name": {
@@ -43,7 +39,6 @@ class HabitForm(forms.ModelForm):
                 "required": "Pilih waktu check-in.",
                 "invalid_choice": "Pilihan waktu tidak valid.",
             },
-            "reminder_time": {"invalid": "Format jam tidak valid."},
         }
 
     def __init__(self, *args, **kwargs):

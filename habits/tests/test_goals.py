@@ -36,26 +36,6 @@ class GoalRuleTests(SimpleTestCase):
         self.assertFalse(services.is_near_deadline(completed, Decimal("5"), TODAY))
         self.assertFalse(services.is_near_deadline(self.goal(deadline=days_ago(1)), Decimal("5"), TODAY))
 
-    def test_pace_counts_today_on_both_sides(self):
-        # 10 days elapsed including today, 11 days left including today.
-        pace = services.goal_pace(self.goal(), Decimal("15"), TODAY)
-        self.assertEqual(pace["average"], Decimal("1.5"))
-        self.assertEqual(pace["needed"], Decimal("5") / 11)
-        self.assertTrue(pace["on_track"])
-
-    def test_pace_behind_target(self):
-        pace = services.goal_pace(self.goal(), Decimal("2"), TODAY)
-        self.assertFalse(pace["on_track"])
-
-    def test_pace_on_deadline_day_needs_the_whole_remainder(self):
-        pace = services.goal_pace(self.goal(deadline=TODAY), Decimal("17"), TODAY)
-        self.assertEqual(pace["needed"], Decimal("3"))
-
-    def test_pace_reached_target_is_on_track(self):
-        pace = services.goal_pace(self.goal(), Decimal("20"), TODAY)
-        self.assertEqual(pace["needed"], 0)
-        self.assertTrue(pace["on_track"])
-
     def test_check_amount(self):
         services.check_amount(Goal.Unit.KG_CO2E, Decimal("2.5"))
         services.check_amount(Goal.Unit.KALI, Decimal("3.00"))
@@ -201,7 +181,7 @@ class GoalDetailPageTests(FrozenClockMixin, TestCase):
         self.goal.progress_logs.update(logged_at=FIXED_NOW)
         self.url = reverse("habits:goal_detail", args=[self.goal.pk])
 
-    def test_detail_shows_checklist_logs_and_pace(self):
+    def test_detail_shows_checklist_and_logs(self):
         response = self.client.get(self.url)
         self.assertContains(response, "Goal · Transportasi")
         self.assertContains(response, "Tinggal 5 kali lagi dalam 10 hari.")
@@ -209,8 +189,6 @@ class GoalDetailPageTests(FrozenClockMixin, TestCase):
         self.assertContains(response, "Belum")
         self.assertContains(response, "+15 Naik KRL Gambir - Blok M")
         self.assertContains(response, "Hari ini")
-        self.assertContains(response, "1,5 kali / hari")
-        self.assertContains(response, "Sesuai target")
 
     def test_toggle_checklist_item(self):
         url = reverse("habits:goal_checklist_toggle", args=[self.goal.pk, self.item.pk])

@@ -242,7 +242,6 @@ class HabitDetailPageTests(FrozenClockMixin, TestCase):
         self.assertContains(response, "7 hari lagi")
         self.assertContains(response, "Belum terbuka", count=1)
         self.assertContains(response, "habit-day-done", count=8)  # 7 days plus the legend
-        self.assertContains(response, "Tidak ada")  # reminder
 
     def test_check_in_from_detail_returns_to_detail(self):
         url = reverse("habits:habit_check_in", args=[self.habit.pk])

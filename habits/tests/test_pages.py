@@ -154,7 +154,7 @@ class HabitFormTests(FrozenClockMixin, TestCase):
             self.assertContains(response, f'name="weekdays" value="{day}" checked')
 
     def test_every_day_checked_is_stored_as_daily(self):
-        response = self.post(reminder_time="20:00")
+        response = self.post()
         self.assertRedirects(response, reverse("habits:index"), fetch_redirect_response=False)
         habit = Habit.objects.get()
         self.assertEqual(habit.user, self.user)
@@ -162,19 +162,12 @@ class HabitFormTests(FrozenClockMixin, TestCase):
         self.assertEqual(habit.frequency_type, Habit.Frequency.DAILY)
         self.assertIsNone(habit.weekdays)
         self.assertEqual(habit.start_date, TODAY)
-        self.assertEqual(habit.reminder_time.strftime("%H:%M"), "20:00")
 
     def test_some_days_checked_is_stored_as_weekdays(self):
         self.post(weekdays=["4", "0", "2"])
         habit = Habit.objects.get()
         self.assertEqual(habit.frequency_type, Habit.Frequency.WEEKDAYS)
         self.assertEqual(habit.weekdays, [0, 2, 4])
-
-    def test_reminder_explains_it_is_stored_only_for_now(self):
-        self.assertContains(
-            self.client.get(self.url),
-            "Pengingat akan aktif di aplikasi mobile nanti. Untuk sekarang, jamnya disimpan dulu.",
-        )
 
     def test_frequency_type_cannot_be_posted_directly(self):
         self.post(frequency_type="weekdays")
@@ -187,7 +180,6 @@ class HabitFormTests(FrozenClockMixin, TestCase):
             ({"weekdays": []}, "Pilih minimal satu hari."),
             ({"weekdays": ["9"]}, "Pilihan hari tidak valid."),
             ({"icon": "rocket"}, "Pilihan ikon tidak valid."),
-            ({"reminder_time": "25:99"}, "Format jam tidak valid."),
         ]
         for fields, message in cases:
             with self.subTest(message=message):

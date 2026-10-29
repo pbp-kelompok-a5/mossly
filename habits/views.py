@@ -368,7 +368,6 @@ def goal_detail(request, pk):
     services.expire_overdue_goals(Goal.objects.filter(pk=pk, user=request.user), today)
     goal = _owned_goal(request, pk)
     card = _goal_card(goal, today)
-    pace = services.goal_pace(goal, card["progress"], today)
     checklist = [
         {
             "pk": item.pk,
@@ -391,11 +390,6 @@ def goal_detail(request, pk):
         "goal": card,
         "checklist": checklist,
         "logs": logs,
-        "pace": {
-            "needed": f"{display.format_rate(pace['needed'])} {card['unit_short']} / hari",
-            "average": f"{display.format_rate(pace['average'])} {card['unit_short']} / hari",
-            "on_track": pace["on_track"],
-        },
         "progress_form": GoalProgressForm(goal=goal),
     }
     return render(request, "habits/goal/goal_detail.html", context)
@@ -803,7 +797,6 @@ def habit_detail(request, pk):
         },
         "ladder": ladder,
         "frequency": frequency,
-        "reminder": display.reminder_text(habit),
         "milestone": _pop_milestone(request),
     }
     return render(request, "habits/habit/habit_detail.html", context)

@@ -105,14 +105,6 @@ def frequency_text(habit):
         return ", ".join(DAY_SHORT[d] for d in sorted(habit.weekday_numbers))
     return "Setiap hari"
 
-
-def reminder_text(habit):
-    if habit.reminder_time is None:
-        return "Tidak ada"
-    when = "setiap hari" if habit.frequency_type == Habit.Frequency.DAILY else "di hari terjadwal"
-    return f"{habit.reminder_time.strftime('%H.%M')} · {when}"
-
-
 def day_month(day):
     """'31 Okt'"""
     return f"{day.day} {MONTH_SHORT[day.month - 1]}"

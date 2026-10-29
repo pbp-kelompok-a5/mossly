@@ -118,22 +118,6 @@
   </div>
 
   <aside class="habits-aside">
-    {% if goal.status == "active" %}
-      <section class="side-card side-card-sand" aria-labelledby="pace-title">
-        <p class="eyebrow eyebrow-accent" id="pace-title">Ritme goal</p>
-        <dl class="pace-list">
-          <div><dt>Dibutuhkan</dt><dd>{{ pace.needed }}</dd></div>
-          <div><dt>Rata-rata kamu</dt><dd>{{ pace.average }}</dd></div>
-        </dl>
-        {% if pace.on_track %}
-          <span class="tag tag-achievement">Sesuai target</span>
-        {% else %}
-          <span class="tag tag-outline">Masih bisa dikejar</span>
-        {% endif %}
-        <img class="decor side-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
-      </section>
-    {% endif %}
-
     <section class="side-card side-card-muted" aria-labelledby="finish-title">
       <p class="eyebrow" id="finish-title">Saat goal selesai</p>
       <ul class="finish-list">

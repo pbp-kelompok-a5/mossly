@@ -10,8 +10,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import DecimalField, F, Sum, Value
-from django.db.models.functions import Coalesce
+from django.db.models import Sum
 from django.utils import timezone
 
 from .models import Goal, GoalProgressLog, Habit, HabitCheckIn, SustainabilityEvent
@@ -351,24 +350,6 @@ def is_near_deadline(goal, progress, today):
         and 0 <= days_until(goal.deadline, today) <= NEAR_DEADLINE_DAYS
     )
 
-
-def goal_pace(goal, progress, today):
-    """Amount per day still needed versus the user's average so far.
-
-    Today counts as a day in both, so on the deadline day the whole remainder
-    is needed today. A goal at or above its target is always on track.
-    """
-    days_left = max(days_until(goal.deadline, today) + 1, 1)
-    days_elapsed = max((min(today, goal.deadline) - goal.start_date).days + 1, 1)
-    needed = max(goal.target_value - progress, Decimal("0")) / days_left
-    average = progress / days_elapsed
-    return {
-        "needed": needed,
-        "average": average,
-        "on_track": progress >= goal.target_value or average >= needed,
-    }
-
-
 def check_amount(unit, amount):
     """Reject fractions for units that are counted in whole numbers."""
     amount = Decimal(amount)
@@ -401,25 +382,19 @@ def refresh_goal_after_edit(goal):
 
 
 def expire_overdue_goals(goals, today=None):
-    """Store "expired" on active goals past their deadline and below target.
+    """Mark active goals whose deadline has passed below target as "expired".
 
     There is no background job, so this runs whenever the module's pages or
     progress logging touch the goals. Returns the number of goals updated.
     """
     today = today or local_today()
-    overdue = (
-        goals.filter(status=Goal.Status.ACTIVE, deadline__lt=today)
-        .annotate(
-            progress=Coalesce(
-                Sum("progress_logs__amount"),
-                Value(Decimal("0")),
-                output_field=DecimalField(max_digits=10, decimal_places=2),
-            )
-        )
-        .filter(progress__lt=F("target_value"))
-        .values("pk")
-    )
-    return Goal.objects.filter(pk__in=overdue).update(status=Goal.Status.EXPIRED)
+    updated = 0
+    for goal in goals.filter(status=Goal.Status.ACTIVE, deadline__lt=today):
+        if goal_progress_total(goal) < goal.target_value:
+            goal.status = Goal.Status.EXPIRED
+            goal.save(update_fields=["status"])
+            updated += 1
+    return updated
 
 
 def log_goal_progress(goal, amount, note=""):
