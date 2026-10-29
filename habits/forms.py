@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils.html import strip_tags
 
 from . import services
 from .display import DAY_SHORT, ICON_TINTS
@@ -56,6 +57,13 @@ class HabitForm(forms.ModelForm):
                 if self.instance.frequency_type == Habit.Frequency.WEEKDAYS
                 else ALL_WEEKDAYS
             )
+
+    def clean_name(self):
+        # Buang tag HTML (Tutorial 05); escaping di template tetap pertahanan utama.
+        name = strip_tags(self.cleaned_data["name"]).strip()
+        if not name:
+            raise forms.ValidationError("Nama habit tidak boleh hanya berisi tag HTML.")
+        return name
 
     def icon_options(self):
         """Radio widgets for the icon field, each paired with its tint."""
@@ -134,6 +142,12 @@ class GoalForm(forms.ModelForm):
         else:
             self.checklist_rows = []
 
+    def clean_title(self):
+        title = strip_tags(self.cleaned_data["title"]).strip()
+        if not title:
+            raise forms.ValidationError("Nama goal tidak boleh hanya berisi tag HTML.")
+        return title
+
     def _posted_rows(self):
         ids = self.data.getlist("checklist_id")
         rows = []
@@ -151,6 +165,10 @@ class GoalForm(forms.ModelForm):
             self.add_error(None, f"Checklist maksimal {MAX_CHECKLIST_ITEMS} item.")
         if any(len(row["label"]) > CHECKLIST_LABEL_MAX for row in self.checklist_rows):
             self.add_error(None, f"Setiap item checklist maksimal {CHECKLIST_LABEL_MAX} karakter.")
+        start, deadline = cleaned.get("start_date"), cleaned.get("deadline")
+        # Only for new goals; an ordering problem is reported by the model instead.
+        if not self.instance.pk and start and deadline and start <= deadline < services.local_today():
+            self.add_error("deadline", "Deadline tidak boleh di masa lalu.")
         unit, target = cleaned.get("unit"), cleaned.get("target_value")
         if unit and target is not None:
             try:
