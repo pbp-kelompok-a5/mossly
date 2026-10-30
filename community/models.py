@@ -1,56 +1,98 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
+
 
 class Thread(models.Model):
     class Category(models.TextChoices):
-        TIPS = "tips", "TIPS"
-        ACHIEVEMENT = "achievement", "Achievement"
+        TIPS = "tips", "Tips"
         GENERAL = "general", "General"
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete = models.CASCADE, related_name = "community_threads",)
-    title = models.CharField(max_length = 255)
-    content = models.TextField()
-    category = models.CharField(max_length = 20,choices = Category.choices, default = Category.GENERAL)
-    liked_by = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="liked_community_threads", blank=True,)
-    achievement_event_id = models.CharField(max_length = 100, unique = True, null = True, blank = True, editable = False)
-    created_at = models.DateTimeField(auto_now_add = True)
-    updated_at = models.DateTimeField(auto_now=True)
-    class Meta:
-        ordering = ["-created_at", "pk"]
+        ACHIEVEMENT = "achievement", "Achievement"
 
-    @property
-    def is_automatic(self):
-        return self.achievement_event_id is not None
-
-    def __str__(self):
-        return self.title
-    
-class Reply (models.Model):
-    thread = models.ForeignKey(Thread, on_delete=models.CASCADE, related_name = "replies",)
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete = models.CASCADE, related_name = "community_replies",)
-    content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add = True)
-    class Meta: ordering = ["-created_at", "pk"]
-    def __str__(self):
-        return f"Reply {self.pk} on thread {self.thread_id}"
-    
-class AchievementEvent(models.Model):
-    event_id = models.CharField(max_length=100, unique=True)
-    achievement_id = models.CharField(max_length=100)
-    earned_at = models.DateTimeField()
-    processed_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
+        related_name="community_threads",
     )
-    thread = models.OneToOneField(
-        Thread,
+    title = models.CharField(max_length=255)
+    body = models.TextField(max_length=5000)
+    category = models.CharField(
+        max_length=20,
+        choices=Category.choices,
+        default=Category.GENERAL,
+    )
+    is_auto_post = models.BooleanField(default=False, editable=False)
+    user_achievement = models.OneToOneField(
+        "dashboard.UserAchievement",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        related_name="community_thread",
+        editable=False,
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "pk"]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(is_auto_post=True, category="achievement")
+                    | (
+                        models.Q(is_auto_post=False, user_achievement__isnull=True)
+                        & ~models.Q(category="achievement")
+                    )
+                ),
+                name="community_thread_auto_post_consistent",
+            )
+        ]
 
     def __str__(self):
-        return self.event_id
-# Create your models here.
+        return self.title
 
 
+class Reply(models.Model):
+    thread = models.ForeignKey(
+        Thread,
+        on_delete=models.CASCADE,
+        related_name="replies",
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="community_replies",
+    )
+    body = models.TextField(max_length=2000)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "pk"]
+
+    def __str__(self):
+        return f"Reply {self.pk} on thread {self.thread_id}"
+
+
+class ThreadLike(models.Model):
+    thread = models.ForeignKey(
+        Thread,
+        on_delete=models.CASCADE,
+        related_name="likes",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="community_likes",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["thread", "user"],
+                name="unique_thread_like",
+            )
+        ]
+        ordering = ["created_at", "pk"]
+
+    def __str__(self):
+        return f"{self.user} likes thread {self.thread_id}"

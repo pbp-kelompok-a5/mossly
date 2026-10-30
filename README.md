@@ -9,28 +9,28 @@
 
 
 ## 👥 Kelompok A-05
-- *[Fildza Hasnalia Nabila](https://github.com/fildzasnaliaa) - 2506625003* 
-- [Sheva Aquila Mahardika](https://github.com/sheva48) - 2506622033  
-- [Tania Ju](https://github.com/tanniajju) - 2506608123  
-- [Callysta Arviana](https://github.com/callystaarviana-coder) - 2506619045  
-- [Isybal Sama Eleazar Malau](https://github.com/https://github.com/eleazarmalau) - 2506623963  
+- *[Fildza Hasnalia Nabila](https://github.com/fildzasnaliaa) - 2506625003*
+- [Sheva Aquila Mahardika](https://github.com/sheva48) - 2506622033
+- [Tania Ju](https://github.com/tanniajju) - 2506608123
+- [Callysta Arviana](https://github.com/callystaarviana-coder) - 2506619045
+- [Isybal Sama Eleazar Malau](https://github.com/eleazarmalau) - 2506623963
 
 ## 🧩 Modul
-1. **Login & Onboarding**      
-*Dikerjakan oleh Sheva Aquila Mahardika*   
+1. **Login & Onboarding**
+*Dikerjakan oleh Sheva Aquila Mahardika*
 Modul ini menangani registrasi, login, logout, serta session/cookie management untuk menjaga status autentikasi pengguna. Tersedia juga *onboarding form* setelah menyelesaikan registrasi untuk menyesuaikan data awal untuk input bagian tracker nantinya. Modul ini juga akan menyediakan data identitas yang diambil untuk tampilan di modul *Sustainability Community*.
-2. **Carbon Footprint Tracker**  
-*Dikerjakan oleh Callysta Arviana*  
+2. **Carbon Footprint Tracker**
+*Dikerjakan oleh Callysta Arviana*
 Modul ini memungkinkan pengguna mencatat perjalanan sehari-hari dan menghitung estimasi emisi karbon yang dihasilkan. Pengguna memasukkan titik asal dan tujuan, yang kemudian diproses melalui public API sehingga jarak tempuh dihitung otomatis, bukan diinput manual. Jarak tersebut dikalikan dengan faktor emisi sesuai moda transportasi yang dipilih untuk menghasilkan estimasi emisi CO2 per perjalanan. Seluruh riwayat perjalanan kemudian disimpan dan diterima sebagai track mentah (bukan visualisasi).
-3. **Sustainable Habit & Goal Tracker**  
-*Dikerjakan oleh Tania Ju*  
+3. **Sustainable Habit & Goal Tracker**
+*Dikerjakan oleh Tania Ju*
 Modul ini membantu pengguna membangun kebiasaan berkelanjutan sekaligus mencapai target spesifik, menjadi dua bagian yang saling melengkapi. Pada bagian Habit, pengguna mencatat kebiasaan harian yang bersifat recurring seperti membawa tumbler, menggunakan transportasi umum, atau memilah sampah. Pada bagian Goal, pengguna dapat membuat target dengan deadline tertentu (misalnya "naik transportasi umum 20 kali dalam sebulan") beserta checklist dan progress bar untuk memantau penyelesaiannya. Setiap kali sebuah goal selesai atau sebuah habit mencapai milestone streak tertentu, modul ini mengirimkan event ke *Personal Sustainability Dashboard* agar dapat direkap dan dievaluasi sebagai bagian dari pencapaian keseluruhan pengguna.
-4. **Sustainability Community**  
-*Dikerjakan oleh Isybal Sama Eleazar Malau*  
+4. **Sustainability Community**
+*Dikerjakan oleh Isybal Sama Eleazar Malau*
 Modul ini menyediakan forum sosial tempat pengguna berbagi tips dan pengalaman seputar gaya hidup berkelanjutan. Pengguna dapat membuat, mengedit, dan menghapus *thread* miliknya sendiri, memberikan reply pada *thread* orang lain, serta memberi like/unlike. Setiap *thread* dapat diberi tag/kategori (misalnya tips, achievement, atau general) untuk memudahkan navigasi. Nama dan avatar penulis pada setiap thread/reply diambil dari modul *Login* berdasarkan *user_id.* Modul ini juga menampilkan post otomatis saat pengguna meraih achievement baru, dengan data pencapaian yang dikirim langsung dari modul *Personal Sustainability Dashboard*.
-5. **Personal Sustainability Dashboard**  
-*Dikerjakan oleh Fildza Hasnalia Nabila*  
-Modul ini berfungsi sebagai halaman rekap terpusat ("Me"/Profile) yang mengagregasi data dari seluruh modul lain: total emisi dari *Carbon Footprint Tracker*, kebiasaan dan progress goal dari *Sustainabile Habit & Goal Tracker*, serta aktivitas dari *Sustainability Community*. Modul ini menjadi pemilik utama logika penentuan achievement/badge dan memicu event ke modul Community setiap kali pengguna meraih pencapaian baru. Ringkasan aktivitas ditampilkan dalam bentuk visualisasi yang lebih mudah dibaca user.
+5. **Personal Sustainability Dashboard**
+*Dikerjakan oleh Fildza Hasnalia Nabila*
+Modul ini berfungsi sebagai halaman rekap terpusat ("Me"/Profile) yang mengagregasi data dari seluruh modul lain: total emisi dari *Carbon Footprint Tracker*, kebiasaan dan progress goal dari *Sustainable Habit & Goal Tracker*, serta aktivitas dari *Sustainability Community*. Modul ini menjadi pemilik utama logika penentuan achievement/badge dan memicu event ke modul Community setiap kali pengguna meraih pencapaian baru. Ringkasan aktivitas ditampilkan dalam bentuk visualisasi yang lebih mudah dibaca user.
 
 ## 📊 Sumber/Dokumentasi API
 ### Geoapify — Carbon Footprint Tracker

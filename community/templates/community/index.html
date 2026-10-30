@@ -1,13 +1,142 @@
 {% extends 'community/base.html' %}
+
 {% block community_content %}
-<section class="community-hero">
-<div class="hero-copy"><span class="eyebrow"><span class="status-dot"></span> SUSTAINABILITY COMMUNITY</span><h1>Tumbuh bareng,<br>mulai dari <span>cerita kecil.</span><i aria-hidden="true">✳</i></h1><p>Tempat berbagi tips, merayakan langkah baik, dan menemukan teman seperjalanan. Karena hidup hijau lebih seru bareng-bareng.</p><a class="button ochre" href="{% url 'community:create' %}"><span aria-hidden="true">＋</span> Bagikan ceritamu</a><span class="hero-note">Nggak harus sempurna, mulai aja dulu.</span></div>
-<div class="hero-garden" aria-hidden="true"><div class="orbit"></div><span class="garden-spark spark-one">✦</span><span class="garden-spark spark-two">✳</span><div class="garden-sticker">small steps,<br><b>big little joys!</b></div><div class="plant"><div class="stem"></div><div class="leaf leaf-one"></div><div class="leaf leaf-two"></div><div class="leaf leaf-three"></div><div class="pot"><div class="eyes">• •</div><div class="smile"></div></div></div><div class="garden-label">🌱 Sedikit demi sedikit, jadi bukit.</div></div>
-</section>
-<div class="community-ribbon"><span>✳ Cerita kecil, dampak baik</span><span>✦ Saling berbagi, saling menginspirasi</span><span>✿ Rayakan setiap langkah</span></div>
-<div class="community-layout"><section class="feed" aria-labelledby="feed-title"><div class="section-heading"><div><span class="eyebrow">DARI KITA, UNTUK BUMI</span><h2 id="feed-title">Obrolan di kebun <span aria-hidden="true">✿</span></h2></div><span class="sort-label">↓ Terbaru dulu</span></div>
-<nav class="filter-tabs" aria-label="Filter kategori"><a class="{% if not category %}selected{% endif %}" href="{% url 'community:index' %}" {% if not category %}aria-current="page"{% endif %}>Semua cerita</a><a class="{% if category == 'tips' %}selected{% endif %}" href="?category=tips" {% if category == 'tips' %}aria-current="page"{% endif %}>✳ Tips hijau</a><a class="{% if category == 'achievement' %}selected{% endif %}" href="?category=achievement" {% if category == 'achievement' %}aria-current="page"{% endif %}>✦ Pencapaian</a><a class="{% if category == 'general' %}selected{% endif %}" href="?category=general" {% if category == 'general' %}aria-current="page"{% endif %}>☀ Obrolan</a></nav>
-<div class="thread-list">{% for thread in page_obj %}<article class="thread-card category-{{ thread.category }}"><div class="card-top">{% include 'community/author.html' with author=thread.author published=thread.created_at %}<div class="badges">{% include 'community/badge.html' %}</div></div><h3><a href="{% url 'community:detail' thread.pk %}">{{ thread.title }}</a></h3><p class="thread-excerpt">{{ thread.content|truncatechars:240 }}</p><div class="card-bottom"><div><span>{% if thread.is_liked %}♥{% else %}♡{% endif %} {{ thread.like_count }} apresiasi</span><a href="{% url 'community:detail' thread.pk %}#replies">♧ {{ thread.reply_count }} balasan</a></div><a class="read-link" href="{% url 'community:detail' thread.pk %}">Ikut ngobrol <span aria-hidden="true">↗</span></a></div></article>{% empty %}<div class="empty-state"><div class="empty-flower" aria-hidden="true">✿</div><span class="eyebrow">RUANG UNTUK CERITA BARU</span><h3>{% if category %}Belum ada cerita di kategori ini{% else %}Kebun ini menunggu cerita pertamamu{% endif %}</h3><p>Tips membawa tumbler, perjalanan naik KRL, atau satu kebiasaan kecil. Ceritamu bisa jadi awal yang baik untuk seseorang.</p><a class="button" href="{% url 'community:create' %}">＋ Mulai sebuah cerita</a>{% if category %}<a class="text-link" href="{% url 'community:index' %}">Lihat semua cerita</a>{% endif %}</div>{% endfor %}</div>
-{% if page_obj.has_other_pages %}<nav class="pagination" aria-label="Halaman diskusi">{% if page_obj.has_previous %}<a href="?category={{ category }}&page={{ page_obj.previous_page_number }}">← Sebelumnya</a>{% endif %}<span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?category={{ category }}&page={{ page_obj.next_page_number }}">Selanjutnya →</a>{% endif %}</nav>{% endif %}
-</section><aside class="community-sidebar"><section class="welcome-card"><span class="eyebrow">SENANG KAMU DI SINI!</span><h2>Hai, {{ user.first_name|default:user.username }} <span aria-hidden="true">☀</span></h2><p>Satu langkahmu berarti.<br>Satu ceritamu menginspirasi.</p><a href="{% url 'community:create' %}">Hari ini mau berbagi apa? ↗</a></section><section class="stats-card"><h3>Kebun kita bertumbuh <span aria-hidden="true">↗</span></h3><div><strong>{{ thread_total }}</strong><span>cerita dibagikan</span></div><div><strong>{{ member_total }}</strong><span>teman berbagi cerita</span></div><div><strong>{{ achievement_total }}</strong><span>pencapaian dirayakan</span></div></section><section class="note-card"><span class="tape" aria-hidden="true"></span><span class="eyebrow">CATATAN KECIL</span><h3>Jadi teman tumbuh<br>yang baik, ya.</h3><ul><li>Hargai setiap langkah kecil.</li><li>Bagikan pengalaman dengan jujur.</li><li>Beda pendapat? Tetap hangat.</li></ul><span class="note-doodle" aria-hidden="true">♡</span></section></aside></div>
+  <section class="community-hero">
+    <div class="hero-copy">
+      <h1>
+        Tumbuh bareng,<br>
+        mulai dari <span>cerita kecil.</span>
+        <i aria-hidden="true">✳</i>
+      </h1>
+      <p>
+        Tempat berbagi tips, merayakan langkah baik, dan menemukan teman
+        seperjalanan. Karena hidup hijau lebih seru bareng-bareng.
+      </p>
+      <a class="button ochre" href="{% url 'community:create' %}">
+        <span aria-hidden="true">＋</span>
+        Bagikan ceritamu
+      </a>
+    </div>
+
+    <div class="hero-garden" aria-hidden="true">
+      <div class="orbit"></div>
+      <span class="garden-spark spark-one">✦</span>
+      <span class="garden-spark spark-two">✳</span>
+      <div class="garden-sticker">
+        small steps,<br>
+        <b>big little joys!</b>
+      </div>
+      <div class="plant">
+        <div class="stem"></div>
+        <div class="leaf leaf-one"></div>
+        <div class="leaf leaf-two"></div>
+        <div class="leaf leaf-three"></div>
+        <div class="pot">
+          <div class="eyes">• •</div>
+          <div class="smile"></div>
+        </div>
+      </div>
+      <div class="garden-label">🌱 Sedikit demi sedikit, jadi bukit.</div>
+    </div>
+  </section>
+
+  <div class="community-layout">
+    <section class="feed" aria-labelledby="feed-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="feed-title">
+            Obrolan di kebun <span aria-hidden="true">✿</span>
+          </h2>
+        </div>
+        <span class="sort-label">↓ Terbaru dulu</span>
+      </div>
+
+      <nav class="filter-tabs" aria-label="Filter kategori">
+        <a
+          class="{% if not category %}selected{% endif %}"
+          data-category-filter
+          href="{% url 'community:index' %}"
+          {% if not category %}aria-current="page"{% endif %}
+        >
+          Semua cerita
+        </a>
+        <a
+          class="{% if category == 'tips' %}selected{% endif %}"
+          data-category-filter
+          href="?category=tips"
+          {% if category == 'tips' %}aria-current="page"{% endif %}
+        >
+          ✳ Tips hijau
+        </a>
+        <a
+          class="{% if category == 'achievement' %}selected{% endif %}"
+          data-category-filter
+          href="?category=achievement"
+          {% if category == 'achievement' %}aria-current="page"{% endif %}
+        >
+          ✦ Pencapaian
+        </a>
+        <a
+          class="{% if category == 'general' %}selected{% endif %}"
+          data-category-filter
+          href="?category=general"
+          {% if category == 'general' %}aria-current="page"{% endif %}
+        >
+          ☀ Obrolan
+        </a>
+      </nav>
+
+      <div data-thread-feed>
+        {% include 'community/thread_feed.html' %}
+      </div>
+    </section>
+
+    <aside class="community-sidebar">
+      <section class="welcome-card">
+        <span class="eyebrow">SENANG KAMU DI SINI!</span>
+        <h2>
+          Hai, {{ user.first_name|default:user.username }}
+          <span aria-hidden="true">☀</span>
+        </h2>
+        <p>
+          Satu langkahmu berarti.<br>
+          Satu ceritamu menginspirasi.
+        </p>
+        <a href="{% url 'community:create' %}">
+          Hari ini mau berbagi apa? ↗
+        </a>
+      </section>
+
+      <section class="stats-card">
+        <h3>Kebun kita bertumbuh <span aria-hidden="true">↗</span></h3>
+        <div>
+          <strong>{{ thread_total }}</strong>
+          <span>cerita dibagikan</span>
+        </div>
+        <div>
+          <strong>{{ member_total }}</strong>
+          <span>teman berbagi cerita</span>
+        </div>
+        <div>
+          <strong>{{ achievement_total }}</strong>
+          <span>pencapaian dirayakan</span>
+        </div>
+      </section>
+
+      <section class="note-card">
+        <span class="tape" aria-hidden="true"></span>
+        <span class="eyebrow">CATATAN KECIL</span>
+        <h3>
+          Jadi teman tumbuh<br>
+          yang baik, ya.
+        </h3>
+        <ul>
+          <li>Hargai setiap langkah kecil.</li>
+          <li>Bagikan pengalaman dengan jujur.</li>
+          <li>Beda pendapat? Tetap hangat.</li>
+        </ul>
+        <span class="note-doodle" aria-hidden="true">♡</span>
+      </section>
+    </aside>
+  </div>
 {% endblock %}

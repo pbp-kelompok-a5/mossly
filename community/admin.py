@@ -1,5 +1,7 @@
 from django.contrib import admin
-from .models import Reply, Thread
+
+from .models import Reply, Thread, ThreadLike
+
 
 @admin.register(Thread)
 class ThreadAdmin(admin.ModelAdmin):
@@ -7,14 +9,22 @@ class ThreadAdmin(admin.ModelAdmin):
         "title",
         "author",
         "category",
-        "created_at"
+        "is_auto_post",
+        "created_at",
     )
-    list_filler = ("category",)
-    search_fields = ("title", "content")
-    readonly_fields = ("achievement_event_id",)
-    
+    list_filter = ("category", "is_auto_post")
+    search_fields = ("title", "body", "author__username")
+    readonly_fields = ("is_auto_post", "user_achievement")
+
+
 @admin.register(Reply)
 class ReplyAdmin(admin.ModelAdmin):
     list_display = ("id", "thread", "author", "created_at")
-    search_fields = ("content",)
-# Register your models here.
+    search_fields = ("body", "author__username")
+
+
+@admin.register(ThreadLike)
+class ThreadLikeAdmin(admin.ModelAdmin):
+    list_display = ("thread", "user", "created_at")
+    list_select_related = ("thread", "user")
+    search_fields = ("thread__title", "user__username")

@@ -85,6 +85,15 @@ img {
   height:32px;
   width:32px
 }
+.author-avatar-icon {
+  width:20px;
+  height:20px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round
+}
 .community-shell {
   width:100%;
   max-width:1168px;
@@ -348,7 +357,7 @@ img {
   margin-left:5px
 }
 .sort-label {
-  font-size:10px;
+  font-size:15px;
   color:var(--muted);
   white-space:nowrap;
   padding-bottom:4px
@@ -386,7 +395,12 @@ img {
   padding:25px;
   box-shadow:0 4px 0 #e9e1ce50;
   transition:transform .2s,border-color .2s;
-  min-width:0
+  min-width:0;
+  cursor:pointer
+}
+.thread-card:focus-visible {
+  outline:3px solid var(--ochre);
+  outline-offset:4px
 }
 .thread-card:hover {
   transform:translateY(-3px);
@@ -415,11 +429,15 @@ img {
   display:block;
   overflow-wrap:anywhere
 }
-.author>div>span {
+.author-meta {
   display:block;
   font-size:10px;
   color:var(--muted);
   margin-top:1px
+}
+.author-username {
+  font-weight:700;
+  color:#69725e;
 }
 .badges {
   display:flex;
@@ -428,9 +446,9 @@ img {
   align-items:center
 }
 .category-badge {
-  font-size:9px;
+  font-size:10.5px;
   border-radius:99px;
-  padding:4px 10px;
+  padding:5px 11px;
   white-space:nowrap;
   font-weight:700
 }
@@ -447,7 +465,7 @@ img {
   background:#efebe1
 }
 .auto-badge {
-  font-size:9px;
+  font-size:10px;
   color:var(--muted)
 }
 .thread-card h3 {
@@ -468,21 +486,75 @@ img {
 }
 .card-bottom {
   display:flex;
+  align-items:center;
   justify-content:space-between;
   gap:10px;
   margin-top:22px;
   padding-top:16px;
   border-top:1px solid #f0ebdf;
-  font-size:10px;
+  font-size:13px;
   color:var(--muted)
 }
 .card-bottom>div {
   display:flex;
+  align-items:center;
   gap:20px;
   flex-wrap:wrap
 }
+.like-form {
+  display:flex;
+  align-items:center;
+  height:24px;
+  margin:0
+}
+.like-button,
+.reply-link {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  height:24px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:inherit;
+  font:inherit;
+  line-height:24px;
+  text-decoration:none
+}
+.like-button {
+  cursor:pointer
+}
+.like-button svg,
+.reply-link svg {
+  display:block;
+  width:18px;
+  height:18px;
+  flex:none;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round
+}
+.like-button[aria-pressed="true"] {
+  color:#a34d36
+}
+.like-button[aria-pressed="true"] svg {
+  fill:currentColor;
+}
+.like-button:hover,
+.reply-link:hover {
+  color:var(--moss)
+}
+.like-button:focus-visible,
+.reply-link:focus-visible {
+  outline:2px solid var(--ochre);
+  outline-offset:4px;
+  border-radius:4px
+}
 .read-link {
   color:var(--moss);
+  font-size:14px;
   font-weight:700;
   white-space:nowrap
 }
@@ -740,16 +812,29 @@ img {
   margin-bottom:22px
 }
 .reply-section h2 span {
-  font-size:16px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:30px;
+  height:30px;
+  font-size:14px;
+  line-height:1;
   background:var(--sage);
-  padding:4px 10px;
-  border-radius:50%
+  border-radius:50%;
+  vertical-align:middle
 }
 .reply-form {
   background:#e9eddf;
   border-radius:22px;
   padding:25px;
+  margin-top:20px;
   margin-bottom:25px
+}
+.async-feedback {
+  min-height:1.25em;
+  margin:12px 0 0;
+  color:var(--moss);
+  font-size:12px;
 }
 .field {
   margin-bottom:22px
@@ -797,33 +882,15 @@ img {
   padding:0;
   list-style:none
 }
-.login-required-card {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:18px;
-  margin:18px 0;
-  padding:16px 18px;
-  border:1px solid #d9b893;
-  border-radius:14px;
-  background:#fff3e3;
-  color:#71491f;
-  font-size:12px
-}
-.login-required-card a {
-  flex:none;
-  padding:8px 14px;
-  border-radius:99px;
-  background:var(--moss);
-  color:#fff;
-  font-weight:700
-}
 .field [aria-invalid=true] {
   border-color:#a13d28
 }
 .reply-card {
   padding:24px 0;
   border-bottom:1px solid var(--line)
+}
+.reply-card:last-of-type {
+  border-bottom:0
 }
 .reply-card .prose {
   margin:15px 0 0 52px

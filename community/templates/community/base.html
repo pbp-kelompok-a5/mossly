@@ -4,17 +4,23 @@
 {% block title %}{% block community_title %}Komunitas{% endblock %} · Mossly{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/community.css' %}">
+  <link rel="stylesheet" href="{% static 'css/community.css' %}">
+  <script src="{% static 'js/vendor/htmx.min.js' %}?v=2.0.4" defer></script>
+  <script src="{% static 'js/community.js' %}?v=10" defer></script>
 {% endblock %}
 
 {% block content %}
-<a class="skip-link" href="#community-main">Lewati ke konten</a>
-<div id="community-main" class="community-shell">
-  {% if messages %}
-    <div class="notices" role="status">
-      {% for message in messages %}<p>{{ message }}</p>{% endfor %}
-    </div>
-  {% endif %}
-  {% block community_content %}{% endblock %}
-</div>
+  <a class="skip-link" href="#community-main">Lewati ke konten</a>
+
+  <div id="community-main" class="community-shell">
+    {% if messages %}
+      <div class="notices" role="status">
+        {% for message in messages %}
+          <p>{{ message }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% block community_content %}{% endblock %}
+  </div>
 {% endblock %}

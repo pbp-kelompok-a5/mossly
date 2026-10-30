@@ -1,0 +1,80 @@
+<div class="thread-list">
+  {% for thread in page_obj %}
+    <article
+      class="thread-card category-{{ thread.category }}"
+      data-thread-url="{% url 'community:detail' thread.pk %}"
+      tabindex="0"
+    >
+      <div class="card-top">
+        {% include 'community/author.html' with author=thread.author published=thread.created_at %}
+        <div class="badges">
+          {% include 'community/badge.html' %}
+        </div>
+      </div>
+
+      <h3>
+        <a href="{% url 'community:detail' thread.pk %}">
+          {{ thread.title }}
+        </a>
+      </h3>
+      <p class="thread-excerpt">{{ thread.body|truncatechars:240 }}</p>
+
+      <div class="card-bottom">
+        <div>
+          {% include 'community/like_control.html' with like_variant='feed' %}
+
+          <a
+            class="reply-link"
+            href="{% url 'community:detail' thread.pk %}#replies"
+            aria-label="Lihat {{ thread.reply_count }} balasan"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 11.5a7.5 7.5 0 0 1-7.8 7.5 8.5 8.5 0 0 1-3.3-.7L4 20l1.7-3.3A7.3 7.3 0 0 1 4.5 12 7.5 7.5 0 0 1 12 4.5a7.5 7.5 0 0 1 8 7Z"/>
+            </svg>
+            <span>{{ thread.reply_count }} balasan</span>
+          </a>
+        </div>
+      </div>
+    </article>
+  {% empty %}
+    <div class="empty-state">
+      <div class="empty-flower" aria-hidden="true">✿</div>
+      <span class="eyebrow">RUANG UNTUK CERITA BARU</span>
+      <h3>
+        {% if category %}
+          Belum ada cerita di kategori ini
+        {% else %}
+          Kebun ini menunggu cerita pertamamu
+        {% endif %}
+      </h3>
+      <p>
+        Tips membawa tumbler, perjalanan naik KRL, atau satu kebiasaan kecil.
+        Ceritamu bisa jadi awal yang baik untuk seseorang.
+      </p>
+      <a class="button" href="{% url 'community:create' %}">
+        ＋ Mulai sebuah cerita
+      </a>
+      {% if category %}
+        <a class="text-link" href="{% url 'community:index' %}">
+          Lihat semua cerita
+        </a>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+
+{% if page_obj.has_other_pages %}
+  <nav class="pagination" aria-label="Halaman diskusi">
+    {% if page_obj.has_previous %}
+      <a href="?category={{ category }}&page={{ page_obj.previous_page_number }}">
+        ← Sebelumnya
+      </a>
+    {% endif %}
+    <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?category={{ category }}&page={{ page_obj.next_page_number }}">
+        Selanjutnya →
+      </a>
+    {% endif %}
+  </nav>
+{% endif %}
