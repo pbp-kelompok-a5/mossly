@@ -1,0 +1,16 @@
+<div class="dash-tabs" role="navigation" aria-label="Filter badge">
+  <a class="dash-tab" href="{% url 'dashboard:badges' %}" hx-get="{% url 'dashboard:badges' %}" hx-target="#badge-browser" hx-push-url="true"{% if active == 'all' %} aria-current="true"{% endif %}>Semua · {{ total_badges }}</a>
+  {% for t in tabs %}<a class="dash-tab" href="{% url 'dashboard:badges' %}?kategori={{ t.key }}" hx-get="{% url 'dashboard:badges' %}?kategori={{ t.key }}" hx-target="#badge-browser" hx-push-url="true"{% if active == t.key %} aria-current="true"{% endif %}>{{ t.label }} · {{ t.total }}</a>{% endfor %}
+</div>
+
+{% for g in groups %}
+<section class="dash-card">
+  <div class="dash-card-head">
+    <h2 class="dash-card-title">{{ g.label }}</h2>
+    <p class="dash-note">{{ g.earned }} dari {{ g.total }} diraih</p>
+  </div>
+  <div class="dash-badges dash-badges-5">
+    {% for b in g.items %}{% include "dashboard_parts/badge.html" %}{% endfor %}
+  </div>
+</section>
+{% endfor %}

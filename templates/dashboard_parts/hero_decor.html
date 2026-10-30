@@ -1,11 +1,35 @@
 {% load static %}
-<img class="dash-decor dash-decor-leaf" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
-<img class="dash-decor dash-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
-<img class="dash-decor dash-decor-leaf-sm" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
-<img class="dash-decor dash-decor-seedling" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
 <img class="dash-decor dash-decor-grass dash-decor-grass-left" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
 <img class="dash-decor dash-decor-grass dash-decor-grass-right" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
 <svg class="dash-decor dash-decor-hill" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
   <path class="dash-hill-back" d="M0 60C160 10 320 90 520 50C720 10 900 80 1200 30V120H0V60Z"/>
   <path class="dash-hill-front" d="M0 92C200 52 380 112 600 82C820 52 1000 102 1200 72V120H0V92Z"/>
 </svg>
+<div class="dash-decor dash-scene" aria-hidden="true">
+  <span class="dash-scene-rays"></span>
+  <span class="dash-scene-sun"></span>
+  <svg class="dash-scene-mountain" viewBox="0 0 700 190" preserveAspectRatio="none" focusable="false">
+    <path d="M0 190 150 70 250 130 380 20 520 120 600 70 700 130V190Z" opacity=".45"/>
+    <path d="M120 190 300 90 420 150 560 60 700 140V190Z" opacity=".6"/>
+  </svg>
+  <span class="dash-scene-cloud" style="--t:5rem;--r:34rem;--w:5rem"></span>
+  <span class="dash-scene-cloud" style="--t:6rem;--r:30rem;--w:3rem"></span>
+  <span class="dash-scene-cloud" style="--t:11rem;--r:5rem;--w:4rem"></span>
+  <img class="dash-scene-tree dash-scene-tree-back dash-scene-tree-a" src="{% static 'img/dashboard-tree.svg' %}" alt="">
+  <img class="dash-scene-tree dash-scene-tree-back dash-scene-tree-b" src="{% static 'img/dashboard-tree.svg' %}" alt="">
+  <img class="dash-scene-tree dash-scene-tree-back dash-scene-tree-c" src="{% static 'img/dashboard-tree.svg' %}" alt="">
+  <img class="dash-scene-tree dash-scene-tree-main" src="{% static 'img/dashboard-tree.svg' %}" alt="">
+  <span class="dash-scene-fly" style="--t:8rem;--r:27rem;--d:0s"></span>
+  <span class="dash-scene-fly" style="--t:12rem;--r:24rem;--d:1.2s"></span>
+  <span class="dash-scene-fly" style="--t:15rem;--r:31rem;--d:2.4s"></span>
+  <span class="dash-scene-fly" style="--t:6rem;--r:7rem;--d:.6s"></span>
+  <span class="dash-scene-fly" style="--t:11rem;--r:2.5rem;--d:1.8s"></span>
+  <span class="dash-scene-fly" style="--t:17rem;--r:9rem;--d:3s"></span>
+  <span class="dash-scene-fly" style="--t:4rem;--r:23rem;--d:2s"></span>
+  <span class="dash-scene-petal" style="--t:13rem;--r:19rem;--a:30deg"></span>
+  <span class="dash-scene-petal" style="--t:16rem;--r:13rem;--a:-20deg"></span>
+  <span class="dash-scene-petal" style="--t:18rem;--r:23rem;--a:55deg"></span>
+  <span class="dash-scene-petal" style="--t:14rem;--r:6rem;--a:10deg"></span>
+  <svg class="dash-scene-spark" style="--t:2rem;--r:3rem" viewBox="0 0 24 24" focusable="false"><path d="M12 0 14 10 24 12 14 14 12 24 10 14 0 12 10 10Z"/></svg>
+  <svg class="dash-scene-spark dash-scene-spark-sm" style="--t:9rem;--r:30rem" viewBox="0 0 24 24" focusable="false"><path d="M12 0 14 10 24 12 14 14 12 24 10 14 0 12 10 10Z"/></svg>
+</div>

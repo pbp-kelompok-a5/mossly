@@ -27,7 +27,7 @@ from .badges import (
     UNIT_BY_CODE,
     ensure_achievements,
 )
-from .models import Achievement, UserAchievement
+from .models import Achievement, EmissionTarget, UserAchievement
 
 logger = logging.getLogger(__name__)
 
@@ -475,6 +475,60 @@ def timeline(user, today, limit=5):
     ]
 
 
+def month_label(day):
+    return f"{display.MONTH_NAMES[day.month - 1]} {day.year}"
+
+
+def _target_row(user, target, today):
+    used = month_total(user, target.month.year, target.month.month)
+    percent = int(used * 100 / target.target_kg)
+    diff = abs(target.target_kg - used)
+    if used > target.target_kg:
+        state, note = "over", f"melebihi {display.format_rate(diff)} kg dari target"
+    elif percent >= 80:
+        state, note = "warn", f"tersisa {display.format_rate(diff)} kg lagi"
+    else:
+        state, note = "ok", f"tersisa {display.format_rate(diff)} kg, masih aman"
+    return {
+        "pk": target.pk,
+        "month_label": month_label(target.month),
+        "target": display.format_rate(target.target_kg),
+        "used": display.format_rate(used),
+        "percent": percent,
+        "bar": min(percent, 100),
+        "state": state,
+        "note": note,
+        "is_current": (target.month.year, target.month.month) == (today.year, today.month),
+    }
+
+
+def target_overview(user, today):
+    target = EmissionTarget.objects.filter(
+        user=user, month=today.replace(day=1)
+    ).first()
+    return {"row": _target_row(user, target, today) if target else None}
+
+
+def target_list(user, today, limit=24):
+    targets = EmissionTarget.objects.filter(user=user)[:limit]
+    return [_target_row(user, t, today) for t in targets]
+
+
+def api_summary(user, today):
+    metrics = collect_metrics(user, today)
+    rows = badge_rows(user, metrics)
+    target = EmissionTarget.objects.filter(user=user, month=today.replace(day=1)).first()
+    return {
+        "month": f"{today.year}-{today.month:02d}",
+        "emission_kg": float(month_total(user, today.year, today.month)),
+        "target_kg": float(target.target_kg) if target else None,
+        "streak": {"now": metrics["streak_now"], "best": metrics["streak_best"]},
+        "goals": {"done": metrics["goals_done"], "total": metrics["goals_total"]},
+        "community_actions": metrics["threads"] + metrics["replies"] + metrics["likes_given"],
+        "badges": {"earned": sum(1 for r in rows if r["earned"]), "total": len(rows)},
+    }
+
+
 def build_dashboard(user, today, metrics, rows):
     this = month_total(user, today.year, today.month)
     prev_year, prev_month = habit_services.shift_month(today.year, today.month, -1)
@@ -517,6 +571,7 @@ def build_dashboard(user, today, metrics, rows):
             "replies": metrics["replies"],
             "likes": metrics["likes_given"],
         },
+        "target": target_overview(user, today),
         "chart": emission_chart(user, today),
         "modes": mode_breakdown(user, today),
         "habit": habit_overview(user, today),

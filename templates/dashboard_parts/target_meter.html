@@ -1,0 +1,8 @@
+<div class="dash-target dash-target-{{ t.state }}">
+  <div class="dash-target-figures">
+    <span class="dash-target-used">{{ t.used }}</span>
+    <span class="dash-note">dari {{ t.target }} kg CO₂e · {{ t.percent }}%</span>
+  </div>
+  <div class="dash-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ t.bar }}"><span class="dash-meter-fill" style="--p:{{ t.bar }}"></span></div>
+  <p class="dash-note">{{ t.note }}</p>
+</div>

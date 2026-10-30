@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Target Emisi · Mossly{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/dashboard-fildza.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dash-page">
+  {% include "dashboard_parts/icons.html" %}
+
+  <a class="dash-back" href="{% url 'dashboard:index' %}">
+    <svg class="dash-ico"><use href="#i-back"/></svg>Kembali ke Dashboard
+  </a>
+
+  <header class="dash-badges-head">
+    <h1 class="dash-badges-title">Target emisi</h1>
+    <p class="dash-hero-text">Tentukan batas emisi per bulan, lalu pantau perbandingannya dengan data dari Carbon Tracker.</p>
+    <a class="btn" href="{% url 'dashboard:target_create' %}">Tambah target</a>
+  </header>
+
+  <div class="dash-target-list">
+    {% for t in targets %}
+    <article class="dash-card">
+      <div class="dash-card-head">
+        <h2 class="dash-card-title">{{ t.month_label }}{% if t.is_current %} <span class="dash-tag dash-tag-soft">Bulan ini</span>{% endif %}</h2>
+        <div class="dash-target-actions">
+          <a class="dash-link" href="{% url 'dashboard:target_edit' t.pk %}">Ubah</a>
+          <a class="dash-link dash-link-danger" href="{% url 'dashboard:target_delete' t.pk %}">Hapus</a>
+        </div>
+      </div>
+      {% include "dashboard_parts/target_meter.html" %}
+    </article>
+    {% empty %}
+    <section class="dash-card">
+      <p class="dash-note">Belum ada target. Buat target pertamamu untuk bulan ini.</p>
+      <a class="dash-link" href="{% url 'dashboard:target_create' %}">Tambah target <svg class="dash-ico"><use href="#i-arrow"/></svg></a>
+    </section>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Hapus Target Emisi · Mossly{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/dashboard-fildza.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dash-page">
+  {% include "dashboard_parts/icons.html" %}
+
+  <a class="dash-back" href="{% url 'dashboard:targets' %}">
+    <svg class="dash-ico"><use href="#i-back"/></svg>Kembali ke daftar target
+  </a>
+
+  <section class="dash-card">
+    <h1 class="dash-card-title">Hapus target emisi?</h1>
+    <p class="dash-note">Target {{ target.target_kg }} kg CO₂e untuk bulan {{ target.month|date:"m/Y" }} akan dihapus. Data perjalananmu di Carbon Tracker tidak berubah.</p>
+    <form class="dash-form" method="post">
+      {% csrf_token %}
+      <div class="dash-form-actions">
+        <button type="submit" class="btn dash-btn-danger">Ya, hapus</button>
+        <a class="btn btn-ghost" href="{% url 'dashboard:targets' %}">Batal</a>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}
