@@ -12,6 +12,7 @@ from django.views.decorators.http import require_POST
 
 from .forms import ReplyForm, ThreadForm
 from .models import Reply, Thread, ThreadLike
+from .rate_limit import limit_post_requests
 
 
 def is_async_request(request):
@@ -155,6 +156,7 @@ def threads_json(request):
 
 
 @login_required
+@limit_post_requests("reply")
 def detail(request, pk):
     thread = get_object_or_404(threads_for(request.user), pk=pk)
     form = ReplyForm(request.POST or None)
@@ -202,6 +204,7 @@ def detail(request, pk):
 
 
 @login_required
+@limit_post_requests("thread_write")
 def thread_form(request, pk=None):
     thread = (
         get_object_or_404(
@@ -233,6 +236,7 @@ def thread_form(request, pk=None):
 
 
 @login_required
+@limit_post_requests("delete")
 def delete(request, pk):
     thread = get_object_or_404(Thread, pk=pk, author=request.user)
     if request.method == "POST":
@@ -244,6 +248,7 @@ def delete(request, pk):
 
 @login_required
 @require_POST
+@limit_post_requests("like")
 def like(request, pk):
     thread = get_object_or_404(Thread, pk=pk)
     action = request.POST.get("action")

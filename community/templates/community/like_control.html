@@ -1,5 +1,6 @@
 <form
   class="like-form"
+  data-like-control
   method="post"
   action="{% url 'community:like' thread.pk %}"
   hx-post="{% url 'community:like' thread.pk %}"
@@ -17,7 +18,9 @@
   {% if like_variant == "detail" %}
     <button
       class="button {% if not thread.is_liked %}secondary{% endif %}"
+      data-like-button
       type="submit"
+      aria-label="{% if thread.is_liked %}Hapus apresiasi{% else %}Beri apresiasi{% endif %}"
       aria-pressed="{{ thread.is_liked|yesno:'true,false' }}"
     >
       <span data-like-state>
@@ -28,6 +31,7 @@
   {% else %}
     <button
       class="like-button"
+      data-like-button
       type="submit"
       aria-label="{% if thread.is_liked %}Hapus apresiasi{% else %}Beri apresiasi{% endif %}"
       aria-pressed="{{ thread.is_liked|yesno:'true,false' }}"
