@@ -26,6 +26,7 @@ API_DAILY_LIMIT = 150
 
 
 class GeoapifyError(Exception):
+    """Kesalahan layanan yang aman ditampilkan tanpa membocorkan API key."""
     def __init__(self, message, code='provider_error', status=502):
         super().__init__(message)
         self.code = code
@@ -33,6 +34,7 @@ class GeoapifyError(Exception):
 
 
 def get_api_key():
+    """Baca API key dari konfigurasi backend."""
     return getattr(settings, 'GEOAPIFY_API_KEY', '').strip()
 
 
@@ -61,6 +63,7 @@ def check_api_limit(user):
 
 
 def coordinate(value, limit):
+    """Validasi rentang koordinat dan bulatkan menjadi enam desimal."""
     try:
         number = Decimal(str(value))
         if not number.is_finite() or not -limit <= number <= limit:
@@ -71,6 +74,7 @@ def coordinate(value, limit):
 
 
 def validate_route_inputs(origin_lat, origin_lon, dest_lat, dest_lon, mode):
+    """Periksa profil moda dan pastikan titik asal serta tujuan berbeda."""
     if mode not in SUPPORTED_PROFILES:
         raise ValueError('Moda transportasi tidak valid.')
     coords = (coordinate(origin_lat, 90), coordinate(origin_lon, 180),
@@ -81,6 +85,7 @@ def validate_route_inputs(origin_lat, origin_lon, dest_lat, dest_lon, mode):
 
 
 def _request(endpoint, params):
+    """Panggil Geoapify dengan timeout dan ubah kegagalan menjadi pesan aman."""
     api_key = get_api_key()
     if not api_key:
         raise GeoapifyError('Layanan lokasi belum tersedia. API key backend belum dikonfigurasi.', 'service_unavailable', 503)
@@ -113,6 +118,7 @@ def _request(endpoint, params):
 
 
 def geocode_search(query):
+    """Cari maksimal lima alamat Indonesia dan simpan hasilnya di cache."""
     query = ' '.join(query.split())
     key = 'carbon:geocode:v1:' + sha256(query.casefold().encode()).hexdigest()
     cached = cache.get(key)
@@ -138,6 +144,7 @@ def geocode_search(query):
 
 
 def location_token(location, user_id):
+    """Tandatangani lokasi dan pemiliknya agar isian tidak dapat dipalsukan."""
     return signing.dumps({
         'user': user_id, 'name': location['name'],
         'lat': str(coordinate(location['lat'], 90)),
@@ -165,6 +172,7 @@ def reverse_geocode(lat, lon):
 
 
 def verify_location(token, name, lat, lon, user_id):
+    """Cocokkan token dengan nama lokasi, koordinat, dan pengguna yang menyimpan."""
     try:
         payload = signing.loads(token, salt=LOCATION_SALT)
         return payload == {'user': user_id, 'name': name, 'lat': str(coordinate(lat, 90)),
@@ -174,6 +182,7 @@ def verify_location(token, name, lat, lon, user_id):
 
 
 def calculate_route(origin_lat, origin_lon, dest_lat, dest_lon, mode):
+    """Ambil rute sesuai moda dan ubah jaraknya dari meter menjadi kilometer."""
     olat, olon, dlat, dlon = validate_route_inputs(origin_lat, origin_lon, dest_lat, dest_lon, mode)
     features = _request('routing', {
         'waypoints': f'{olat},{olon}|{dlat},{dlon}', 'mode': mode, 'units': 'metric',
@@ -213,6 +222,7 @@ def get_mode(value):
 
 
 def get_emission_factor(mode, on_date=None):
+    """Pilih versi faktor emisi yang berlaku pada tanggal perjalanan."""
     on_date = on_date or today()
     factor = EmissionFactor.objects.filter(mode=mode, valid_from__lte=on_date).filter(
         Q(valid_to__isnull=True) | Q(valid_to__gte=on_date),

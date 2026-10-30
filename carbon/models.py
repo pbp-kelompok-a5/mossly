@@ -21,6 +21,7 @@ class ApiUsage(models.Model):
 
 
 class TransportMode(models.Model):
+    """Daftar moda transportasi dan profil routing yang tersedia."""
     code = models.SlugField(max_length=20, unique=True)
     name = models.CharField(max_length=50)
     geoapify_profile = models.CharField(max_length=20, null=True, blank=True)
@@ -33,11 +34,13 @@ class TransportMode(models.Model):
         return self.name
 
     def clean(self):
+        """Aktifkan hanya moda dengan profil routing yang didukung."""
         if self.is_active and self.geoapify_profile not in SUPPORTED_PROFILES:
             raise ValidationError('MVP hanya mengaktifkan moda dengan empat profil routing yang didukung.')
 
 
 class FactorQuerySet(models.QuerySet):
+    """Cegah perubahan massal agar faktor emisi historis tetap konsisten."""
     def update(self, **kwargs):
         raise ValidationError('Faktor emisi tidak boleh diubah. Buat versi baru.')
 
@@ -46,6 +49,7 @@ class FactorQuerySet(models.QuerySet):
 
 
 class EmissionFactor(models.Model):
+    """Simpan faktor emisi per moda, sumber, versi, dan masa berlakunya."""
     mode = models.ForeignKey(TransportMode, on_delete=models.PROTECT, related_name='emission_factors')
     kg_co2e_per_km = models.DecimalField(max_digits=12, decimal_places=9, validators=[MinValueValidator(0)])
     source = models.TextField()
@@ -67,6 +71,7 @@ class EmissionFactor(models.Model):
         return f'{self.mode.name} — {self.version}'
 
     def clean(self):
+        """Tolak periode faktor yang bertumpang-tindih untuk moda yang sama."""
         if not self.mode_id or not self.valid_from:
             return
         overlaps = type(self).objects.filter(mode_id=self.mode_id).exclude(pk=self.pk)
@@ -77,6 +82,7 @@ class EmissionFactor(models.Model):
             raise ValidationError('Masa berlaku faktor untuk moda ini bertumpang-tindih. Akhiri periode lama sebelum membuat versi baru.')
 
     def save(self, *args, **kwargs):
+        """Simpan versi faktor tanpa mengubah nilai yang dipakai riwayat lama."""
         with transaction.atomic():
             # Serialize penambahan versi untuk moda yang sama di database produksi.
             TransportMode.objects.select_for_update().get(pk=self.mode_id)
@@ -90,6 +96,7 @@ class EmissionFactor(models.Model):
 
 
 class Trip(models.Model):
+    """Simpan perjalanan pribadi beserta hasil perhitungan dan data rutenya."""
     class DistanceSource(models.TextChoices):
         ROUTING = 'routing', 'Geoapify Routing'
         APPROX_DRIVE = 'approx_drive', 'Pendekatan rute kendaraan jalan'
@@ -126,6 +133,7 @@ class Trip(models.Model):
         ]
 
     def clean(self):
+        """Pastikan faktor sesuai moda dan tanggal perjalanan tidak di masa depan."""
         if self.mode_id and self.emission_factor_id and self.emission_factor.mode_id != self.mode_id:
             raise ValidationError('Faktor emisi harus sesuai dengan moda perjalanan.')
         if self.traveled_at and local_date(self.traveled_at) > today():
@@ -133,6 +141,7 @@ class Trip(models.Model):
 
     @property
     def trip_date(self):
+        """Baca tanggal perjalanan sesuai zona waktu Jakarta."""
         return local_date(self.traveled_at)
 
     def __str__(self):
