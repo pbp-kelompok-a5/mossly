@@ -27,6 +27,10 @@
         {% else %}{{ field }}{% endif %}
     {% endif %}
     <div id="{{ field.auto_id }}_helptext" class="field-hint">{{ field.help_text|safe }}</div>
+    {% if field.name == 'username' %}
+      <span id="username-check-indicator" class="field-hint htmx-indicator" aria-hidden="true">Memeriksa username…</span>
+      <div id="username-availability" class="field-hint" role="status" aria-live="polite" aria-atomic="true">Ketersediaan username diperiksa saat mengetik dan saat daftar.</div>
+    {% endif %}
     <div id="{{ field.auto_id }}_error" class="field-error"{% if field.errors %} role="alert"{% endif %}>
       {% for error in field.errors %}<p>{{ error }}</p>{% endfor %}
     </div>
