@@ -13,7 +13,6 @@
   </form>
   <div class="signup text-label-s"><a href="{% url 'dashboard:index' %}">Kembali ke Dashboard</a></div>
   <div class="auth-account-tools">
-    <a class="text-label-m" href="{% url 'accounts:current_user_json' %}">Lihat data profil dalam JSON</a>
     <a class="text-label-m auth-danger-link" href="{% url 'accounts:delete' %}">Hapus akun</a>
   </div>
 {% endblock %}
