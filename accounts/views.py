@@ -1,11 +1,13 @@
 from urllib.parse import urlsplit
 
 from django.contrib import messages
-from django.contrib.auth import login, logout
+from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.db import IntegrityError, transaction
-from django.shortcuts import redirect, render
+from django.core.exceptions import ValidationError
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone, translation
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -14,7 +16,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.debug import sensitive_post_parameters
 
-from .forms import LoginForm, PreferencesForm, ProfileForm, RegisterForm
+from .forms import DeleteAccountForm, LoginForm, PreferencesForm, ProfileForm, RegisterForm
 from .models import UserProfile
 
 
@@ -50,6 +52,7 @@ class AccountsLoginView(LoginView):
             reverse("accounts:register"),
             reverse("accounts:logout"),
             reverse("accounts:onboarding"),
+            reverse("accounts:delete"),
         }
         if urlsplit(target).path.rstrip("/") in {
             path.rstrip("/") for path in auth_paths
@@ -107,7 +110,7 @@ def onboarding_view(request):
             if (url_has_allowed_host_and_scheme(target, {request.get_host()}, require_https=request.is_secure())
                     and urlsplit(target).path.rstrip("/") not in {
                         reverse(f"accounts:{name}").rstrip("/")
-                        for name in ("login", "register", "onboarding", "logout")
+                        for name in ("login", "register", "onboarding", "logout", "delete")
                     }):
                 return redirect(target)
             return redirect("dashboard:index")
@@ -140,3 +143,73 @@ def logout_view(request):
         logout(request)
         return redirect("main:landing")
     return render(request, "accounts/logout.html")
+
+
+@never_cache
+@require_http_methods(["GET"])
+def check_username(request):
+    raw_username = request.GET.get("username", "")
+    state, message = "empty", "Ketik username untuk memeriksa ketersediaan."
+    if raw_username.strip():
+        with translation.override("id"):
+            field = RegisterForm().fields["username"]
+            try:
+                username = field.clean(raw_username)
+                # UserCreationForm juga memvalidasi model saat _post_clean;
+                # jalur hint harus menjalankan validator username model yang sama.
+                username = get_user_model()._meta.get_field("username").clean(username, None)
+            except ValidationError as error:
+                state, message = "invalid", error.messages[0]
+            else:
+                if get_user_model().objects.filter(username__iexact=username).exists():
+                    state, message = "taken", "Username sudah digunakan."
+                else:
+                    state, message = "available", "Username tersedia. Ketersediaan diperiksa ulang saat daftar."
+    return render(request, "accounts/_username_availability.html", {"state": state, "message": message})
+
+
+@never_cache
+@require_http_methods(["GET"])
+def current_user_json(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Silakan login terlebih dahulu."}, status=401)
+    profile = UserProfile.objects.select_related("primary_mode").filter(user=request.user).first()
+    if profile is None:
+        return JsonResponse({"error": "Profil belum tersedia."}, status=404)
+    mode = profile.primary_mode
+    return JsonResponse({
+        "id": request.user.pk,
+        "username": request.user.get_username(),
+        "display_name": profile.display_name,
+        "avatar": profile.avatar,
+        "umur": profile.umur,
+        "is_onboarded": profile.is_onboarded,
+        "onboarded_at": profile.onboarded_at,
+        "primary_mode": {"id": mode.pk, "code": mode.code, "name": mode.name} if mode else None,
+        "focus_areas": profile.focus_areas,
+        "share_achievements": profile.share_achievements,
+    })
+
+
+@sensitive_post_parameters("password")
+@never_cache
+@login_required
+@require_http_methods(["GET", "POST"])
+@csrf_protect
+def delete_account(request):
+    with translation.override("id"):
+        form = DeleteAccountForm(request.user, request.POST if request.method == "POST" else None)
+        if request.method == "POST" and form.is_valid():
+            with transaction.atomic():
+                user = get_object_or_404(get_user_model().objects.select_for_update(), pk=request.user.pk)
+                # Periksa ulang jika password berubah saat request sedang diproses.
+                if user.check_password(form.cleaned_data["password"]):
+                    user.delete()
+                    deleted = True
+                else:
+                    form.add_error("password", "Password tidak sesuai.")
+                    deleted = False
+            if deleted:
+                logout(request)
+                return redirect("main:landing")
+        return render(request, "accounts/delete_account.html", {"form": form})

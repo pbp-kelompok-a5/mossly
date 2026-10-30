@@ -1,0 +1,42 @@
+<form
+  class="like-form"
+  method="post"
+  action="{% url 'community:like' thread.pk %}"
+  hx-post="{% url 'community:like' thread.pk %}"
+  hx-target="this"
+  hx-swap="outerHTML"
+>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  <input type="hidden" name="variant" value="{{ like_variant }}">
+  <input
+    type="hidden"
+    name="action"
+    value="{% if thread.is_liked %}unlike{% else %}like{% endif %}"
+  >
+  {% if like_variant == "detail" %}
+    <button
+      class="button {% if not thread.is_liked %}secondary{% endif %}"
+      type="submit"
+      aria-pressed="{{ thread.is_liked|yesno:'true,false' }}"
+    >
+      <span data-like-state>
+        {% if thread.is_liked %}♥ Diapresiasi{% else %}♡ Beri apresiasi{% endif %}
+      </span>
+      · <span data-like-count>{{ thread.like_count }}</span>
+    </button>
+  {% else %}
+    <button
+      class="like-button"
+      type="submit"
+      aria-label="{% if thread.is_liked %}Hapus apresiasi{% else %}Beri apresiasi{% endif %}"
+      aria-pressed="{{ thread.is_liked|yesno:'true,false' }}"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20.8 8.8c0 5.5-8.8 10.2-8.8 10.2S3.2 14.3 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/>
+      </svg>
+      <span data-like-count>{{ thread.like_count }}</span>
+      <span>apresiasi</span>
+    </button>
+  {% endif %}
+</form>
