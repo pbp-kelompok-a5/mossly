@@ -41,18 +41,21 @@
       <details class="card-checklist" data-open-key="goal-{{ goal.pk }}">
         <summary class="card-checklist-head">
           {% include "habits/components/icon.html" with name="list-checks" class="icon-sm" %}Checklist
-          <span class="card-checklist-count">{{ goal.checklist_done }}/{{ goal.checklist_total }}</span>
+          <span class="card-checklist-count" id="card-checklist-count-{{ goal.pk }}">{{ goal.checklist_done }}/{{ goal.checklist_total }}</span>
           {% include "habits/components/icon.html" with name="chevron-down" class="icon-sm card-checklist-chevron" %}
         </summary>
-        <ul class="card-checklist-list">
+        <ul class="card-checklist-list" id="card-checklist-list-{{ goal.pk }}">
           {% for item in goal.checklist %}
             <li>
               {% if goal.status == "active" %}
                 <form class="checklist-item card-checklist-item{% if item.is_done %} is-done{% endif %}" method="post"
-                      action="{% url 'habits:goal_checklist_toggle' goal.pk item.pk %}">
+                      action="{% url 'habits:goal_checklist_toggle' goal.pk item.pk %}"
+                      hx-post="{% url 'habits:goal_checklist_toggle' goal.pk item.pk %}" hx-sync="this:drop"
+                      hx-target="#card-checklist-list-{{ goal.pk }}" hx-select="#card-checklist-list-{{ goal.pk }}"
+                      hx-select-oob="#card-checklist-count-{{ goal.pk }}">
                   {% csrf_token %}
                   <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                  <button class="card-checklist-toggle" type="submit" aria-pressed="{% if item.is_done %}true{% else %}false{% endif %}">
+                  <button class="card-checklist-toggle" id="checklist-{{ item.pk }}" type="submit" aria-pressed="{% if item.is_done %}true{% else %}false{% endif %}">
                     <span class="checkbox-box">{% if item.is_done %}{% include "habits/components/icon.html" with name="check" class="icon-sm" %}{% endif %}</span>
                     <span class="checklist-label">{{ item.label }}</span>
                   </button>

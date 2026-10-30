@@ -150,13 +150,15 @@ class HtmxCheckInTests(FrozenClockMixin, TestCase):
         self.client.force_login(self.user)
         self.habit = make_habit(self.user, name="Bawa tumbler")
 
-    def test_htmx_check_in_returns_only_the_row(self):
-        url = reverse("habits:habit_check_in", args=[self.habit.pk])
-        response = self.client.post(url, HTTP_HX_REQUEST="true")
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "habits/components/habit_row.html")
-        self.assertNotContains(response, "<html")
-        self.assertContains(response, "is-done")
+    def htmx_post(self, name):
+        url = reverse(name, args=[self.habit.pk])
+        return self.client.post(url, HTTP_HX_REQUEST="true", follow=True)
+
+    def test_htmx_check_in_returns_the_page_with_fresh_counts(self):
+        response = self.htmx_post("habits:habit_check_in")
+        self.assertTemplateUsed(response, "habits/habit/habit_list.html")
+        self.assertContains(response, "1 dari 1 kebiasaan hijau sudah kamu selesaikan hari ini")
+        self.assertContains(response, 'aria-label="1 dari 1 selesai"')
         self.assertEqual(self.habit.checkins.count(), 1)
 
     def test_htmx_anonymous_gets_hx_redirect(self):
@@ -167,20 +169,59 @@ class HtmxCheckInTests(FrozenClockMixin, TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertTrue(response["HX-Redirect"].startswith(reverse("accounts:login")))
 
-    def test_htmx_undo_returns_only_the_row(self):
-        self.client.post(reverse("habits:habit_check_in", args=[self.habit.pk]), HTTP_HX_REQUEST="true")
-        response = self.client.post(reverse("habits:habit_undo_check_in", args=[self.habit.pk]), HTTP_HX_REQUEST="true")
-        self.assertNotContains(response, "is-done")
+    def test_htmx_undo_returns_the_page_with_fresh_counts(self):
+        self.htmx_post("habits:habit_check_in")
+        response = self.htmx_post("habits:habit_undo_check_in")
+        self.assertContains(response, "0 dari 1 kebiasaan hijau sudah kamu selesaikan hari ini")
         self.assertEqual(self.habit.checkins.count(), 0)
 
-    def test_htmx_milestone_reloads_the_page_for_the_dialog(self):
+    def test_htmx_milestone_dialog_comes_with_the_page(self):
         for n in (2, 1):
             self.habit.checkins.create(checkin_date=days_ago(n))
-        response = self.client.post(
-            reverse("habits:habit_check_in", args=[self.habit.pk]), HTTP_HX_REQUEST="true"
-        )
-        self.assertEqual(response["HX-Refresh"], "true")
+        response = self.htmx_post("habits:habit_check_in")
+        self.assertContains(response, "3 hari berturut-turut!")
         self.assertEqual(SustainabilityEvent.objects.get().milestone_days, 3)
+
+    def test_htmx_anonymous_get_returns_to_the_same_page_after_login(self):
+        self.client.logout()
+        url = reverse("habits:goal_list") + "?category=plastik"
+        response = self.client.get(url, HTTP_HX_REQUEST="true")
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response["HX-Redirect"], f"{reverse('accounts:login')}?next={url}")
+
+    def test_pages_swap_the_shared_block(self):
+        for name in ("habits:index", "habits:goal_list", "habits:history"):
+            with self.subTest(page=name):
+                self.assertContains(self.client.get(reverse(name)), 'hx-select=".habits-page"')
+
+    def test_check_in_swaps_only_its_row_and_counts(self):
+        response = self.client.get(reverse("habits:index"))
+        row = f"habit-row-{self.habit.pk}"
+        self.assertContains(response, f'<li class="habit-row" id="{row}">')
+        self.assertContains(response, f'hx-target="closest li" hx-select="#{row}"')
+        self.assertContains(response, 'hx-select-oob="#today-title,#today-stats,#week-strip,')
+        group = f"group-note-{self.habit.time_of_day}"
+        for target in ("today-title", "today-stats", "week-strip", group, "habits-messages", "habit-dialog-slot"):
+            with self.subTest(target=target):
+                self.assertContains(response, f'id="{target}"')
+
+    def test_checklist_swaps_only_its_list_and_count(self):
+        goal = make_goal(self.user)
+        item = goal.checklist_items.create(label="Langkah", position=0)
+        url = reverse("habits:goal_checklist_toggle", args=[goal.pk, item.pk])
+        response = self.client.post(url, {"next": reverse("habits:goal_list")}, HTTP_HX_REQUEST="true", follow=True)
+        self.assertContains(response, f'id="card-checklist-list-{goal.pk}"')
+        self.assertContains(response, f'id="card-checklist-count-{goal.pk}">1/1<')
+        detail = self.client.get(reverse("habits:goal_detail", args=[goal.pk]))
+        self.assertContains(detail, 'hx-target="#goal-checklist-list"')
+        self.assertContains(detail, 'id="goal-checklist-count">1 dari 1 selesai<')
+
+    def test_tabs_and_filters_keep_links_for_no_javascript(self):
+        goal_list = reverse("habits:goal_list")
+        make_goal(self.user, category="plastik")
+        response = self.client.get(goal_list)
+        self.assertContains(response, f'href="{goal_list}" hx-get="{goal_list}"')
+        self.assertContains(response, f'href="?category=plastik" hx-get="{goal_list}?category=plastik"')
 
 
 class GoalFilterTests(FrozenClockMixin, TestCase):

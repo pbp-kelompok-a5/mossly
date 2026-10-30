@@ -122,12 +122,10 @@ function readFoldedGroups() {
   }
 }
 
-function rememberGroup(event) {
-  const group = event.target;
-  if (!(group instanceof HTMLDetailsElement) || !group.dataset.group) return;
+function rememberGroup(key, opening) {
   const folded = readFoldedGroups();
-  if (group.open) folded.delete(group.dataset.group);
-  else folded.add(group.dataset.group);
+  if (opening) folded.delete(key);
+  else folded.add(key);
   try {
     localStorage.setItem(FOLDED_GROUPS_KEY, JSON.stringify([...folded]));
   } catch {
@@ -148,12 +146,10 @@ function readOpenChecklists() {
   }
 }
 
-function rememberChecklist(event) {
-  const details = event.target;
-  if (!(details instanceof HTMLDetailsElement) || !details.dataset.openKey) return;
+function rememberChecklist(key, opening) {
   const open = readOpenChecklists();
-  if (details.open) open.add(details.dataset.openKey);
-  else open.delete(details.dataset.openKey);
+  if (opening) open.add(key);
+  else open.delete(key);
   try {
     localStorage.setItem(OPEN_CHECKLISTS_KEY, JSON.stringify([...open]));
   } catch {
@@ -190,29 +186,41 @@ document.addEventListener("input", (event) => {
   if (field.name === "checklist_label") updateChecklistCount(field.closest("form"));
 });
 
-// "toggle" does not bubble, so listen in the capture phase.
-document.addEventListener("toggle", rememberGroup, true);
-document.addEventListener("toggle", rememberChecklist, true);
+// Clicks, not "toggle": a <details open> swapped in by htmx also fires toggle, which
+// would read as the user reopening a folded group. Keyboard use arrives as a click too.
+document.addEventListener("click", (event) => {
+  const details = event.target.closest("summary")?.parentElement;
+  if (!details) return;
+  if (details.dataset.group) rememberGroup(details.dataset.group, !details.open);
+  if (details.dataset.openKey) rememberChecklist(details.dataset.openKey, !details.open);
+});
 
-document.querySelectorAll("[data-deadline-input]").forEach(updateDeadlineHint);
-
-const rowBoxes = document.querySelectorAll("[data-max-rows]");
-rowBoxes.forEach(limitRows);
 // Rows rewrap at other widths, so the height is measured again.
-window.addEventListener("resize", () => rowBoxes.forEach(limitRows));
-
-const openChecklists = readOpenChecklists();
-document.querySelectorAll("details[data-open-key]").forEach((details) => {
-  if (openChecklists.has(details.dataset.openKey)) details.open = true;
+window.addEventListener("resize", () => {
+  document.querySelectorAll("[data-max-rows]").forEach(limitRows);
 });
 
-const foldedGroups = readFoldedGroups();
-document.querySelectorAll("details[data-group]").forEach((group) => {
-  if (foldedGroups.has(group.dataset.group)) group.open = false;
-});
+// Runs on load and again whenever htmx swaps new content in.
+function setUpPage() {
+  document.querySelectorAll("[data-deadline-input]").forEach(updateDeadlineHint);
+  document.querySelectorAll("[data-max-rows]").forEach(limitRows);
 
-document.querySelectorAll("dialog[data-autoshow]").forEach((dialog) => {
-  if (typeof dialog.showModal !== "function") return;
-  dialog.close();
-  dialog.showModal();
-});
+  const openChecklists = readOpenChecklists();
+  document.querySelectorAll("details[data-open-key]").forEach((details) => {
+    if (openChecklists.has(details.dataset.openKey)) details.open = true;
+  });
+
+  const foldedGroups = readFoldedGroups();
+  document.querySelectorAll("details[data-group]").forEach((group) => {
+    if (foldedGroups.has(group.dataset.group)) group.open = false;
+  });
+
+  document.querySelectorAll("dialog[data-autoshow]").forEach((dialog) => {
+    if (typeof dialog.showModal !== "function") return;
+    dialog.close();
+    dialog.showModal();
+  });
+}
+
+setUpPage();
+document.addEventListener("htmx:afterSettle", setUpPage);

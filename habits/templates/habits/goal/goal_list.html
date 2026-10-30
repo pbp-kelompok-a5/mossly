@@ -9,9 +9,10 @@
 {% block page %}
   {% if has_history %}
     <nav class="tabs tabs-pill tabs-clay goal-filter" aria-label="Filter kategori goal">
-      <a class="tab" href="?"{% if not category %} aria-current="page"{% endif %}>Semua</a>
+      {% url 'habits:goal_list' as goal_list_url %}
+      <a class="tab" href="?" hx-get="{{ goal_list_url }}" hx-push-url="true" hx-swap="outerHTML transition:true"{% if not category %} aria-current="page"{% endif %}>Semua</a>
       {% for value, label in categories %}
-        <a class="tab" href="?category={{ value }}"{% if category == value %} aria-current="page"{% endif %}>{{ label }}</a>
+        <a class="tab" href="?category={{ value }}" hx-get="{{ goal_list_url }}?category={{ value }}" hx-push-url="true" hx-swap="outerHTML transition:true"{% if category == value %} aria-current="page"{% endif %}>{{ label }}</a>
       {% endfor %}
     </nav>
   {% endif %}

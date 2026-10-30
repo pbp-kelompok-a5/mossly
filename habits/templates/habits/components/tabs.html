@@ -2,9 +2,9 @@
 {# Centered pill tabs in moss; faint flowers sit behind two corners, partly outside. #}
 <div class="habits-tabs-wrap">
   <nav class="tabs tabs-pill habits-tabs" aria-label="Habit & Goal">
-    <a class="tab" href="{% url 'habits:index' %}"{% if active == "habit" %} aria-current="page"{% endif %}>Habit</a>
-    <a class="tab" href="{% url 'habits:goal_list' %}"{% if active == "goal" %} aria-current="page"{% endif %}>Goal</a>
-    <a class="tab" href="{% url 'habits:history' %}"{% if active == "history" %} aria-current="page"{% endif %}>Riwayat</a>
+    <a class="tab" href="{% url 'habits:index' %}" hx-get="{% url 'habits:index' %}" hx-push-url="true" hx-swap="outerHTML transition:true show:window:top"{% if active == "habit" %} aria-current="page"{% endif %}>Habit</a>
+    <a class="tab" href="{% url 'habits:goal_list' %}" hx-get="{% url 'habits:goal_list' %}" hx-push-url="true" hx-swap="outerHTML transition:true show:window:top"{% if active == "goal" %} aria-current="page"{% endif %}>Goal</a>
+    <a class="tab" href="{% url 'habits:history' %}" hx-get="{% url 'habits:history' %}" hx-push-url="true" hx-swap="outerHTML transition:true show:window:top"{% if active == "history" %} aria-current="page"{% endif %}>Riwayat</a>
   </nav>
   <img class="decor habits-tabs-decor habits-tabs-decor-top" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
   <img class="decor habits-tabs-decor habits-tabs-decor-bottom" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">

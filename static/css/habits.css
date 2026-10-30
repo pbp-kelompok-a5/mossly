@@ -128,6 +128,9 @@ main.container:has(> .habits-page-history) {
 .habits-tabs .tab[aria-disabled="true"]:hover { color: var(--color-text-tertiary); }
 
 .habits-messages { display: grid; gap: var(--space-3); }
+/* Always in the page as a target for htmx; empty, it must not add a gap. */
+.habits-messages:not(:has(.alert)) { display: none; }
+.habit-dialog-slot { display: contents; }
 
 .habits-layout {
   display: grid;
@@ -1504,4 +1507,11 @@ html:not(.js) .activity-card { max-height: calc(6 * (var(--space-12) + var(--spa
    ========================================================== */
 @media (min-width: 80rem) {
   :root { --layout-margin-x: var(--layout-margin-x-xl); }
+}
+
+/* htmx: tab changes fade softly. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none; }
 }

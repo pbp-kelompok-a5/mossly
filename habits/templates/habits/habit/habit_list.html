@@ -13,7 +13,7 @@
     {# Title left, action at the right edge, on a translucent moss panel; the Habit tab's decorations are grass and leaves. #}
     <header class="page-header page-panel">
       <span class="page-panel-icon">{% include "habits/components/icon.html" with name="leaf" %}</span>
-      <h1 class="page-header-title">
+      <h1 class="page-header-title" id="today-title">
         {% if scheduled_today %}
           {{ done_today }} dari {{ scheduled_today }} kebiasaan hijau sudah kamu selesaikan hari ini
         {% else %}
@@ -33,7 +33,8 @@
       <div class="habits-main habits-today">
         {% include "habits/components/week_strip.html" %}
 
-        <div class="habit-groups">
+        {# A check-in swaps its own row (habit_row.html) and refreshes these from the same response. #}
+        <div class="habit-groups" hx-select-oob="#today-title,#today-stats,#week-strip,#group-note-pagi,#group-note-siang,#group-note-malam,#group-note-kapan_saja,#habits-messages,#habit-dialog-slot">
           {# Groups fold by time of day; habits.js remembers which ones were closed. #}
           {% for group in groups %}
             <details class="habit-group habit-group-{{ group.key }}" data-group="{{ group.label }}" open>
@@ -41,7 +42,7 @@
                 <h2 class="habit-group-title">
                   {% include "habits/components/icon.html" with name=group.icon %}{{ group.label }}
                 </h2>
-                <span class="section-note">{{ group.done }} dari {{ group.rows|length }} selesai</span>
+                <span class="section-note" id="group-note-{{ group.key }}">{{ group.done }} dari {{ group.rows|length }} selesai</span>
                 {% include "habits/components/icon.html" with name="chevron-down" class="icon-sm habit-group-chevron" %}
               </summary>
               <ul class="habit-list">
@@ -67,7 +68,7 @@
       </div>
 
       <aside class="habits-aside">
-        <section class="today-stats" aria-label="Ringkasan hari ini">
+        <section class="today-stats" id="today-stats" aria-label="Ringkasan hari ini">
             <div class="focus-streak today-streak">
               <span class="focus-streak-icon">{% include "habits/components/icon.html" with name="flame" %}</span>
               <p class="focus-streak-value">{{ longest_streak }} hari</p>
@@ -94,7 +95,7 @@
     {% include "habits/components/habit_form_fields.html" with action=create_url title_id="habit-create-title" in_dialog=True is_edit=False %}
   </dialog>
 
-  {% if milestone %}{% include "habits/components/milestone_dialog.html" %}{% endif %}
+  <div class="habit-dialog-slot" id="habit-dialog-slot">{% if milestone %}{% include "habits/components/milestone_dialog.html" %}{% endif %}</div>
 
   {% if not is_empty %}
     <img class="decor page-decor-branch" src="{% static 'img/decor/ranting.svg' %}" alt="" aria-hidden="true">

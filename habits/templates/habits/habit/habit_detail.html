@@ -18,18 +18,20 @@
       <h1 class="focus-title" id="focus-title">{{ habit.name }}</h1>
       {% url 'habits:habit_detail' habit.pk as detail_url %}
       {% if is_done_today %}
-        <form method="post" action="{% url 'habits:habit_undo_check_in' habit.pk %}">
+        <form method="post" action="{% url 'habits:habit_undo_check_in' habit.pk %}"
+              hx-post="{% url 'habits:habit_undo_check_in' habit.pk %}" hx-sync="this:drop">
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ detail_url }}">
-          <button class="btn btn-accent focus-cta" type="submit" aria-label="Sudah check-in. Tekan untuk membatalkan.">
+          <button class="btn btn-accent focus-cta" id="detail-check" type="submit" aria-label="Sudah check-in. Tekan untuk membatalkan.">
             {% include "habits/components/icon.html" with name="check" %}Sudah check-in
           </button>
         </form>
       {% elif is_scheduled_today %}
-        <form method="post" action="{% url 'habits:habit_check_in' habit.pk %}">
+        <form method="post" action="{% url 'habits:habit_check_in' habit.pk %}"
+              hx-post="{% url 'habits:habit_check_in' habit.pk %}" hx-sync="this:drop">
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ detail_url }}">
-          <button class="btn btn-accent focus-cta" type="submit">
+          <button class="btn btn-accent focus-cta" id="detail-check" type="submit">
             {% include "habits/components/icon.html" with name="check" %}Check-in hari ini
           </button>
         </form>

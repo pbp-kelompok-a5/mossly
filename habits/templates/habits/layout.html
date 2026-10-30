@@ -12,18 +12,19 @@ one-time messages. Pages fill "page_top" (tabs, back link) and "page".
 
 {% block content %}
 {# page_class picks the tab's background (habits-page-habit / -goal / -history). #}
-<div class="habits-page {% block page_class %}{% endblock %}">
+{# htmx: actions inside get a normal full page back and swap only this block. #}
+<div class="habits-page {% block page_class %}{% endblock %}" hx-target="this" hx-select=".habits-page" hx-swap="outerHTML">
   {% block page_top %}{% endblock %}
 
-  {% if messages %}
-    <div class="habits-messages">
+  <div class="habits-messages" id="habits-messages">
+    {% if messages %}
       {% for message in messages %}
         <div class="alert{% if message.level_tag == 'error' %} alert-error{% elif message.level_tag == 'success' %} alert-success{% endif %}" role="status">
           <p class="alert-body">{{ message }}</p>
         </div>
       {% endfor %}
-    </div>
-  {% endif %}
+    {% endif %}
+  </div>
 
   {% block page %}{% endblock %}
 </div>

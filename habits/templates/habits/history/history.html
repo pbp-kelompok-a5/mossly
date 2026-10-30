@@ -90,7 +90,7 @@
         </h2>
         <nav class="tabs-pill tabs-clay" aria-label="Periode riwayat">
           {% for item in periods %}
-            <a class="tab" href="{{ item.url }}"{% if item.key == period %} aria-current="page"{% endif %}>{{ item.label }}</a>
+            <a class="tab" href="{{ item.url }}" hx-get="{{ item.url }}" hx-push-url="true" hx-swap="outerHTML transition:true"{% if item.key == period %} aria-current="page"{% endif %}>{{ item.label }}</a>
           {% endfor %}
         </nav>
       </div>
