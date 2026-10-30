@@ -1,15 +1,18 @@
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.core.cache import cache
+from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
 
 from dashboard.models import Achievement, UserAchievement
 
 from .models import Reply, Thread, ThreadLike
+from .rate_limit import RATE_LIMITS, rate_limit_key
 from .services import publish_achievement
 
 
 class CommunityTests(TestCase):
     def setUp(self):
+        cache.clear()
         Thread.objects.all().delete()
         self.owner = get_user_model().objects.create_user(
             username="rara",
@@ -29,6 +32,7 @@ class CommunityTests(TestCase):
         self.owner.profile.avatar = "leaf"
         self.owner.profile.save(update_fields=["display_name", "avatar"])
         self.client.force_login(self.owner)
+        self.request_factory = RequestFactory()
 
     def test_authentication_is_required_for_all_community_pages(self):
         self.client.logout()
@@ -250,6 +254,7 @@ class CommunityTests(TestCase):
 
     def test_index_like_button_uses_thread_like_endpoint(self):
         response = self.client.get(reverse("community:index"))
+        self.assertContains(response, "data-like-control")
         self.assertContains(response, 'aria-label="Beri apresiasi"')
         self.assertContains(response, 'aria-label="Lihat 0 balasan"')
         self.assertContains(response, f'href="{reverse("community:detail", args=[self.thread.pk])}#replies"')
@@ -288,6 +293,49 @@ class CommunityTests(TestCase):
         self.assertContains(response, "hx-post=")
         self.assertContains(response, "Hapus apresiasi")
         self.assertTrue(ThreadLike.objects.filter(thread=self.thread, user=self.owner).exists())
+
+    def test_sensitive_post_actions_are_rate_limited(self):
+        actions = [
+            (
+                "thread_write",
+                reverse("community:create"),
+                {
+                    "title": "Terlalu cepat",
+                    "body": "Tidak boleh dibuat karena batas request.",
+                    "category": Thread.Category.TIPS,
+                },
+            ),
+            (
+                "reply",
+                reverse("community:detail", args=[self.thread.pk]),
+                {"body": "Terlalu cepat."},
+            ),
+            ("like", reverse("community:like", args=[self.thread.pk]), {"action": "like"}),
+            ("delete", reverse("community:delete", args=[self.thread.pk]), {}),
+        ]
+
+        for action, url, payload in actions:
+            with self.subTest(action=action):
+                config = RATE_LIMITS[action]
+                request = self.request_factory.post("/")
+                request.user = self.owner
+                cache.set(
+                    rate_limit_key(request, action),
+                    config["limit"],
+                    timeout=config["window"],
+                )
+                response = self.client.post(
+                    url,
+                    payload,
+                    HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+                    HTTP_ACCEPT="application/json",
+                )
+                self.assertEqual(response.status_code, 429)
+                self.assertEqual(
+                    response.json()["detail"],
+                    "Terlalu banyak permintaan. Coba lagi sebentar lagi.",
+                )
+                self.assertEqual(response["Retry-After"], str(config["window"]))
 
     def test_delete_cascades_replies_and_likes(self):
         Reply.objects.create(thread=self.thread, author=self.other, body="Bagus!")

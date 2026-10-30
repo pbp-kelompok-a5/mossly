@@ -1,0 +1,14 @@
+{% extends 'community/base.html' %}
+
+{% block community_title %}Tunggu sebentar{% endblock %}
+
+{% block community_content %}
+  <div class="reading-layout">
+    <section class="form-card delete-card">
+      <span class="empty-flower" aria-hidden="true">☀</span>
+      <h1>Tunggu sebentar, ya.</h1>
+      <p>{{ message }}</p>
+      <a class="button" href="{% url 'community:index' %}">Kembali ke Community</a>
+    </section>
+  </div>
+{% endblock %}
