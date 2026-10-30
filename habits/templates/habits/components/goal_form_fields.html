@@ -4,7 +4,7 @@ Expects: form, action, title_id, in_dialog, is_edit.
 Checklist rows post parallel "checklist_id" / "checklist_label" lists; one
 blank row is always offered so the form also works without JavaScript.
 {% endcomment %}
-<form class="goal-form" method="post" action="{{ action }}" data-goal-form>
+<form class="goal-form" method="post" action="{{ action }}" data-goal-form{% if in_dialog %} hx-post="{{ action }}" hx-target="this" hx-select="unset" hx-sync="this:drop"{% endif %}>
   {% csrf_token %}
 
   <header class="sheet-header">
@@ -112,7 +112,7 @@ blank row is always offered so the form also works without JavaScript.
 
   <div class="sheet-actions">
     {% if in_dialog %}
-      <button class="btn btn-ghost" type="submit" formmethod="dialog" formnovalidate>Batal</button>
+      <button class="btn btn-ghost" type="button" data-dialog-close>Batal</button>
     {% elif is_edit %}
       <a class="btn btn-ghost" href="{% url 'habits:goal_detail' form.instance.pk %}">Batal</a>
     {% else %}

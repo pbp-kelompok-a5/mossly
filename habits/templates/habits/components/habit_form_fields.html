@@ -2,7 +2,7 @@
 Add/edit habit form. Used inside the sheet dialog and on the standalone page.
 Expects: form, action, title_id, in_dialog, is_edit.
 {% endcomment %}
-<form class="habit-form" method="post" action="{{ action }}">
+<form class="habit-form" method="post" action="{{ action }}"{% if in_dialog %} hx-post="{{ action }}" hx-target="this" hx-select="unset" hx-sync="this:drop"{% endif %}>
   {% csrf_token %}
 
   <header class="sheet-header">
@@ -69,7 +69,7 @@ Expects: form, action, title_id, in_dialog, is_edit.
 
   <div class="sheet-actions">
     {% if in_dialog %}
-      <button class="btn btn-ghost" type="submit" formmethod="dialog" formnovalidate>Batal</button>
+      <button class="btn btn-ghost" type="button" data-dialog-close>Batal</button>
     {% else %}
       <a class="btn btn-ghost" href="{% if is_edit %}{% url 'habits:habit_detail' form.instance.pk %}{% else %}{% url 'habits:index' %}{% endif %}">Batal</a>
     {% endif %}

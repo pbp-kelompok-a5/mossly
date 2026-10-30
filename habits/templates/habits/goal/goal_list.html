@@ -45,9 +45,7 @@
       <div class="section-head">
         <h2 class="section-title" id="active-title">Goal aktif</h2>
       </div>
-      <div class="goal-grid">
-        {% for goal in active %}{% include "habits/components/goal_card.html" %}{% endfor %}
-      </div>
+      {% include "habits/components/goal_columns.html" with goals=active %}
     </section>
   {% elif not category_empty %}
     {# Nothing active: invite a new goal; past goals sit between the hero and the examples. #}
@@ -74,9 +72,7 @@
         <h2 class="section-title" id="expired-title">Lewat deadline</h2>
         <p class="section-note">Perpanjang deadline lewat Edit goal untuk melanjutkan</p>
       </div>
-      <div class="goal-grid">
-        {% for goal in expired %}{% include "habits/components/goal_card.html" %}{% endfor %}
-      </div>
+      {% include "habits/components/goal_columns.html" with goals=expired %}
     </section>
   {% endif %}
 
@@ -88,8 +84,7 @@
       <form method="dialog">
         <button class="sheet-close" type="submit" aria-label="Tutup">{% include "habits/components/icon.html" with name="x" %}</button>
       </form>
-      {% url 'habits:goal_list' as list_url %}
-      {% include "habits/components/goal_progress_fields.html" with form=goal.progress_form title_id=goal.progress_title_id in_dialog=True next_url=list_url %}
+      {% include "habits/components/goal_progress_fields.html" with form=goal.progress_form title_id=goal.progress_title_id in_dialog=True next_url=request.get_full_path %}
     </dialog>
   {% endfor %}
 

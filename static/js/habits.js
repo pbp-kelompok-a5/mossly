@@ -175,6 +175,9 @@ function limitRows(box) {
 
 document.addEventListener("click", openDialog);
 document.addEventListener("click", closeOnBackdrop);
+document.addEventListener("click", (event) => {
+  event.target.closest("[data-dialog-close]")?.closest("dialog")?.close();
+});
 document.addEventListener("click", stepAmount);
 document.addEventListener("click", editChecklist);
 
@@ -200,7 +203,8 @@ window.addEventListener("resize", () => {
   document.querySelectorAll("[data-max-rows]").forEach(limitRows);
 });
 
-// Runs on load and again whenever htmx swaps new content in.
+// Runs on load and right after each htmx swap. afterSwap, not afterSettle: it runs before
+// the browser paints, so restored checklists and folded groups never show in the wrong state.
 function setUpPage() {
   document.querySelectorAll("[data-deadline-input]").forEach(updateDeadlineHint);
   document.querySelectorAll("[data-max-rows]").forEach(limitRows);
@@ -223,4 +227,9 @@ function setUpPage() {
 }
 
 setUpPage();
-document.addEventListener("htmx:afterSettle", setUpPage);
+document.addEventListener("htmx:afterSwap", setUpPage);
+// A form that came back with errors stays in its dialog: bring the first one into view.
+document.addEventListener("htmx:afterSettle", (event) => {
+  if (!event.target.closest("dialog")) return;
+  event.target.querySelector(".field-error, .alert-error")?.scrollIntoView({ block: "center" });
+});

@@ -1,5 +1,7 @@
 """Access control and request handling for state-changing views."""
 
+import json
+from datetime import timedelta
 from decimal import Decimal
 
 from django.test import Client, TestCase
@@ -258,6 +260,86 @@ class GoalFilterTests(FrozenClockMixin, TestCase):
         self.assertContains(response, "Belum ada goal aktif dengan kategori Komunitas")
         self.assertContains(response, "Kerja bakti")  # listed under "Lewat deadline"
         self.assertNotContains(response, "Tentukan satu target dengan deadline.")
+
+
+class HtmxDialogFormTests(FrozenClockMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = make_user()
+        self.client.force_login(self.user)
+
+    HABIT = {"name": "Pilah sampah", "icon": "leaf", "time_of_day": "pagi", "weekdays": [str(d) for d in range(7)]}
+    GOAL = {
+        "title": "Kurangi plastik", "category": "plastik", "target_value": "5", "unit": "kali",
+        "start_date": TODAY.isoformat(), "deadline": (TODAY + timedelta(days=5)).isoformat(),
+    }
+
+    def htmx(self, name, data, *args):
+        return self.client.post(reverse(name, args=args), data, HTTP_HX_REQUEST="true")
+
+    def assert_goes_to(self, response, url):
+        self.assertEqual(response.status_code, 200)
+        location = json.loads(response["HX-Location"])
+        self.assertEqual(location["path"], url)
+        self.assertEqual(location["target"], ".habits-page")
+
+    def assert_form_only(self, response, message):
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "<html")
+        self.assertContains(response, message)
+        self.assertContains(response, "data-dialog-close")
+        self.assertNotIn("HX-Location", response)
+
+    def test_new_habit(self):
+        self.assert_goes_to(self.htmx("habits:habit_create", self.HABIT), reverse("habits:index"))
+        self.assertEqual(self.user.habits.get().name, "Pilah sampah")
+
+    def test_invalid_habit_stays_in_the_dialog(self):
+        response = self.htmx("habits:habit_create", {**self.HABIT, "name": "<b></b>"})
+        self.assert_form_only(response, "Nama habit tidak boleh hanya berisi tag HTML.")
+        self.assertContains(response, 'value="leaf" checked')
+        self.assertFalse(self.user.habits.exists())
+
+    def test_new_goal(self):
+        self.assert_goes_to(self.htmx("habits:goal_create", self.GOAL), reverse("habits:goal_list"))
+        self.assertEqual(self.user.goals.get().title, "Kurangi plastik")
+
+    def test_invalid_goal_keeps_its_checklist(self):
+        data = {**self.GOAL, "title": "<i></i>", "checklist_id": [""], "checklist_label": ["Beli tumbler"]}
+        response = self.htmx("habits:goal_create", data)
+        self.assert_form_only(response, "Nama goal tidak boleh hanya berisi tag HTML.")
+        self.assertContains(response, 'value="Beli tumbler"')
+        self.assertFalse(self.user.goals.exists())
+
+    def test_progress_returns_to_the_page_it_came_from(self):
+        goal = make_goal(self.user)
+        back = reverse("habits:goal_list") + "?category=transportasi"
+        response = self.htmx("habits:goal_log_progress", {"amount": "2", "next": back}, goal.pk)
+        self.assert_goes_to(response, back)
+        self.assertEqual(goal.progress_logs.get().amount, Decimal("2"))
+
+    def test_progress_ignores_an_outside_next(self):
+        goal = make_goal(self.user)
+        response = self.htmx("habits:goal_log_progress", {"amount": "2", "next": "https://contoh.test/"}, goal.pk)
+        self.assert_goes_to(response, reverse("habits:goal_detail", args=[goal.pk]))
+
+    def test_invalid_progress_stays_in_the_dialog(self):
+        goal = make_goal(self.user)
+        response = self.htmx("habits:goal_log_progress", {"amount": "0", "next": "/goal/"}, goal.pk)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "<html")
+        self.assertContains(response, 'class="field-error"')
+        self.assertContains(response, 'name="next" value="/goal/"')
+        self.assertFalse(goal.progress_logs.exists())
+
+    def test_without_htmx_forms_still_use_full_pages(self):
+        url = reverse("habits:habit_create")
+        self.assertContains(self.client.post(url, {**self.HABIT, "name": ""}), "<html")
+        self.assertRedirects(self.client.post(url, self.HABIT), reverse("habits:index"), fetch_redirect_response=False)
+
+    def test_standalone_form_has_no_htmx(self):
+        response = self.client.get(reverse("habits:habit_create"))
+        self.assertNotContains(response, 'hx-post="/habit/new/"')
 
 
 class JsonEndpointTests(FrozenClockMixin, TestCase):

@@ -135,12 +135,12 @@
 </div>
 
 {% if goal.status == "active" %}
-  <dialog class="sheet" id="progress-dialog" aria-labelledby="progress-title">
+  <dialog class="sheet" id="progress-dialog" aria-labelledby="{{ goal.progress_title_id }}">
     <span class="sheet-handle" aria-hidden="true"></span>
     <form method="dialog">
       <button class="sheet-close" type="submit" aria-label="Tutup">{% include "habits/components/icon.html" with name="x" %}</button>
     </form>
-    {% include "habits/components/goal_progress_fields.html" with form=progress_form title_id="progress-title" in_dialog=True %}
+    {% include "habits/components/goal_progress_fields.html" with form=progress_form title_id=goal.progress_title_id in_dialog=True %}
   </dialog>
 {% endif %}
 

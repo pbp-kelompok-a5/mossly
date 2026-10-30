@@ -6,7 +6,8 @@ The stepper and the "after saving" preview work without JavaScript too: the
 number field can be typed in, and the preview starts at the default of +1.
 {% endcomment %}
 <form class="progress-form" method="post" action="{% url 'habits:goal_log_progress' goal.pk %}"
-      data-progress-form data-progress="{{ goal.progress|unlocalize }}" data-target="{{ goal.target|unlocalize }}" data-unit="{{ goal.unit_short }}">
+      data-progress-form data-progress="{{ goal.progress|unlocalize }}" data-target="{{ goal.target|unlocalize }}" data-unit="{{ goal.unit_short }}"{% if in_dialog %}
+      hx-post="{% url 'habits:goal_log_progress' goal.pk %}" hx-target="this" hx-select="unset" hx-sync="this:drop"{% endif %}>
   {% csrf_token %}
   {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
 
@@ -50,7 +51,7 @@ number field can be typed in, and the preview starts at the default of +1.
 
   <div class="sheet-actions">
     {% if in_dialog %}
-      <button class="btn btn-ghost" type="submit" formmethod="dialog" formnovalidate>Batal</button>
+      <button class="btn btn-ghost" type="button" data-dialog-close>Batal</button>
     {% else %}
       <a class="btn btn-ghost" href="{% url 'habits:goal_detail' goal.pk %}">Batal</a>
     {% endif %}

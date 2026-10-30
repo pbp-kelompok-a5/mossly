@@ -888,6 +888,9 @@ html:not(.js) .js-only { display: none; }
 .goal-fold-chevron { flex: none; color: var(--color-text-secondary); transition: transform 150ms ease; }
 .goal-fold[open] .goal-fold-chevron { transform: rotate(180deg); }
 
+/* One column until md: the two column wrappers dissolve into the grid. */
+.goal-col { display: contents; }
+
 /* Cards keep their own height, so opening one card's checklist leaves its row-mate alone. */
 .goal-grid { display: grid; gap: var(--space-5); align-items: start; }
 
@@ -1347,6 +1350,7 @@ html:not(.js) .activity-card { max-height: calc(6 * (var(--space-12) + var(--spa
   .form-page { padding: var(--space-10) var(--space-12); }
 
   .goal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+  .goal-col { display: grid; gap: var(--space-6); align-content: start; min-width: 0; }
   .goal-card, .goal-placeholder, .habit-placeholder { padding: var(--space-6); }
   .goal-card.is-completed { padding: var(--space-5); }
   .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
