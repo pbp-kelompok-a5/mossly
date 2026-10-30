@@ -1,13 +1,11 @@
 """Rendered habit pages: tab, forms, milestone celebration."""
 
-from datetime import datetime, timezone as dt_timezone
-
 from django.test import TestCase
 from django.urls import reverse
 
-from habits.models import Goal, Habit
+from habits.models import Habit
 
-from .helpers import TODAY, FrozenClockMixin, days_ago, freeze_time, make_goal, make_habit, make_user
+from .helpers import TODAY, FrozenClockMixin, days_ago, make_habit, make_user
 
 
 class HabitTabTests(FrozenClockMixin, TestCase):
@@ -33,39 +31,47 @@ class HabitTabTests(FrozenClockMixin, TestCase):
         response = self.client.get(self.url)
 
         self.assertContains(response, "1 dari 3 kebiasaan hijau sudah kamu selesaikan hari ini")
-        self.assertNotContains(response, "untuk hari yang sempurna")
-        self.assertContains(response, "Senin, 26 Oktober 2026")
-        self.assertContains(response, "Selamat siang, tania")
+        self.assertContains(response, 'aria-label="1 dari 3 selesai"')
+        self.assertContains(response, 'style="--value: 33"')  # 1 of 3, rounded down
         self.assertContains(response, 'class="habit-group-title"', count=3)
         self.assertContains(response, "1 dari 1 selesai")
         self.assertContains(response, "Batalkan check-in Bawa tumbler")
         self.assertContains(response, "Check-in Pilah sampah")
 
-    def test_perfect_day_message(self):
-        habit = make_habit(self.user)
-        habit.checkins.create(checkin_date=TODAY)
+    def test_groups_fold_and_are_tinted_by_time_of_day(self):
+        make_habit(self.user, time_of_day="pagi")
+        make_habit(self.user, name="Matikan lampu", time_of_day="malam")
         response = self.client.get(self.url)
-        self.assertContains(response, "Hari yang sempurna, semua kebiasaan hari ini selesai.")
+        self.assertContains(response, '<details class="habit-group habit-group-pagi" data-group="Pagi" open>')
+        self.assertContains(response, '<details class="habit-group habit-group-malam" data-group="Malam" open>')
+        self.assertNotContains(response, "habit-group-siang")  # empty groups are left out
+
+    def test_longest_streak_is_shown_beside_the_ring(self):
+        habit = make_habit(self.user)
+        for n in range(1, 6):  # a 5-day run, broken since
+            habit.checkins.create(checkin_date=days_ago(n + 3))
+        response = self.client.get(self.url)
+        self.assertContains(response, '<p class="focus-streak-value">5 hari</p>', html=True)
+        self.assertContains(response, "Streak terpanjang")
 
     def test_new_habit_shows_first_streak_message(self):
         make_habit(self.user, start_date=TODAY)
         response = self.client.get(self.url)
         self.assertContains(response, "Baru dimulai · streak pertamamu mulai hari ini")
 
-    def test_streak_and_next_milestone(self):
+    def test_streak_between_milestones(self):
         habit = make_habit(self.user, name="Bawa tumbler")
         for n in range(1, 13):  # 12-day streak, today not checked yet
             habit.checkins.create(checkin_date=days_ago(n))
         response = self.client.get(self.url)
         self.assertContains(response, "12 hari berturut-turut")
-        self.assertContains(response, "Bawa tumbler, tinggal 2 hari lagi")
-        self.assertContains(response, '<progress class="progress" value="12" max="14">')
+        self.assertNotContains(response, "milestone tercapai")
 
-    def test_all_milestones_reached(self):
+    def test_streak_on_a_milestone(self):
         habit = make_habit(self.user)
-        for n in range(30):
+        for n in range(14):
             habit.checkins.create(checkin_date=days_ago(n))
-        self.assertContains(self.client.get(self.url), "Semua milestone tercapai")
+        self.assertContains(self.client.get(self.url), "14 hari berturut-turut, milestone tercapai")
 
     def test_week_strip_statuses(self):
         habit = make_habit(self.user, start_date=days_ago(10))
@@ -77,29 +83,14 @@ class HabitTabTests(FrozenClockMixin, TestCase):
         self.assertContains(response, "day-chip-done is-today")
         self.assertContains(response, "day-chip-upcoming", count=6)
 
-    def test_weekday_habit_not_scheduled_today_is_listed_apart(self):
+    def test_nothing_scheduled_today(self):
+        # TODAY is a Monday; this habit only runs on Saturdays.
         make_habit(self.user, name="Bersepeda", frequency_type="weekdays", weekdays=[5])
         response = self.client.get(self.url)
+        self.assertContains(response, "Tidak ada kebiasaan terjadwal hari ini, nikmati harimu")
         self.assertContains(response, "Tidak dijadwalkan hari ini")
-        self.assertContains(response, "Tidak ada kebiasaan terjadwal hari ini")
         self.assertNotContains(response, "Check-in Bersepeda")
-
-    def test_greeting_follows_local_time(self):
-        cases = [
-            (datetime(2026, 10, 25, 22, 0, tzinfo=dt_timezone.utc), "Selamat pagi"),  # 05:00 WIB
-            (datetime(2026, 10, 26, 9, 0, tzinfo=dt_timezone.utc), "Selamat sore"),  # 16:00 WIB
-            (datetime(2026, 10, 26, 13, 0, tzinfo=dt_timezone.utc), "Selamat malam"),  # 20:00 WIB
-        ]
-        make_habit(self.user)
-        for instant, text in cases:
-            with self.subTest(text=text), freeze_time(instant):
-                self.assertContains(self.client.get(self.url), text)
-
-    def test_overdue_goals_are_marked_expired_on_visit(self):
-        goal = make_goal(self.user, start_date=days_ago(30), deadline=days_ago(1))
-        self.client.get(self.url)
-        goal.refresh_from_db()
-        self.assertEqual(goal.status, Goal.Status.EXPIRED)
+        self.assertNotContains(response, "today-ring")  # no ring without anything scheduled
 
 
 class MilestoneCelebrationTests(FrozenClockMixin, TestCase):
@@ -118,7 +109,7 @@ class MilestoneCelebrationTests(FrozenClockMixin, TestCase):
         self.assertContains(response, "3 hari berturut-turut!")
         self.assertContains(response, "Spora")
         self.assertContains(response, "Terkirim ke Personal Dashboard")
-        self.assertContains(response, "Habiskan makanan · 3 hari")
+        self.assertContains(response, '"Habiskan makanan" sudah 3 hari berturut-turut')
 
         again = self.client.get(reverse("habits:index"))
         self.assertNotContains(again, "3 hari berturut-turut!")
@@ -154,7 +145,7 @@ class HabitFormTests(FrozenClockMixin, TestCase):
             self.assertContains(response, f'name="weekdays" value="{day}" checked')
 
     def test_every_day_checked_is_stored_as_daily(self):
-        response = self.post(reminder_time="20:00")
+        response = self.post()
         self.assertRedirects(response, reverse("habits:index"), fetch_redirect_response=False)
         habit = Habit.objects.get()
         self.assertEqual(habit.user, self.user)
@@ -162,19 +153,12 @@ class HabitFormTests(FrozenClockMixin, TestCase):
         self.assertEqual(habit.frequency_type, Habit.Frequency.DAILY)
         self.assertIsNone(habit.weekdays)
         self.assertEqual(habit.start_date, TODAY)
-        self.assertEqual(habit.reminder_time.strftime("%H:%M"), "20:00")
 
     def test_some_days_checked_is_stored_as_weekdays(self):
         self.post(weekdays=["4", "0", "2"])
         habit = Habit.objects.get()
         self.assertEqual(habit.frequency_type, Habit.Frequency.WEEKDAYS)
         self.assertEqual(habit.weekdays, [0, 2, 4])
-
-    def test_reminder_explains_it_is_stored_only_for_now(self):
-        self.assertContains(
-            self.client.get(self.url),
-            "Pengingat akan aktif di aplikasi mobile nanti. Untuk sekarang, jamnya disimpan dulu.",
-        )
 
     def test_frequency_type_cannot_be_posted_directly(self):
         self.post(frequency_type="weekdays")
@@ -187,7 +171,6 @@ class HabitFormTests(FrozenClockMixin, TestCase):
             ({"weekdays": []}, "Pilih minimal satu hari."),
             ({"weekdays": ["9"]}, "Pilihan hari tidak valid."),
             ({"icon": "rocket"}, "Pilihan ikon tidak valid."),
-            ({"reminder_time": "25:99"}, "Format jam tidak valid."),
         ]
         for fields, message in cases:
             with self.subTest(message=message):
@@ -200,10 +183,6 @@ class HabitFormTests(FrozenClockMixin, TestCase):
         response = self.client.get(self.url, {"name": "Pilah sampah", "icon": "recycle"})
         self.assertContains(response, 'value="Pilah sampah"')
         self.assertContains(response, 'value="recycle" checked')
-
-    def test_milestone_list_comes_from_constant(self):
-        response = self.client.get(self.url)
-        self.assertContains(response, "Begitu mencapai 3, 7, 14, atau 30 hari")
 
     def test_edit_keeps_start_date_and_updates_fields(self):
         habit = make_habit(self.user, frequency_type="weekdays", weekdays=[1, 3])

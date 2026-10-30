@@ -5,6 +5,7 @@ from decimal import Decimal
 from django.test import Client, TestCase
 from django.urls import reverse
 
+from habits import services
 from habits.models import Goal, Habit, SustainabilityEvent
 
 from .helpers import TODAY, FrozenClockMixin, days_ago, make_goal, make_habit, make_user
@@ -132,3 +133,115 @@ class GoalActionTests(FrozenClockMixin, TestCase):
     def test_delete_goal(self):
         self.client.post(reverse("habits:goal_delete", args=[self.goal.pk]))
         self.assertFalse(Goal.objects.exists())
+
+    def test_completed_goal_cannot_be_deleted(self):
+        services.log_goal_progress(self.goal, self.goal.target_value)
+        detail = self.client.get(reverse("habits:goal_detail", args=[self.goal.pk]))
+        self.assertNotContains(detail, "goal-delete-dialog")
+        response = self.client.post(reverse("habits:goal_delete", args=[self.goal.pk]), follow=True)
+        self.assertContains(response, "tidak bisa dihapus")
+        self.assertTrue(Goal.objects.filter(pk=self.goal.pk).exists())
+
+
+class HtmxCheckInTests(FrozenClockMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = make_user()
+        self.client.force_login(self.user)
+        self.habit = make_habit(self.user, name="Bawa tumbler")
+
+    def test_htmx_check_in_returns_only_the_row(self):
+        url = reverse("habits:habit_check_in", args=[self.habit.pk])
+        response = self.client.post(url, HTTP_HX_REQUEST="true")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "habits/components/habit_row.html")
+        self.assertNotContains(response, "<html")
+        self.assertContains(response, "is-done")
+        self.assertEqual(self.habit.checkins.count(), 1)
+
+    def test_htmx_anonymous_gets_hx_redirect(self):
+        self.client.logout()
+        response = self.client.post(
+            reverse("habits:habit_check_in", args=[self.habit.pk]), HTTP_HX_REQUEST="true"
+        )
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue(response["HX-Redirect"].startswith(reverse("accounts:login")))
+
+    def test_htmx_undo_returns_only_the_row(self):
+        self.client.post(reverse("habits:habit_check_in", args=[self.habit.pk]), HTTP_HX_REQUEST="true")
+        response = self.client.post(reverse("habits:habit_undo_check_in", args=[self.habit.pk]), HTTP_HX_REQUEST="true")
+        self.assertNotContains(response, "is-done")
+        self.assertEqual(self.habit.checkins.count(), 0)
+
+    def test_htmx_milestone_reloads_the_page_for_the_dialog(self):
+        for n in (2, 1):
+            self.habit.checkins.create(checkin_date=days_ago(n))
+        response = self.client.post(
+            reverse("habits:habit_check_in", args=[self.habit.pk]), HTTP_HX_REQUEST="true"
+        )
+        self.assertEqual(response["HX-Refresh"], "true")
+        self.assertEqual(SustainabilityEvent.objects.get().milestone_days, 3)
+
+
+class GoalFilterTests(FrozenClockMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = make_user()
+        self.client.force_login(self.user)
+        make_goal(self.user, title="Bawa botol", category="plastik")
+        make_goal(self.user, title="Naik KRL", category="transportasi")
+
+    def test_category_filter(self):
+        response = self.client.get(reverse("habits:goal_list"), {"category": "plastik"})
+        self.assertContains(response, "Bawa botol")
+        self.assertNotContains(response, "Naik KRL")
+        self.assertContains(response, 'aria-current="page">Plastik')
+
+    def test_unknown_category_shows_all(self):
+        response = self.client.get(reverse("habits:goal_list"), {"category": "xyz"})
+        self.assertContains(response, "Bawa botol")
+        self.assertContains(response, "Naik KRL")
+
+    def test_empty_category_only_changes_the_title(self):
+        response = self.client.get(reverse("habits:goal_list"), {"category": "sampah"})
+        self.assertContains(response, "Belum ada goal dengan kategori Sampah")
+        self.assertNotContains(response, "Tentukan satu target dengan deadline.")
+        self.assertNotContains(response, "Contoh goal")
+
+    def test_category_with_only_past_goals_only_changes_the_title(self):
+        make_goal(
+            self.user, title="Kerja bakti", category="komunitas",
+            start_date=days_ago(30), deadline=days_ago(1),
+        )
+        response = self.client.get(reverse("habits:goal_list"), {"category": "komunitas"})
+        self.assertContains(response, "Belum ada goal aktif dengan kategori Komunitas")
+        self.assertContains(response, "Kerja bakti")  # listed under "Lewat deadline"
+        self.assertNotContains(response, "Tentukan satu target dengan deadline.")
+
+
+class JsonEndpointTests(FrozenClockMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = make_user()
+        self.client.force_login(self.user)
+        make_goal(self.user, title="Bawa botol", category="plastik")
+        make_goal(self.user, title="Naik KRL", category="transportasi")
+        make_goal(make_user("other"), title="Punya orang", category="plastik")
+
+    def test_goals_json_only_own_goals(self):
+        data = self.client.get(reverse("habits:goals_json")).json()
+        self.assertEqual({goal["title"] for goal in data}, {"Bawa botol", "Naik KRL"})
+        data = self.client.get(reverse("habits:goals_json"), {"category": "plastik"}).json()
+        self.assertEqual([goal["title"] for goal in data], ["Bawa botol"])
+
+    def test_habits_json_only_own_habits(self):
+        make_habit(self.user, name="Pilah sampah", time_of_day="siang")
+        make_habit(make_user("tetangga"), name="Punya orang")
+        data = self.client.get(reverse("habits:habits_json")).json()
+        self.assertEqual(
+            data, [{"id": data[0]["id"], "name": "Pilah sampah", "time_of_day": "siang", "start_date": "2026-08-27"}]
+        )
+
+    def test_json_requires_login(self):
+        self.client.logout()
+        self.assertEqual(self.client.get(reverse("habits:goals_json")).status_code, 302)

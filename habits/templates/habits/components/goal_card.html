@@ -1,43 +1,90 @@
 {% comment %}Card Goal (active, completed, or expired). Expects goal: a goal card dict.{% endcomment %}
-<article class="goal-card{% if goal.status == 'completed' %} is-completed{% endif %}">
-  <header class="goal-card-head">
-    <span class="goal-icon">{% include "habits/components/icon.html" with name="goal" %}</span>
+{% if goal.status == "completed" %}
+  {# Completed: title, period, final progress; the summary link is top-right, or under the bar on phones. #}
+  <article class="goal-card goal-heat-{{ goal.heat_level }} is-completed">
     <div class="goal-card-titles">
       <h3 class="goal-card-title">{{ goal.title }}</h3>
-      <p class="goal-card-sub">Target {{ goal.target_text }} · {{ goal.period }}</p>
+      <p class="goal-card-sub">{{ goal.period_long }}</p>
     </div>
-    {% if goal.status == "completed" %}
-      <span class="tag tag-achievement">Selesai</span>
-    {% elif goal.status == "expired" %}
-      <span class="tag">Lewat deadline</span>
-    {% else %}
-      <span class="tag tag-outline">{{ goal.category }}</span>
-    {% endif %}
-  </header>
-
-  <div class="goal-progress">
-    <p class="goal-progress-row"><span>{{ goal.progress_text }}</span><span>{{ goal.percent }}%</span></p>
-    <progress class="progress" value="{{ goal.percent }}" max="100">{{ goal.percent }}%</progress>
-  </div>
-
-  <ul class="goal-card-meta">
-    {% if goal.checklist_total %}
-      <li>{% include "habits/components/icon.html" with name="list-checks" class="icon-sm" %}{{ goal.checklist_done }} dari {{ goal.checklist_total }} checklist</li>
-    {% endif %}
-    <li>
-      {% include "habits/components/icon.html" with name="calendar" class="icon-sm" %}
-      {% if goal.status == "completed" %}{{ goal.completed_text }} · terkirim ke Dashboard{% else %}{{ goal.deadline_text }}{% endif %}
-    </li>
-  </ul>
-
-  <footer class="goal-card-actions">
-    <a class="btn btn-ghost btn-m" href="{% url 'habits:goal_detail' goal.pk %}">
-      {% if goal.status == "completed" %}Lihat ringkasan{% else %}Lihat detail{% endif %}<span class="arrow-right" aria-hidden="true"></span>
+    <a class="btn btn-ghost btn-m goal-card-corner" href="{% url 'habits:goal_detail' goal.pk %}">
+      Lihat ringkasan<span class="arrow-right" aria-hidden="true"></span>
     </a>
-    {% if goal.status == "active" %}
-      <a class="btn btn-m" href="{% url 'habits:goal_log_progress' goal.pk %}" data-dialog-open="{{ goal.progress_dialog_id }}">
-        {% include "habits/components/icon.html" with name="plus" class="icon-sm" %}Catat progres
-      </a>
+
+    <div class="goal-progress">
+      <p class="goal-progress-row"><span>{{ goal.progress_text }}</span><span>{{ goal.percent }}%</span></p>
+      <progress class="progress" value="{{ goal.percent }}" max="100">{{ goal.percent }}%</progress>
+    </div>
+  </article>
+{% else %}
+  <article class="goal-card goal-heat-{{ goal.heat_level }}">
+    <header class="goal-card-head">
+      <span class="goal-icon">{% include "habits/components/icon.html" with name="goal" %}</span>
+      <div class="goal-card-titles">
+        <h3 class="goal-card-title">{{ goal.title }}</h3>
+        <p class="goal-card-sub">{{ goal.period }}</p>
+      </div>
+      {% if goal.status == "expired" %}
+        <span class="tag">Lewat deadline</span>
+      {% else %}
+        <span class="tag tag-outline">{{ goal.category }}</span>
+      {% endif %}
+    </header>
+
+    <div class="goal-progress">
+      <p class="goal-progress-row"><span>{{ goal.progress_text }}</span><span>{{ goal.percent }}%</span></p>
+      <progress class="progress" value="{{ goal.percent }}" max="100">{{ goal.percent }}%</progress>
+    </div>
+
+    {% if goal.checklist %}
+      {# Active goals tick steps right here (back to this same page); expired goals only show them. #}
+      {# Folded by default; habits.js keeps it open across the reload after a tick. #}
+      <details class="card-checklist" data-open-key="goal-{{ goal.pk }}">
+        <summary class="card-checklist-head">
+          {% include "habits/components/icon.html" with name="list-checks" class="icon-sm" %}Checklist
+          <span class="card-checklist-count">{{ goal.checklist_done }}/{{ goal.checklist_total }}</span>
+          {% include "habits/components/icon.html" with name="chevron-down" class="icon-sm card-checklist-chevron" %}
+        </summary>
+        <ul class="card-checklist-list">
+          {% for item in goal.checklist %}
+            <li>
+              {% if goal.status == "active" %}
+                <form class="checklist-item card-checklist-item{% if item.is_done %} is-done{% endif %}" method="post"
+                      action="{% url 'habits:goal_checklist_toggle' goal.pk item.pk %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <button class="card-checklist-toggle" type="submit" aria-pressed="{% if item.is_done %}true{% else %}false{% endif %}">
+                    <span class="checkbox-box">{% if item.is_done %}{% include "habits/components/icon.html" with name="check" class="icon-sm" %}{% endif %}</span>
+                    <span class="checklist-label">{{ item.label }}</span>
+                  </button>
+                </form>
+              {% else %}
+                <span class="checklist-item card-checklist-item card-checklist-static{% if item.is_done %} is-done{% endif %}">
+                  <span class="checkbox-box">{% if item.is_done %}{% include "habits/components/icon.html" with name="check" class="icon-sm" %}{% endif %}</span>
+                  <span class="checklist-label">{{ item.label }}</span>
+                </span>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+        {% if goal.checklist_more %}
+          <a class="card-checklist-more" href="{% url 'habits:goal_detail' goal.pk %}">+{{ goal.checklist_more }} langkah lagi</a>
+        {% endif %}
+      </details>
     {% endif %}
-  </footer>
-</article>
+
+    <ul class="goal-card-meta">
+      <li>{% include "habits/components/icon.html" with name="calendar" class="icon-sm" %}{{ goal.deadline_text }}</li>
+    </ul>
+
+    <footer class="goal-card-actions">
+      <a class="btn btn-ghost btn-m" href="{% url 'habits:goal_detail' goal.pk %}">
+        Lihat detail<span class="arrow-right" aria-hidden="true"></span>
+      </a>
+      {% if goal.status == "active" %}
+        <a class="btn btn-m" href="{% url 'habits:goal_log_progress' goal.pk %}" data-dialog-open="{{ goal.progress_dialog_id }}">
+          {% include "habits/components/icon.html" with name="plus" class="icon-sm" %}Catat progres
+        </a>
+      {% endif %}
+    </footer>
+  </article>
+{% endif %}

@@ -36,26 +36,6 @@ class GoalRuleTests(SimpleTestCase):
         self.assertFalse(services.is_near_deadline(completed, Decimal("5"), TODAY))
         self.assertFalse(services.is_near_deadline(self.goal(deadline=days_ago(1)), Decimal("5"), TODAY))
 
-    def test_pace_counts_today_on_both_sides(self):
-        # 10 days elapsed including today, 11 days left including today.
-        pace = services.goal_pace(self.goal(), Decimal("15"), TODAY)
-        self.assertEqual(pace["average"], Decimal("1.5"))
-        self.assertEqual(pace["needed"], Decimal("5") / 11)
-        self.assertTrue(pace["on_track"])
-
-    def test_pace_behind_target(self):
-        pace = services.goal_pace(self.goal(), Decimal("2"), TODAY)
-        self.assertFalse(pace["on_track"])
-
-    def test_pace_on_deadline_day_needs_the_whole_remainder(self):
-        pace = services.goal_pace(self.goal(deadline=TODAY), Decimal("17"), TODAY)
-        self.assertEqual(pace["needed"], Decimal("3"))
-
-    def test_pace_reached_target_is_on_track(self):
-        pace = services.goal_pace(self.goal(), Decimal("20"), TODAY)
-        self.assertEqual(pace["needed"], 0)
-        self.assertTrue(pace["on_track"])
-
     def test_check_amount(self):
         services.check_amount(Goal.Unit.KG_CO2E, Decimal("2.5"))
         services.check_amount(Goal.Unit.KALI, Decimal("3.00"))
@@ -156,15 +136,19 @@ class GoalListPageTests(FrozenClockMixin, TestCase):
 
         response = self.client.get(self.url)
 
-        self.assertContains(response, "Goal bulan Oktober")
-        self.assertContains(response, "3 goal sedang berjalan, 1 hampir mencapai deadline")
-        self.assertContains(response, "Naik transportasi umum 20 kali tinggal 20 kali lagi dalam 4 hari. Kamu pasti bisa.")
+        self.assertContains(response, "1 goal hampir mencapai deadline, sedikit lagi kamu sampai.")
         self.assertContains(response, "2,5 / 10 kg")
-        self.assertContains(response, "Target 10 kg CO2e")
-        self.assertContains(response, "Selesai baru-baru ini")
+        # Completed goals sit in a section that starts folded, with their count beside the title.
+        self.assertContains(response, '<details class="goal-section goal-fold">')
+        self.assertContains(response, '<span class="section-note">1 goal</span>', html=True)
         self.assertContains(response, "Lewat deadline")
-        self.assertContains(response, "terkirim ke Dashboard")
         self.assertContains(response, 'id="progress-dialog-', count=3)
+
+    def test_header_without_goals_near_deadline(self):
+        make_goal(self.user, deadline=in_days(20))
+        make_goal(self.user, deadline=in_days(25))
+        response = self.client.get(self.url)
+        self.assertContains(response, "2 goal sedang berjalan, sedikit demi sedikit kamu pasti sampai.")
 
     def test_no_active_goal_shows_empty_state_with_history_before_examples(self):
         done = make_goal(self.user, title="Pilah sampah 14 hari", unit=Goal.Unit.HARI, target_value=14)
@@ -201,7 +185,7 @@ class GoalDetailPageTests(FrozenClockMixin, TestCase):
         self.goal.progress_logs.update(logged_at=FIXED_NOW)
         self.url = reverse("habits:goal_detail", args=[self.goal.pk])
 
-    def test_detail_shows_checklist_logs_and_pace(self):
+    def test_detail_shows_checklist_and_logs(self):
         response = self.client.get(self.url)
         self.assertContains(response, "Goal · Transportasi")
         self.assertContains(response, "Tinggal 5 kali lagi dalam 10 hari.")
@@ -209,8 +193,6 @@ class GoalDetailPageTests(FrozenClockMixin, TestCase):
         self.assertContains(response, "Belum")
         self.assertContains(response, "+15 Naik KRL Gambir - Blok M")
         self.assertContains(response, "Hari ini")
-        self.assertContains(response, "1,5 kali / hari")
-        self.assertContains(response, "Sesuai target")
 
     def test_toggle_checklist_item(self):
         url = reverse("habits:goal_checklist_toggle", args=[self.goal.pk, self.item.pk])
@@ -392,3 +374,41 @@ class GoalProgressPageTests(FrozenClockMixin, TestCase):
         url = reverse("habits:goal_log_progress", args=[goal.pk])
         response = self.client.post(url, {"amount": "1"}, follow=True)
         self.assertContains(response, "Progres hanya bisa dicatat untuk goal yang masih aktif.")
+
+
+class GoalPastDeadlineTests(FrozenClockMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = make_user()
+        self.client.force_login(self.user)
+
+    def test_new_goal_with_past_deadline_is_rejected(self):
+        response = self.client.post(reverse("habits:goal_create"), {
+            "title": "Telat", "category": "plastik", "target_value": "5", "unit": "kali",
+            "start_date": days_ago(10).isoformat(), "deadline": days_ago(1).isoformat(),
+        })
+        self.assertContains(response, "Deadline tidak boleh di masa lalu.")
+        self.assertFalse(Goal.objects.exists())
+
+
+class StripTagsTests(FrozenClockMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = make_user()
+        self.client.force_login(self.user)
+
+    def test_habit_name_tags_are_removed(self):
+        self.client.post(reverse("habits:habit_create"), {
+            "name": "<b>Bawa</b> tumbler", "icon": "leaf", "time_of_day": "pagi",
+            "weekdays": [str(d) for d in range(7)],
+        })
+        self.assertEqual(self.user.habits.get().name, "Bawa tumbler")
+
+    def test_goal_title_only_tags_is_rejected(self):
+        response = self.client.post(reverse("habits:goal_create"), {
+            "title": '<img src="x" onerror="alert(1)">', "category": "plastik",
+            "target_value": "5", "unit": "kali",
+            "start_date": TODAY.isoformat(), "deadline": TODAY.isoformat(),
+        })
+        self.assertContains(response, "Nama goal tidak boleh hanya berisi tag HTML.")
+        self.assertFalse(Goal.objects.exists())

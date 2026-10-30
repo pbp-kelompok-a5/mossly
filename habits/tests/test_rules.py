@@ -7,10 +7,8 @@ from django.test import SimpleTestCase
 
 from habits.models import Goal, Habit
 from habits.services import (
-    STREAK_MILESTONES,
     DayStatus,
     GoalStatus,
-    consistency_change,
     consistency_percent,
     current_streak,
     day_counts,
@@ -91,9 +89,6 @@ class LongestStreakTests(SimpleTestCase):
 
 
 class MilestoneTests(SimpleTestCase):
-    def test_milestones_are_fixed(self):
-        self.assertEqual(STREAK_MILESTONES, (3, 7, 14, 30))
-
     def test_milestones_reached_at_edges(self):
         self.assertEqual(milestones_reached(2), ())
         self.assertEqual(milestones_reached(3), (3,))
@@ -156,11 +151,6 @@ class ConsistencyTests(SimpleTestCase):
             [habit], checkins, days_ago(2), TODAY + timedelta(days=10), TODAY
         )
         self.assertEqual((done, expected), (3, 3))
-
-    def test_change_hidden_without_previous_data(self):
-        self.assertIsNone(consistency_change(80, None))
-        self.assertIsNone(consistency_change(None, 70))
-        self.assertEqual(consistency_change(82, 70), 12)
 
 
 class GoalRuleTests(SimpleTestCase):

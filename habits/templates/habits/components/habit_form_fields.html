@@ -1,6 +1,6 @@
 {% comment %}
 Add/edit habit form. Used inside the sheet dialog and on the standalone page.
-Expects: form, action, title_id, in_dialog, is_edit, milestone_list.
+Expects: form, action, title_id, in_dialog, is_edit.
 {% endcomment %}
 <form class="habit-form" method="post" action="{{ action }}">
   {% csrf_token %}
@@ -66,25 +66,6 @@ Expects: form, action, title_id, in_dialog, is_edit, milestone_list.
     </div>
     {% if form.weekdays.errors %}<p class="field-error">{{ form.weekdays.errors.0 }}</p>{% endif %}
   </fieldset>
-
-  <div class="field">
-    <label class="field-label" for="{{ form.reminder_time.id_for_label }}">Pengingat <span class="field-hint">(opsional)</span></label>
-    {{ form.reminder_time }}
-    {% if form.reminder_time.errors %}
-      <p class="field-error">{{ form.reminder_time.errors.0 }}</p>
-    {% else %}
-      <p class="field-hint">Pengingat akan aktif di aplikasi mobile nanti. Untuk sekarang, jamnya disimpan dulu.</p>
-    {% endif %}
-  </div>
-
-  {% if not is_edit %}
-    <div class="alert">
-      <div>
-        <strong>Streak dimulai dari check-in pertamamu</strong>
-        <p class="alert-body">Begitu mencapai {{ milestone_list }} hari, milestone otomatis dikirim ke Personal Dashboard.</p>
-      </div>
-    </div>
-  {% endif %}
 
   <div class="sheet-actions">
     {% if in_dialog %}

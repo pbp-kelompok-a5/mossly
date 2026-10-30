@@ -109,6 +109,72 @@ function updateDeadlineHint(input) {
   hint.textContent = days > 0 ? `${days} hari dari sekarang` : days === 0 ? "Deadline hari ini" : "Tanggal ini sudah lewat";
 }
 
+// --- Habit groups: remember which time-of-day groups are folded ---------------
+
+const FOLDED_GROUPS_KEY = "habits.foldedGroups";
+
+// Storage can be blocked (private mode); the groups then just start open.
+function readFoldedGroups() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(FOLDED_GROUPS_KEY)) || []);
+  } catch {
+    return new Set();
+  }
+}
+
+function rememberGroup(event) {
+  const group = event.target;
+  if (!(group instanceof HTMLDetailsElement) || !group.dataset.group) return;
+  const folded = readFoldedGroups();
+  if (group.open) folded.delete(group.dataset.group);
+  else folded.add(group.dataset.group);
+  try {
+    localStorage.setItem(FOLDED_GROUPS_KEY, JSON.stringify([...folded]));
+  } catch {
+    // Not saved; the group still folds for this visit.
+  }
+}
+
+// --- Goal card checklists: folded by default, remember the open ones ----------
+
+// Ticking a step reloads the page; without this the checklist would fold again.
+const OPEN_CHECKLISTS_KEY = "habits.openChecklists";
+
+function readOpenChecklists() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(OPEN_CHECKLISTS_KEY)) || []);
+  } catch {
+    return new Set();
+  }
+}
+
+function rememberChecklist(event) {
+  const details = event.target;
+  if (!(details instanceof HTMLDetailsElement) || !details.dataset.openKey) return;
+  const open = readOpenChecklists();
+  if (details.open) open.add(details.dataset.openKey);
+  else open.delete(details.dataset.openKey);
+  try {
+    localStorage.setItem(OPEN_CHECKLISTS_KEY, JSON.stringify([...open]));
+  } catch {
+    // Not saved; it just folds again after the next reload.
+  }
+}
+
+// --- Scroll boxes: show N rows, scroll the rest --------------------------------
+
+// data-max-rows="6" caps the box at the bottom of its sixth <li>, so day labels
+// between rows never cut a row in half.
+function limitRows(box) {
+  const rows = box.querySelectorAll("li");
+  const max = Number(box.dataset.maxRows);
+  box.style.maxHeight = "";
+  if (rows.length <= max) return;
+  const style = getComputedStyle(box);
+  const bottom = rows[max - 1].getBoundingClientRect().bottom - box.getBoundingClientRect().top + box.scrollTop;
+  box.style.maxHeight = `${bottom + parseFloat(style.paddingBottom) + parseFloat(style.borderBottomWidth)}px`;
+}
+
 // --- Wiring --------------------------------------------------------------------
 
 document.addEventListener("click", openDialog);
@@ -124,7 +190,26 @@ document.addEventListener("input", (event) => {
   if (field.name === "checklist_label") updateChecklistCount(field.closest("form"));
 });
 
+// "toggle" does not bubble, so listen in the capture phase.
+document.addEventListener("toggle", rememberGroup, true);
+document.addEventListener("toggle", rememberChecklist, true);
+
 document.querySelectorAll("[data-deadline-input]").forEach(updateDeadlineHint);
+
+const rowBoxes = document.querySelectorAll("[data-max-rows]");
+rowBoxes.forEach(limitRows);
+// Rows rewrap at other widths, so the height is measured again.
+window.addEventListener("resize", () => rowBoxes.forEach(limitRows));
+
+const openChecklists = readOpenChecklists();
+document.querySelectorAll("details[data-open-key]").forEach((details) => {
+  if (openChecklists.has(details.dataset.openKey)) details.open = true;
+});
+
+const foldedGroups = readFoldedGroups();
+document.querySelectorAll("details[data-group]").forEach((group) => {
+  if (foldedGroups.has(group.dataset.group)) group.open = false;
+});
 
 document.querySelectorAll("dialog[data-autoshow]").forEach((dialog) => {
   if (typeof dialog.showModal !== "function") return;

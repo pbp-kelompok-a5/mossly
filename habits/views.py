@@ -1,24 +1,28 @@
 from datetime import date, datetime, timedelta
+from functools import wraps
 from decimal import Decimal
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.dates import WEEKDAYS
+from django.utils.formats import date_format
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
-
 from . import display, services
 from .forms import GoalForm, GoalProgressForm, HabitForm
 from .models import Goal, GoalChecklistItem, GoalProgressLog, Habit, HabitCheckIn, SustainabilityEvent
 
 # Session key holding the milestone event to celebrate on the next page load.
 MILESTONE_SESSION_KEY = "habits_new_milestone"
-SENT_EVENTS_SHOWN = 3
 RECENT_COMPLETED_SHOWN = 4
-GOAL_COMPLETED_MESSAGE = "Goal selesai! Pencapaian ini sudah terkirim ke Personal Dashboard."
+# Goal cards list the first few checklist steps; the rest are on the detail page.
+CARD_CHECKLIST_SHOWN = 4
+GOAL_LOCKED_MESSAGE = "Goal ini sudah selesai dan tercatat di Personal Dashboard, jadi tidak bisa dihapus."
+GOAL_COMPLETED_MESSAGE ="Goal selesai! Pencapaian ini sudah terkirim ke Personal Dashboard."
 
 
 def _redirect_back(request, fallback, *args):
@@ -31,18 +35,15 @@ def _redirect_back(request, fallback, *args):
     return redirect(fallback, *args)
 
 
-def _display_name(user):
-    # display_name belongs to the Login module's user model once it exists.
-    return getattr(user, "display_name", "") or user.first_name or user.get_username()
-
-
 def _habit_row(habit, dates, today):
+    streak = services.current_streak(habit, dates, today)
     return {
         "pk": habit.pk,
         "name": habit.name,
         "icon": habit.icon,
         "tint": habit.tint,
-        "streak": services.current_streak(habit, dates, today),
+        "streak": streak,
+        "is_milestone": streak in services.STREAK_MILESTONES,
         "is_done": today in dates,
         "never_checked_in": not dates,
     }
@@ -68,36 +69,6 @@ def _week_strip(habits, checkins, today):
     return days
 
 
-def _next_milestone_card(habits, checkins, today):
-    """The habit closest to its next milestone, or a flag when all are reached."""
-    best = None
-    for habit in habits:
-        streak = services.current_streak(habit, checkins[habit.pk], today)
-        target = services.next_milestone(streak)
-        if target is None:
-            continue
-        candidate = (target - streak, -streak, habit.name, target, streak)
-        if best is None or candidate < best:
-            best = candidate
-    if best is None:
-        return {"all_reached": True}
-    days_left, _, name, target, streak = best
-    return {"all_reached": False, "target": target, "name": name, "days_left": days_left, "streak": streak}
-
-
-def _sent_milestones(user, today):
-    events = SustainabilityEvent.objects.filter(
-        user=user, event_type=SustainabilityEvent.EventType.HABIT_MILESTONE
-    )[:SENT_EVENTS_SHOWN]
-    return [
-        {
-            "title": f"{event.title_snapshot} · {event.milestone_days} hari",
-            "date": display.short_date(timezone.localdate(event.occurred_at), today),
-        }
-        for event in events
-    ]
-
-
 def _pop_milestone(request):
     pk = request.session.pop(MILESTONE_SESSION_KEY, None)
     if pk is None:
@@ -113,17 +84,14 @@ def _pop_milestone(request):
 
 
 def _form_context(form):
-    return {"form": form, "milestone_list": display.milestone_list_text()}
+    return {"form": form}
 
 
 @login_required
 def index(request):
     today = services.local_today()
-    services.expire_overdue_goals(request.user.goals.all(), today)
     habits = list(request.user.habits.all())
     context = {
-        "greeting": display.greeting(timezone.localtime().hour),
-        "display_name": _display_name(request.user),
         "milestone": _pop_milestone(request),
         **_form_context(HabitForm()),
     }
@@ -147,15 +115,14 @@ def index(request):
     scheduled, done = services.day_counts(habits, checkins, today)
     context.update(
         is_empty=False,
-        today_label=display.long_date(today),
         scheduled_today=scheduled,
         done_today=done,
-        remaining_today=scheduled - done,
         done_percent=done * 100 // scheduled if scheduled else 0,
         longest_streak=longest,
         week=_week_strip(habits, checkins, today),
         groups=[
             {
+                "key": key,
                 "label": Habit.TimeOfDay(key).label,
                 "icon": display.TIME_OF_DAY_ICONS[key],
                 "rows": rows,
@@ -165,8 +132,6 @@ def index(request):
             if rows
         ],
         unscheduled=unscheduled,
-        next_milestone=_next_milestone_card(habits, checkins, today),
-        sent_milestones=_sent_milestones(request.user, today),
     )
     return render(request, "habits/habit/habit_list.html", context)
 
@@ -212,7 +177,25 @@ def habit_delete(request, pk):
     return render(request, "habits/habit/habit_confirm_delete.html", {"habit": habit})
 
 
-@login_required
+def htmx_login_required(view):
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        if not request.user.is_authenticated and request.headers.get("HX-Request"):
+            response = HttpResponse(status=401)
+            response["HX-Redirect"] = f"{reverse('accounts:login')}?next={reverse('habits:index')}"
+            return response
+        return login_required(view)(request, *args, **kwargs)
+    return wrapped
+
+
+def _row_partial(request, habit):
+    """Satu baris habit untuk HTMX: hanya <li> ini yang diganti, tanpa reload."""
+    today = services.local_today()
+    dates = set(habit.checkins.values_list("checkin_date", flat=True))
+    return render(request, "habits/components/habit_row.html", {"row": _habit_row(habit, dates, today)})
+
+
+@htmx_login_required
 @require_POST
 def habit_check_in(request, pk):
     habit = get_object_or_404(Habit, pk=pk, user=request.user)
@@ -225,14 +208,23 @@ def habit_check_in(request, pk):
             # Celebrate the highest milestone when several are crossed at once.
             top = max(events, key=lambda event: event.milestone_days)
             request.session[MILESTONE_SESSION_KEY] = top.pk
+            if request.headers.get("HX-Request"):
+                # Muat ulang penuh supaya dialog milestone tampil.
+                response = HttpResponse()
+                response["HX-Refresh"] = "true"
+                return response
+    if request.headers.get("HX-Request"):
+        return _row_partial(request, habit)
     return _redirect_back(request, "habits:index")
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def habit_undo_check_in(request, pk):
     habit = get_object_or_404(Habit, pk=pk, user=request.user)
     services.undo_check_in(habit)
+    if request.headers.get("HX-Request"):
+        return _row_partial(request, habit)
     return _redirect_back(request, "habits:index")
 
 
@@ -277,6 +269,8 @@ def _goal_card(goal, today):
         "period_long": display.date_range(goal.start_date, goal.deadline, with_year=True),
         "progress_text": f"{display.format_amount(progress)} / {display.format_amount(goal.target_value)} {unit_short}",
         "percent": services.goal_progress_percent(progress, goal.target_value),
+        # Card tint uses the history heatmap's buckets, with percent as "done out of 100".
+        "heat_level": services.heat_level(100, services.goal_progress_percent(progress, goal.target_value)),
         "progress": progress,
         "target": goal.target_value,
         "unit_short": unit_short,
@@ -287,6 +281,11 @@ def _goal_card(goal, today):
         "is_near": services.is_near_deadline(goal, progress, today),
         "checklist_done": sum(item.is_done for item in items),
         "checklist_total": len(items),
+        "checklist": [
+            {"pk": item.pk, "label": item.label, "is_done": item.is_done}
+            for item in items[:CARD_CHECKLIST_SHOWN]
+        ],
+        "checklist_more": max(len(items) - CARD_CHECKLIST_SHOWN, 0),
         "completed_at": goal.completed_at,
         "completed_text": f"Selesai {display.day_month(completed_on)}" if completed_on else "",
         "amount_prompt": display.AMOUNT_PROMPTS[goal.unit],
@@ -314,6 +313,11 @@ def _goal_form_context(form, today):
     return {"form": form, "today_iso": today.isoformat()}
 
 
+def _goal_can_be_deleted(goal):
+    """A goal already sent to the Dashboard (where it counts toward badges) stays."""
+    return not goal.events.filter(event_type=SustainabilityEvent.EventType.GOAL_COMPLETED).exists()
+
+
 def _owned_goal(request, pk):
     return get_object_or_404(
         Goal.objects.prefetch_related("checklist_items", "progress_logs"),
@@ -326,9 +330,17 @@ def _owned_goal(request, pk):
 def goal_list(request):
     today = services.local_today()
     services.expire_overdue_goals(request.user.goals.all(), today)
-    goals = list(request.user.goals.prefetch_related("checklist_items", "progress_logs"))
+    goals = request.user.goals.prefetch_related("checklist_items", "progress_logs")
+    # Filter kategori lewat query string, mis. /goal/?category=plastik
+    category = request.GET.get("category", "")
+    if category in Goal.Category.values:
+        goals = goals.filter(category=category)
+    else:
+        category = ""
+    goals = list(goals)
     context = {
-        "month_name": display.MONTH_NAMES[today.month - 1],
+        "category": category,
+        "categories": Goal.Category.choices,
         # Example goals show whenever nothing is active, with or without history.
         "suggestions": [
             {**item, "deadline": (today + timedelta(days=item["days"] - 1)).isoformat()}
@@ -336,7 +348,7 @@ def goal_list(request):
         ],
         **_goal_form_context(GoalForm(initial=_goal_initial(request, today)), today),
     }
-    if not goals:
+    if not goals and not category:
         context.update(has_history=False)
         return render(request, "habits/goal/goal_list.html", context)
 
@@ -353,9 +365,13 @@ def goal_list(request):
     expired = [card for card in cards if card["status"] == services.GoalStatus.EXPIRED]
     context.update(
         has_history=True,
+        # A filter with nothing active only changes the title; no empty-state card.
+        # Past goals of that category (completed, expired) still list below.
+        category_empty=bool(category) and not active,
+        category_has_past=bool(goals),
+        category_label=Goal.Category(category).label if category else "",
         active=active,
         near_count=sum(card["is_near"] for card in active),
-        nearest=active[0] if active else None,
         completed=completed,
         expired=expired,
     )
@@ -368,7 +384,6 @@ def goal_detail(request, pk):
     services.expire_overdue_goals(Goal.objects.filter(pk=pk, user=request.user), today)
     goal = _owned_goal(request, pk)
     card = _goal_card(goal, today)
-    pace = services.goal_pace(goal, card["progress"], today)
     checklist = [
         {
             "pk": item.pk,
@@ -391,12 +406,8 @@ def goal_detail(request, pk):
         "goal": card,
         "checklist": checklist,
         "logs": logs,
-        "pace": {
-            "needed": f"{display.format_rate(pace['needed'])} {card['unit_short']} / hari",
-            "average": f"{display.format_rate(pace['average'])} {card['unit_short']} / hari",
-            "on_track": pace["on_track"],
-        },
         "progress_form": GoalProgressForm(goal=goal),
+        "can_delete": _goal_can_be_deleted(goal),
     }
     return render(request, "habits/goal/goal_detail.html", context)
 
@@ -449,6 +460,9 @@ def goal_log_progress(request, pk):
 @login_required
 def goal_delete(request, pk):
     goal = get_object_or_404(Goal, pk=pk, user=request.user)
+    if not _goal_can_be_deleted(goal):
+        messages.error(request, GOAL_LOCKED_MESSAGE)
+        return redirect("habits:goal_detail", pk)
     if request.method == "POST":
         goal.delete()
         return redirect("habits:goal_list")
@@ -511,7 +525,7 @@ def _year_weeks(year, today, level_for):
         label = ""
         if in_year and in_year[0].month != labelled_month:
             labelled_month = in_year[0].month
-            label = display.MONTH_SHORT[labelled_month - 1]
+            label = date_format(in_year[0], "M")
         days = []
         for day in week:
             if day.year != year:
@@ -603,16 +617,16 @@ def _activity_log(user, habits, checkins, today):
 
 
 def _history_hero(period, months, overall, today):
-    """Eyebrow and title for the selected period.
+    """Period name for the page header.
 
     With no habit scheduled in the period there is no consistency to show, so
-    the hero switches to a gentle invitation (no_habits, with a subtitle)
-    instead of 0%.
+    the hero switches to a gentle invitation (no_habits, with a title and
+    subtitle) instead of 0%.
     """
     current = months[-1]
     eyebrow = {
         "month": f"{current['name']} {today.year}",
-        "3m": " 3 bulan terakhir",
+        "3m": "3 bulan terakhir",
         "year": f"Tahun {today.year}",
     }[period]
     if overall["percent"] is None:
@@ -624,25 +638,7 @@ def _history_hero(period, months, overall, today):
             "subtitle": "Tambahkan habit untuk melihat konsistensimu di sini. "
                         "Progres dan goal yang selesai tetap tercatat di log aktivitas.",
         }
-
-    if period == "month":
-        previous = months[-2]
-        change = services.consistency_change(current["percent"], previous["percent"])
-        if change and change > 0:
-            title = f"Konsistensimu {current['percent']}% bulan ini, naik {change}% dari {previous['name']}"
-        else:
-            title = f"Konsistensimu {current['percent']}% bulan ini"
-    elif period == "3m":
-        known = [month for month in months if month["percent"] is not None]
-        if len(known) > 1 and current["percent"] is not None and current["percent"] > known[0]["percent"]:
-            title = f"Konsistensimu naik dari {known[0]['percent']}% ke {current['percent']}%"
-        elif current["percent"] is not None:
-            title = f"Konsistensimu {current['percent']}% tiga bulan ini"
-        else:
-            title = "Belum ada habit yang dicatat bulan ini"
-    else:
-        title = f"{overall['done']} check-in sejak Januari {today.year}"
-    return {"eyebrow": eyebrow, "title": title}
+    return {"eyebrow": eyebrow}
 
 
 @login_required
@@ -773,25 +769,14 @@ def habit_detail(request, pk):
         else:
             ladder.append({"days": days, "state": "locked", "note": "Belum terbuka"})
 
-    last_checkin = habit.checkins.first()
-    if last_checkin is None:
-        last_text = "Belum ada check-in."
-    else:
-        on = "hari ini" if last_checkin.checkin_date == today else display.day_month_long(last_checkin.checkin_date)
-        last_text = f"Check-in terakhir {on} pukul {display.clock(last_checkin.checked_at)}."
-    frequency = display.frequency_text(habit)
-    schedule = frequency if habit.frequency_type == Habit.Frequency.DAILY else f"Setiap {frequency}"
     strongest = stats["strongest_weekday"]
 
     context = {
         "habit": habit,
         "time_label": habit.get_time_of_day_display(),
-        "subtitle": f"{schedule}, dimulai {display.full_date(habit.start_date)}. {last_text}",
         "is_done_today": today in dates,
         "is_scheduled_today": services.is_scheduled(habit, today),
         "streak": streak,
-        "target": target,
-        "ring_percent": streak * 100 // target if target else 100,
         "month_name": display.MONTH_NAMES[today.month - 1],
         "day_names": display.DAY_SHORT,
         "cells": cells,
@@ -799,11 +784,39 @@ def habit_detail(request, pk):
             "checkins": f"{stats['done']} dari {stats['scheduled']} hari",
             "rate": f"{stats['rate']}%" if stats["rate"] is not None else "–",
             "longest": f"{stats['longest']} hari",
-            "strongest": display.DAY_NAMES[strongest] if strongest is not None else "–",
+            "strongest": WEEKDAYS[strongest] if strongest is not None else "–",
         },
         "ladder": ladder,
-        "frequency": frequency,
-        "reminder": display.reminder_text(habit),
+        "frequency": display.frequency_text(habit),
         "milestone": _pop_milestone(request),
     }
     return render(request, "habits/habit/habit_detail.html", context)
+
+# --- JSON (data delivery, juga untuk Flutter di Proyek Akhir) ---------------------
+
+@login_required
+def habits_json(request):
+    data = list(request.user.habits.values("id", "name", "time_of_day", "start_date"))
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+def goals_json(request):
+    goals = request.user.goals.all()
+    category = request.GET.get("category")
+    if category in Goal.Category.values:
+        goals = goals.filter(category=category)
+    data = [
+        {
+            "id": goal.pk,
+            "title": goal.title,
+            "category": goal.category,
+            "target_value": float(goal.target_value),
+            "unit": goal.unit,
+            "progress": float(services.goal_progress_total(goal)),
+            "deadline": goal.deadline.isoformat(),
+            "status": goal.status,
+        }
+        for goal in goals
+    ]
+    return JsonResponse(data, safe=False)
