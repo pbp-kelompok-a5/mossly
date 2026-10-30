@@ -12,7 +12,6 @@
     <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
     <link rel="stylesheet" href="{% static 'css/global.css' %}">
     <link rel="stylesheet" href="{% static 'css/components.css' %}">
-    <link rel="stylesheet" href="{% static 'css/footer.css' %}">
     <script src="{% static 'js/vendor/htmx.min.js' %}?v=2.0.4" defer></script>
 
     {# Apps that never used Tailwind (Carbon) empty this block so its reset does not restyle them. #}
@@ -87,7 +86,10 @@
           </ul>
         </nav>
       </div>
-
+    </div>
+    {# The hills rise into the space under the links; the copyright sits on them. #}
+    <div class="landing-footer__ground">
+      <img class="landing-footer__hills" src="{% static 'img/footer-hills.svg' %}" alt="" aria-hidden="true">
       <p class="landing-footer__copyright">&copy; {% now "Y" %} Mossly. All rights reserved.</p>
     </div>
   </footer>

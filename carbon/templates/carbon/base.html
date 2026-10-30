@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{# Navbar and footer come from base.html; this adds Carbon's styles, decorations, and mobile bottom nav. #}
+{# Navbar, footer, and footer hills come from base.html; this adds Carbon's styles, decorations, and mobile bottom nav. #}
 
 {% block title %}Carbon Tracker — Mossly{% endblock %}
 
@@ -36,7 +36,6 @@
 {% block footer_class %}carbon-site-footer{% endblock %}
 
 {% block body_end %}
-    <img src="{% static 'carbon/images/footer-hills.svg' %}" alt="" class="carbon-footer-hills">
     <nav class="carbon-bottom-nav" aria-label="Navigasi mobile">
         <a href="{% url 'dashboard:index' %}">{% include 'carbon/_icon.html' with name='nav-dashboard' %}<span>Dashboard</span></a>
         <a href="{% url 'carbon:index' %}" aria-current="page">{% include 'carbon/_icon.html' with name='nav-carbon' %}<span>Carbon</span></a>
