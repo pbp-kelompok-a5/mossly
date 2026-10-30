@@ -49,3 +49,41 @@ Modul *Carbon Footprint Tracker* akan menggunakan **Geoapify**, layanan API loka
 ## 🔗 URL
 - **Figma:** https://www.figma.com/design/xMVSWGoAmsCNbc0IrEX4gX/PBP-LETSGOOO?node-id=1-2&t=x38m96qwHWQtBWqr-1
 - **PWS:** https://tania-ju-mossly.pws.cs.ui.ac.id/
+
+Contoh itu gayanya lebih tenang: menyebut jenis AI-nya, menjelaskan peran AI sebagai asisten, lalu memberi contoh konkret saat saran AI harus dikoreksi. Ini versi Carbon-mu dengan gaya yang sama, tetap menekankan bahwa kamu yang mengarahkan, memeriksa, dan bertanggung jawab:
+
+---
+
+## AI Disclosure Carbon Tracker
+
+### 1. Cakupan penggunaan AI dan strategi prompt
+
+AI yang digunakan adalah **ChatGPT Codex**. AI digunakan sebagai asisten pengembangan untuk modul Carbon Footprint Tracker, bukan sebagai pengganti keputusan desain, peninjauan kode, dan pengujian manual. Kebutuhan fitur, tampilan, dan batasan modul ditentukan oleh saya, lalu hasilnya dicoba melalui terminal dan browser.
+
+Strategi prompt dilakukan secara bertahap: PRD, README, ERD kelompok, referensi Figma, screenshot, pesan error, dan hasil pengujian diberikan sebagai konteks. Instruksi menekankan kode yang sederhana dan mudah dipelajari pemula, serta pembatasan perubahan hanya pada modul Carbon dan bagian integrasinya yang sudah disepakati kelompok.
+
+AI membantu sangat besar khususnya pada beberapa pekerjaan berikut:
+
+- Menelaah ERD kelompok dan menyesuaikan model `TransportMode`, `EmissionFactor`, dan `Trip`.
+- Membantu mengembangkan dan meninjau CRUD perjalanan, validasi form, serta pembatasan akses berdasarkan pemilik data.
+- Membantu integrasi Geoapify melalui backend Django untuk pencarian alamat, pencarian berdasarkan koordinat, dan perhitungan rute otomatis.
+- Membantu menyusun perhitungan estimasi emisi CO₂e dari jarak dan faktor emisi yang memiliki sumber serta versi.
+
+
+Contoh arahan yang diberikan selama pengembangan: mempertahankan empat moda dengan jarak otomatis, mengganti pencarian otomatis menjadi tombol Cari, menggunakan tombol Hitung estimasi, dan menyederhanakan kode tanpa menghilangkan validasi dan keamanan.
+
+### 2. Pengkritisan terhadap AI dan verifikasi manual
+
+Pendapat AI yang diberikan juga tidak langsung dapat di implementasikan pada program. Struktur data dan metrik pada PRD awal perlu disesuaikan dengan keputusan kelompok, yaitu ERD, satuan CO₂e, dan respons `404` untuk perjalanan milik pengguna lain.
+
+Pilihan teknis AI juga dievaluasi dari sisi kemudahan belajar. Pemasangan build Tailwind menambahkan banyak dependensi di `node_modules`. Setelah diperiksa, folder tersebut dihapus karena CSS hasil build sudah tersedia dan dapat digunakan Django, sementara file sumber CSS dan konfigurasi build yang masih diperlukan tetap dipertahankan.
+
+AI juga tidak dapat menggantikan pengujian browser nyata. Masalah peta 403 Access blocked tidak terlihat dari pengujian respons Django, dan baru dapat ditelusuri setelah permintaan gambar peta dan pengaturan referrer diperiksa langsung di browser.
+
+Verifikasi akhir yang dilakukan:
+
+- Pengujian browser untuk CRUD, filter, dialog, kegagalan API, dan tampilan responsif.
+- Pengujian Geoapify asli untuk geocoding, reverse geocoding, dan empat profil transportasi.
+- Pemeriksaan migrasi dan pengumpulan aset melalui `collectstatic`.
+
+Coverage hanya menjadi indikator jalur kode yang teruji, bukan jaminan bahwa semua kemungkinan masalah sudah ditemukan. Seluruh hasil di atas berasal dari lingkungan lokal, sehingga konfigurasi environment, API key, dan alur Carbon setelah deployment ke PWS tetap harus diverifikasi secara manual. Saya bertanggung jawab untuk meninjau, memahami, dan menjelaskan seluruh implementasi yang dikumpulkan.

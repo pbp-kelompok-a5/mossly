@@ -1,3 +1,6 @@
+# Dependensi build CSS Carbon
+carbon/node_modules/
+
 # Django
 *.log
 *.pot
