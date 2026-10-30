@@ -2,7 +2,7 @@
   "name": "mossly-carbon-styles",
   "private": true,
   "scripts": {
-    "build": "tailwindcss -i ./tailwind.input.css -o ./static/carbon/tailwind.css --minify"
+    "build": "tailwindcss -i ../static/css/carbon-tailwind.input.css -o ../static/css/carbon-tailwind.css --minify"
   },
   "devDependencies": {
     "@tailwindcss/cli": "4.1.18",

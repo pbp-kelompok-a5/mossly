@@ -18,6 +18,7 @@ SOURCE_NOTE = ('UK DESNZ/Defra 2023 flat file v1.1, updated 28 June 2023; '
 
 
 def seed_and_convert(apps, schema_editor):
+    """Isi moda dan faktor awal, lalu sesuaikan perjalanan lama dengan ERD."""
     db = schema_editor.connection.alias
     Mode = apps.get_model('carbon', 'TransportMode')
     Factor = apps.get_model('carbon', 'EmissionFactor')

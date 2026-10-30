@@ -19,6 +19,7 @@ from .services import (
 
 
 def api_login_required(view):
+    """Kembalikan JSON 401 jika pengguna API belum login."""
     @wraps(view)
     def wrapped(request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -28,6 +29,7 @@ def api_login_required(view):
 
 
 def _user_trips(user):
+    """Ambil hanya perjalanan milik pengguna beserta moda dan faktor emisinya."""
     return Trip.objects.filter(user=user).select_related('mode', 'emission_factor')
 
 
@@ -37,6 +39,7 @@ def _filter_trips(trips, mode_code):
 
 
 def limited_geoapify(view):
+    """Periksa batas pemakaian API sebelum menjalankan endpoint Geoapify."""
     @wraps(view)
     def wrapped(request, *args, **kwargs):
         try:
@@ -48,6 +51,7 @@ def limited_geoapify(view):
 
 
 def _summary(trips):
+    """Hitung jumlah perjalanan, total jarak, dan emisi dari data yang dipilih."""
     values = trips.aggregate(total_trips=Count('pk'), total_distance_km=Sum('distance_km'), total_co2e_kg=Sum('emission_kg'))
     return {key: value if value is not None else Decimal('0') for key, value in values.items()}
 
@@ -55,6 +59,7 @@ def _summary(trips):
 @login_required
 @require_GET
 def index(request):
+    """Tampilkan riwayat pribadi dengan filter, pengurutan, dan pembagian halaman."""
     trips = _user_trips(request.user).defer('route_geometry', 'legacy_calculation')
     selected_mode = request.GET.get('mode', '').strip()
     # Sertakan moda nonaktif yang pernah dipakai agar riwayat lama tetap bisa dicari.
@@ -108,6 +113,7 @@ def _form_context(form):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def trip_form(request, pk=None):
+    """Tangani tambah dan edit; hitung hasil di backend sebelum menyimpan."""
     # Kedua URL memakai alur yang sama; ID yang diisi berarti mengedit milik user.
     trip = get_object_or_404(_user_trips(request.user), pk=pk) if pk is not None else None
     form = TripForm(request.POST if request.method == 'POST' else None, instance=trip, user=request.user)
@@ -143,6 +149,7 @@ def trip_form(request, pk=None):
 @login_required
 @require_POST
 def delete_trip(request, pk):
+    """Hapus perjalanan milik pengguna melalui permintaan POST."""
     trip = get_object_or_404(Trip, pk=pk, user=request.user)
     trip.delete()
     return redirect('carbon:index')
@@ -156,6 +163,7 @@ def _api_error(error):
 @require_GET
 @limited_geoapify
 def api_geocode(request):
+    """Cari alamat Indonesia dan sertakan token untuk memvalidasi pilihan lokasi."""
     query = request.GET.get('q', '').strip()
     if len(query) < 2:
         return JsonResponse({'results': []})
@@ -172,6 +180,7 @@ def api_geocode(request):
 @require_GET
 @limited_geoapify
 def api_reverse_geocode(request):
+    """Ubah titik peta atau GPS menjadi pilihan alamat Indonesia."""
     try:
         location = reverse_geocode(request.GET.get('lat'), request.GET.get('lon'))
     except GeoapifyError as error:
@@ -185,6 +194,7 @@ def api_reverse_geocode(request):
 @require_GET
 @limited_geoapify
 def api_route(request):
+    """Kirim preview jarak dan emisi sesuai moda serta tanggal perjalanan."""
     try:
         mode = get_mode(request.GET.get('mode'))
         date_form = TripForm.base_fields['trip_date']
@@ -210,6 +220,7 @@ def api_route(request):
 @api_login_required
 @require_GET
 def api_history(request):
+    """Sediakan riwayat mentah milik pengguna dalam JSON untuk Dashboard."""
     # Geometry besar hanya disertakan jika konsumen memintanya secara eksplisit.
     include_geometry = request.GET.get('include_geometry') == '1'
     trips = _filter_trips(_user_trips(request.user), request.GET.get('mode', '').strip()).defer('legacy_calculation')

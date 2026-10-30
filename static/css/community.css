@@ -542,6 +542,44 @@ img {
 .like-button[aria-pressed="true"] svg {
   fill:currentColor;
 }
+.like-form.is-pending [data-like-button] {
+  pointer-events:none;
+}
+.like-form.is-liking .like-button,
+.like-form.is-liking [data-like-state] {
+  color:#bd493b;
+}
+.like-form.is-liking .like-button svg {
+  fill:currentColor;
+  animation:heart-pop .5s cubic-bezier(.18,.89,.32,1.49);
+}
+.like-form.is-liking [data-like-state] {
+  display:inline-block;
+  animation:heart-pop .5s cubic-bezier(.18,.89,.32,1.49);
+}
+.like-form.is-unliking .like-button svg,
+.like-form.is-unliking [data-like-state] {
+  animation:heart-release .28s ease-out;
+}
+@keyframes heart-pop {
+  0% { transform:scale(1); }
+  38% { transform:scale(1.42); }
+  70% { transform:scale(.88); }
+  100% { transform:scale(1); }
+}
+@keyframes heart-release {
+  0% { transform:scale(1); }
+  55% { transform:scale(.76); }
+  100% { transform:scale(1); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .like-form.is-liking .like-button svg,
+  .like-form.is-liking [data-like-state],
+  .like-form.is-unliking .like-button svg,
+  .like-form.is-unliking [data-like-state] {
+    animation:none;
+  }
+}
 .like-button:hover,
 .reply-link:hover {
   color:var(--moss)

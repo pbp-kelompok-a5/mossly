@@ -11,6 +11,7 @@ ROUTE_FIELDS = (*LOCATION_FIELDS, 'mode', 'trip_date')
 
 
 class TripForm(forms.ModelForm):
+    """Validasi isian perjalanan dan pilihan lokasi yang diterima dari Geoapify."""
     trip_date = forms.DateField(label='Tanggal Perjalanan', initial=today,
                                widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}))
     origin_token = forms.CharField(widget=forms.HiddenInput, required=False)
@@ -30,6 +31,7 @@ class TripForm(forms.ModelForm):
         }
 
     def __init__(self, *args, user=None, **kwargs):
+        """Siapkan pilihan moda dan isi awal untuk form tambah atau edit."""
         super().__init__(*args, **kwargs)
         self.user = user
         allowed = Q(is_active=True, geoapify_profile__in=SUPPORTED_PROFILES)
@@ -52,18 +54,21 @@ class TripForm(forms.ModelForm):
 
     @property
     def route_changed(self):
+        """Periksa perubahan lokasi, moda, atau tanggal yang perlu dihitung ulang."""
         # Django sudah membandingkan input dengan nilai awal melalui changed_data.
         return not self.instance.pk or (
             self.is_bound and any(name in self.changed_data for name in ROUTE_FIELDS)
         )
 
     def clean_trip_date(self):
+        """Tolak tanggal perjalanan yang berada di masa depan."""
         value = self.cleaned_data['trip_date']
         if value > today():
             raise forms.ValidationError('Tanggal perjalanan tidak boleh di masa depan.')
         return value
 
     def clean(self):
+        """Validasi keaslian lokasi, titik yang berbeda, dan perubahan rute."""
         cleaned = super().clean()
         for prefix in ('origin', 'destination'):
             fields = [f'{prefix}_label', f'{prefix}_lat', f'{prefix}_lng']
@@ -85,6 +90,7 @@ class TripForm(forms.ModelForm):
         return cleaned
 
     def save(self, commit=True):
+        """Ubah tanggal pilihan menjadi waktu perjalanan sebelum menyimpan."""
         trip = super().save(commit=False)
         chosen_date = self.cleaned_data['trip_date']
         if not trip.pk or trip.trip_date != chosen_date:

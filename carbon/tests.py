@@ -28,6 +28,7 @@ def route_response(**overrides):
 
 
 class ServiceTests(SimpleTestCase):
+    """Uji validasi, perhitungan, dan respons Geoapify tanpa request internet."""
     def setUp(self):
         cache.clear()
 
@@ -168,6 +169,7 @@ class ServiceTests(SimpleTestCase):
 
 
 class CarbonTests(TestCase):
+    """Uji CRUD, privasi pengguna, validasi form, dan endpoint JSON Carbon."""
     @classmethod
     def setUpTestData(cls):
         cls.user = get_user_model().objects.create_user('callysta')
