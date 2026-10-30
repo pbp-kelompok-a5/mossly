@@ -4,10 +4,64 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/landing-page.css' %}">
-<link rel="stylesheet" href="{% static 'css/global.css' %}">
-<link rel="stylesheet" href="{% static 'css/components.css' %}">
-<link rel="stylesheet" href="{% static 'css/tokens.css' %}">
-<link rel="stylesheet" href="{% static 'css/landing-callysta.css' %}">
+<script src="{% static 'js/landing.js' %}" defer></script>
+{# Tailwind theme animations. apple-fall: wobbles loose, falls, bounces, stays on the ground. Stagger with [--delay:…]: a separate animation-delay would lose to the animation shorthand. #}
+<style type="text/tailwindcss">
+  @theme inline {
+    --animate-apple-fall: apple-fall 1.6s both;
+    --animate-rise: rise .8s cubic-bezier(.22, 1, .36, 1) var(--delay, 0s) backwards;
+    --animate-tree-grow: tree-grow 1.1s cubic-bezier(.34, 1.4, .64, 1) var(--delay, 0s) backwards;
+    --animate-pop: pop .5s cubic-bezier(.34, 1.56, .64, 1) var(--delay, 0s) backwards;
+    --animate-bar-grow: bar-grow 1.1s cubic-bezier(.22, 1, .36, 1) var(--delay, 0s) backwards;
+    --animate-draw: draw 1.6s ease-out var(--delay, 0s) backwards;
+    --animate-float: float 2.6s ease-in-out infinite alternate;
+    --animate-heartbeat: heartbeat 1.4s ease-in-out infinite;
+    --animate-heart-rise: heart-rise 2.6s ease-out var(--delay, 0s) infinite;
+    --animate-sway: sway 2s ease-in-out infinite alternate;
+    --animate-sway-soft: sway-soft 3s ease-in-out infinite alternate;
+    /* translate, scale, and rotate leave each element's own transform and hover effects alone. */
+    @keyframes rise { from { opacity: 0; translate: 0 2.75rem; } }
+    @keyframes tree-grow { from { opacity: 0; scale: .8; } }
+    @keyframes pop { from { opacity: 0; scale: 0; } }
+    @keyframes bar-grow { from { width: 0; } }
+    @keyframes draw { from { clip-path: inset(0 100% 0 0); } }
+    @keyframes float { from { translate: 0 0; } to { translate: 0 -.5rem; } }
+    @keyframes heartbeat {
+      0%, 40%, 100% { scale: 1; }
+      15% { scale: 1.35; }
+      30% { scale: 1.15; }
+    }
+    @keyframes heart-rise {
+      0% { opacity: 0; translate: 0 0; scale: .7; }
+      15% { opacity: 1; }
+      70%, 100% { opacity: 0; translate: var(--heart-drift, -.5rem) -2.75rem; scale: 1.2; }
+    }
+    @keyframes sway { from { rotate: -8deg; } to { rotate: 8deg; } }
+    @keyframes sway-soft { from { rotate: -3deg; } to { rotate: 3deg; } }
+    @keyframes apple-fall {
+      0% { transform: translateY(0) rotate(0); }
+      10% { transform: translateY(0) rotate(-9deg); }
+      18% { transform: translateY(0) rotate(7deg); }
+      25% { transform: translateY(0) rotate(0); animation-timing-function: cubic-bezier(.55, 0, .9, .45); }
+      68% { transform: translateY(var(--apple-fall)) rotate(10deg); animation-timing-function: ease-out; }
+      80% { transform: translateY(calc(var(--apple-fall) * .88)) rotate(16deg); animation-timing-function: ease-in; }
+      91% { transform: translateY(var(--apple-fall)) rotate(22deg); }
+      100% { transform: translateY(var(--apple-fall)) rotate(24deg); }
+    }
+  }
+</style>
+{% endblock %}
+
+{# Logged-in users are sent to the dashboard, so this navbar is only ever seen by guests. #}
+{% block navbar_links %}
+  <span class="navbar-anchors">
+    <a href="#carbon">Carbon</a>
+    <a href="#habit">Habit &amp; Goal</a>
+    <a href="#hasil">Dashboard &amp; Komunitas</a>
+    <a href="#cara-kerja">Cara kerja</a>
+  </span>
+  <a href="{% url 'accounts:login' %}">Login</a>
+  <a href="{% url 'accounts:register' %}" class="btn btn-m">Daftar</a>
 {% endblock %}
 
 {% block content %}
@@ -15,16 +69,16 @@
 <section class="landing-hero" aria-labelledby="landing-hero-title">
   <div class="landing-hero__inner">
     <div class="landing-hero__copy">
-      <p class="landing-hero__eyebrow">Jejak lebih ringan. Hidup lebih hijau.</p>
-      <h1 class="landing-hero__title" id="landing-hero-title">
+      <p class="landing-hero__eyebrow motion-safe:animate-rise">Jejak lebih ringan. Hidup lebih hijau.</p>
+      <h1 class="landing-hero__title motion-safe:animate-rise [--delay:100ms]" id="landing-hero-title">
         Setiap langkah<br>kecil, terhitung.
       </h1>
-      <p class="landing-hero__desc">
+      <p class="landing-hero__desc motion-safe:animate-rise [--delay:200ms]">
         Catat perjalanan, rawat kebiasaan hijau, dan tumbuh bersama komunitas.
         Mulai dari hal kecil yang kamu lakukan hari ini.
       </p>
 
-      <div class="landing-hero__actions">
+      <div class="landing-hero__actions motion-safe:animate-rise [--delay:300ms]">
         <a href="{% url 'accounts:register' %}" class="landing-hero__button landing-hero__button--primary">
           Mulai langkahmu <span aria-hidden="true">→</span>
         </a>
@@ -33,14 +87,17 @@
         </a>
       </div>
 
-      <p class="landing-hero__note">Gratis untuk mulai</p>
+      <p class="landing-hero__note motion-safe:animate-rise [--delay:400ms]">Gratis untuk mulai</p>
     </div>
 
     <div class="landing-hero__visual" aria-hidden="true">
-      <img src="{% static 'img/landing-hero-tree.svg' %}" alt="">
+      <div class="landing-hero__tree motion-safe:animate-tree-grow origin-bottom [--delay:150ms]">
+        <img src="{% static 'img/landing-hero-tree.svg' %}" alt="">
+        <img class="landing-hero__apple motion-safe:animate-sway-soft motion-safe:data-[falling]:animate-apple-fall" data-apple src="{% static 'img/landing-apple.svg' %}" alt="">
+      </div>
 
 
-      <p class="landing-hero__quote">Satu langkah kecil hari ini,<br>cerita yang lebih hijau esok hari.</p>
+      <p class="landing-hero__quote motion-safe:animate-rise [--delay:500ms]">Satu langkah kecil hari ini,<br>cerita yang lebih hijau esok hari.</p>
     </div>
   </div>
 
@@ -58,12 +115,12 @@
 <!-- ===== Habit & Goal Tracker ===== -->
 <section class="habit" id="habit" aria-labelledby="habit-title">
   <!-- Kolom kiri: preview kartu habit -->
-  <div class="habit__preview">
+  <div class="habit__preview data-[reveal=hidden]:opacity-0 motion-safe:data-[reveal=shown]:animate-rise" data-reveal>
     <p class="habit__eyebrow">Catatan kecil hari ini</p>
 
     <div class="habit__preview-head">
       <h3 class="habit__preview-title">Rawat yang baik.</h3>
-      <svg class="habit__leaf" viewBox="512 58 72 56" fill="none"
+      <svg class="habit__leaf motion-safe:animate-sway origin-bottom" viewBox="512 58 72 56" fill="none"
            aria-hidden="true" focusable="false">
         <path d="M534 110C528.133 66.3841 560.73 61.6684 579.556 66.2542C574.801 94.4348 561.605 109.246 534 110Z" fill="#7A9160"/>
         <path d="M534 110L567.105 77.2196" stroke="#45583A" stroke-width="1.9"/>
@@ -82,7 +139,7 @@
              role="progressbar"
              aria-label="Progres kebiasaan bawa tumbler"
              aria-valuemin="0" aria-valuemax="14" aria-valuenow="12">
-          <span class="habit-card__bar" style="--habit-progress: 86%"></span>
+          <span class="habit-card__bar data-[reveal=hidden]:opacity-0 motion-safe:data-[reveal=shown]:animate-bar-grow [--delay:350ms]" data-reveal style="--habit-progress: 86%"></span>
         </div>
         <div class="habit-card__foot">
           <p class="habit-card__hint">Milestone berikutnya: 14 hari</p>
@@ -99,7 +156,7 @@
              role="progressbar"
              aria-label="Progres kebiasaan naik transportasi umum"
              aria-valuemin="0" aria-valuemax="20" aria-valuenow="14">
-          <span class="habit-card__bar" style="--habit-progress: 70%"></span>
+          <span class="habit-card__bar data-[reveal=hidden]:opacity-0 motion-safe:data-[reveal=shown]:animate-bar-grow [--delay:550ms]" data-reveal style="--habit-progress: 70%"></span>
         </div>
         <div class="habit-card__foot">
           <p class="habit-card__hint">Goal: 20 kali bulan ini</p>
@@ -112,7 +169,7 @@
   </div>
 
   <!-- Kolom kanan: narasi & ajakan -->
-  <div class="habit__copy">
+  <div class="habit__copy data-[reveal=hidden]:opacity-0 motion-safe:data-[reveal=shown]:animate-rise [--delay:150ms]" data-reveal>
     <p class="habit__label">02 — Habit &amp; Goal Tracker</p>
     <h2 class="habit__title" id="habit-title">Kebiasaan baik perlu dirawat.</h2>
     <p class="habit__desc">
@@ -134,12 +191,12 @@
 
 <!-- ===== Dashboard & Komunitas ===== -->
 <section class="results" id="hasil" aria-labelledby="results-title">
-  <p class="results__eyebrow">Tumbuh sendiri. Lebih seru bersama.</p>
-  <h2 class="results__title" id="results-title">Lihat hasilnya. Bagikan ceritanya.</h2>
+  <p class="results__eyebrow data-[reveal=hidden]:opacity-0 motion-safe:data-[reveal=shown]:animate-rise" data-reveal>Tumbuh sendiri. Lebih seru bersama.</p>
+  <h2 class="results__title data-[reveal=hidden]:opacity-0 motion-safe:data-[reveal=shown]:animate-rise [--delay:100ms]" data-reveal id="results-title">Lihat hasilnya. Bagikan ceritanya.</h2>
 
   <div class="results__grid">
     <!-- Kartu kiri: Personal Dashboard -->
-    <article class="results-card results-card--moss" aria-labelledby="dashboard-title">
+    <article class="results-card results-card--moss motion-safe:transition-[translate] motion-safe:duration-300 motion-safe:hover:-translate-y-1 data-[reveal=hidden]:opacity-0 motion-safe:data-[reveal=shown]:animate-rise [--delay:100ms]" data-reveal aria-labelledby="dashboard-title">
       <p class="results-card__label">03 — Personal Dashboard</p>
       <h3 class="results-card__title" id="dashboard-title">Kebun kecil pencapaianmu.</h3>
       <p class="results-card__desc">
@@ -168,7 +225,7 @@
     </article>
 
     <!-- Kartu kanan: Sustainability Community -->
-    <article class="results-card results-card--clay" aria-labelledby="community-title">
+    <article class="results-card results-card--clay motion-safe:transition-[translate] motion-safe:duration-300 motion-safe:hover:-translate-y-1 data-[reveal=hidden]:opacity-0 motion-safe:data-[reveal=shown]:animate-rise [--delay:250ms]" data-reveal aria-labelledby="community-title">
       <p class="results-card__label">04 — Sustainability Community</p>
       <h3 class="results-card__title" id="community-title">Teman di sepanjang jalan.</h3>
       <p class="results-card__desc">
@@ -176,7 +233,7 @@
         sustainable.
       </p>
 
-      <div class="post-card">
+      <div class="post-card motion-safe:animate-float">
         <div class="post-card__head">
           <span class="post-card__avatar" aria-hidden="true">E</span>
           <div class="post-card__author">
@@ -190,7 +247,11 @@
           mingguanku turun hampir setengah!
         </p>
         <p class="post-card__meta">
-          <span>Suka 24</span>
+          <span class="post-card__like">
+            <span class="post-card__heart motion-safe:animate-heartbeat" aria-hidden="true">♥</span>Apresiasi 24
+            <span class="post-card__heart-float motion-safe:animate-heart-rise" aria-hidden="true">♥</span>
+            <span class="post-card__heart-float [--heart-drift:.9rem] motion-safe:animate-heart-rise [--delay:1.3s]" aria-hidden="true">♥</span>
+          </span>
           <span>Komentar 8</span>
         </p>
       </div>
@@ -200,23 +261,23 @@
 
 <!-- ===== Cara Kerja ===== -->
 <section class="steps" id="cara-kerja" aria-labelledby="steps-title">
-  <p class="steps__label">05 — Login &amp; Onboarding / Cara Kerja</p>
-  <h2 class="steps__title" id="steps-title">Perjalanan hijau dimulai di sini.</h2>
+  <p class="steps__label data-[reveal=hidden]:opacity-0 motion-safe:data-[reveal=shown]:animate-rise" data-reveal>05 — Login &amp; Onboarding / Cara Kerja</p>
+  <h2 class="steps__title data-[reveal=hidden]:opacity-0 motion-safe:data-[reveal=shown]:animate-rise [--delay:100ms]" data-reveal id="steps-title">Perjalanan hijau dimulai di sini.</h2>
 
   <div class="steps__track">
     <!-- Garis putus-putus -->
-    <svg class="steps__path" viewBox="0 0 966 64" preserveAspectRatio="none"
+    <svg class="steps__path data-[reveal=hidden]:opacity-0 motion-safe:data-[reveal=shown]:animate-draw [--delay:200ms]" data-reveal viewBox="0 0 966 64" preserveAspectRatio="none"
          aria-hidden="true" focusable="false">
       <path d="M52 22C80 15 120 14 180 28C230 40 280 44 318 36M372 30C440 22 490 11 545 11C590 11 615 17 640 22M697 29C760 38 830 46 895 48"/>
     </svg>
-    <svg class="steps__leaf" viewBox="0 0 32 20" fill="none"
+    <svg class="steps__leaf motion-safe:animate-sway origin-left" viewBox="0 0 32 20" fill="none"
          aria-hidden="true" focusable="false">
       <path d="M1 12C8 2 22 0 31 5C27 14 15 19 1 12Z" fill="#7A9160"/>
       <path d="M3 12L26 6" stroke="#45583A" stroke-width="1"/>
     </svg>
 
     <ol class="steps__list">
-      <li class="step">
+      <li class="step data-[reveal=hidden]:opacity-0 motion-safe:data-[reveal=shown]:animate-rise [--delay:150ms]" data-reveal>
         <span class="step__number">01</span>
         <h3 class="step__title">Temukan titik mulamu</h3>
         <p class="step__desc">
@@ -225,7 +286,7 @@
         </p>
       </li>
 
-      <li class="step">
+      <li class="step data-[reveal=hidden]:opacity-0 motion-safe:data-[reveal=shown]:animate-rise [--delay:350ms]" data-reveal>
         <span class="step__number">02</span>
         <h3 class="step__title">Rawat langkah harian</h3>
         <p class="step__desc">
@@ -233,7 +294,7 @@
         </p>
       </li>
 
-      <li class="step">
+      <li class="step data-[reveal=hidden]:opacity-0 motion-safe:data-[reveal=shown]:animate-rise [--delay:550ms]" data-reveal>
         <span class="step__number">03</span>
         <h3 class="step__title">Lihat dirimu bertumbuh</h3>
         <p class="step__desc">
@@ -246,12 +307,14 @@
 
 <!-- ===== CTA Bawah ===== -->
 <section class="cta" aria-labelledby="cta-title">
-  <img class="cta__branch" src="{% static 'img/cta-branch.svg' %}" alt=""
-       aria-hidden="true">
-  <img class="cta__leaf" src="{% static 'img/cta-leaf.svg' %}" alt=""
+  <div class="cta__branch motion-safe:animate-sway-soft origin-top" aria-hidden="true">
+    <img src="{% static 'img/cta-branch.svg' %}" alt="">
+    <img class="cta__apple motion-safe:animate-sway-soft motion-safe:data-[falling]:animate-apple-fall" data-apple src="{% static 'img/landing-apple.svg' %}" alt="">
+  </div>
+  <img class="cta__leaf motion-safe:animate-sway origin-bottom" src="{% static 'img/cta-leaf.svg' %}" alt=""
        aria-hidden="true">
 
-  <div class="cta__inner">
+  <div class="cta__inner data-[reveal=hidden]:opacity-0 motion-safe:data-[reveal=shown]:animate-rise" data-reveal>
     <p class="cta__eyebrow">Satu langkah kecil, mulai hari ini.</p>
     <h2 class="cta__title" id="cta-title">
       Beri ruang untuk<br>kebiasaan yang lebih hijau.

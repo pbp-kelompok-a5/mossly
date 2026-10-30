@@ -8,22 +8,38 @@ one-time messages. Pages fill "page_top" (tabs, back link) and "page".
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/habits.css' %}">
 <script src="{% static 'js/habits.js' %}" defer></script>
+{# Tailwind theme animations. scale and rotate leave each element's own transform and layout alone, so nothing shifts. #}
+<style type="text/tailwindcss">
+  @theme inline {
+    --animate-check-pop: check-pop .4s cubic-bezier(.34, 1.56, .64, 1);
+    --animate-ring-bump: ring-bump .45s ease-out;
+    --animate-flicker: flicker 1.6s ease-in-out infinite alternate;
+    --animate-petal-sway: petal-sway 3s ease-in-out infinite alternate;
+    --animate-trophy-pop: trophy-pop .6s cubic-bezier(.34, 1.56, .64, 1) .1s backwards;
+    @keyframes check-pop { from { scale: .6; } }
+    @keyframes ring-bump { 50% { scale: 1.05; } }
+    @keyframes flicker { from { scale: 1; rotate: -5deg; } to { scale: 1.14; rotate: 5deg; } }
+    @keyframes petal-sway { from { rotate: -10deg; } to { rotate: 10deg; } }
+    @keyframes trophy-pop { from { opacity: 0; scale: 0; rotate: -25deg; } }
+  }
+</style>
 {% endblock %}
 
 {% block content %}
 {# page_class picks the tab's background (habits-page-habit / -goal / -history). #}
-<div class="habits-page {% block page_class %}{% endblock %}">
+{# htmx: actions inside get a normal full page back and swap only this block. #}
+<div class="habits-page {% block page_class %}{% endblock %}" hx-target="this" hx-select=".habits-page" hx-swap="outerHTML">
   {% block page_top %}{% endblock %}
 
-  {% if messages %}
-    <div class="habits-messages">
+  <div class="habits-messages" id="habits-messages">
+    {% if messages %}
       {% for message in messages %}
         <div class="alert{% if message.level_tag == 'error' %} alert-error{% elif message.level_tag == 'success' %} alert-success{% endif %}" role="status">
           <p class="alert-body">{{ message }}</p>
         </div>
       {% endfor %}
-    </div>
-  {% endif %}
+    {% endif %}
+  </div>
 
   {% block page %}{% endblock %}
 </div>

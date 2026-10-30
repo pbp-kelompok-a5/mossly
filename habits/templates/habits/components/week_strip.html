@@ -1,5 +1,5 @@
 {% comment %}Week strip of Day Chips. Each status has text or an icon, never color alone.{% endcomment %}
-<section class="card week-card" aria-label="Minggu ini">
+<section class="card week-card" id="week-strip" aria-label="Minggu ini">
   <ol class="week-strip">
     {% for day in week %}
       <li class="week-day{% if day.is_today %} is-today{% endif %}">

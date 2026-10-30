@@ -1,0 +1,13 @@
+{% comment %}
+Goal cards in two independent columns, so a short card leaves no gap and opening a
+checklist only pushes its own column. On one-column screens the columns dissolve and
+"order" keeps the original sequence. Expects: goals.
+{% endcomment %}
+<div class="goal-grid goal-columns">
+  <div class="goal-col">
+    {% for goal in goals %}{% if not forloop.counter|divisibleby:2 %}<div style="order: {{ forloop.counter }}">{% include "habits/components/goal_card.html" %}</div>{% endif %}{% endfor %}
+  </div>
+  <div class="goal-col">
+    {% for goal in goals %}{% if forloop.counter|divisibleby:2 %}<div style="order: {{ forloop.counter }}">{% include "habits/components/goal_card.html" %}</div>{% endif %}{% endfor %}
+  </div>
+</div>

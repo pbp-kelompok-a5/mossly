@@ -72,20 +72,23 @@
     <section class="goal-section" aria-labelledby="checklist-title">
       <div class="section-head">
         <h2 class="section-title" id="checklist-title">Checklist</h2>
-        {% if checklist %}<p class="section-note">{{ goal.checklist_done }} dari {{ goal.checklist_total }} selesai</p>
+        {% if checklist %}<p class="section-note" id="goal-checklist-count">{{ goal.checklist_done }} dari {{ goal.checklist_total }} selesai</p>
         <p class="checklist-help">
         Tiap langkah cukup dicentang sekali. Checklist membantu persiapan, tapi tidak menambah progres; goal selesai saat progres yang dicatat mencapai target.
         </p>
         {% endif %}
       </div>
       {% if checklist %}
-        <ul class="checklist">
+        <ul class="checklist" id="goal-checklist-list">
           {% for item in checklist %}
             <li>
               <form class="checklist-item{% if item.is_done %} is-done{% endif %}" method="post"
-                    action="{% url 'habits:goal_checklist_toggle' goal.pk item.pk %}">
+                    action="{% url 'habits:goal_checklist_toggle' goal.pk item.pk %}"
+                    hx-post="{% url 'habits:goal_checklist_toggle' goal.pk item.pk %}" hx-sync="this:drop"
+                    hx-target="#goal-checklist-list" hx-select="#goal-checklist-list"
+                    hx-select-oob="#goal-checklist-count">
                 {% csrf_token %}
-                <button class="checklist-toggle" type="submit" aria-pressed="{% if item.is_done %}true{% else %}false{% endif %}">
+                <button class="checklist-toggle" id="checklist-{{ item.pk }}" type="submit" aria-pressed="{% if item.is_done %}true{% else %}false{% endif %}">
                   <span class="checkbox-box">{% if item.is_done %}{% include "habits/components/icon.html" with name="check" class="icon-sm" %}{% endif %}</span>
                   <span class="checklist-label">{{ item.label }}</span>
                   <span class="checklist-date">{{ item.date }}</span>
@@ -132,12 +135,12 @@
 </div>
 
 {% if goal.status == "active" %}
-  <dialog class="sheet" id="progress-dialog" aria-labelledby="progress-title">
+  <dialog class="sheet" id="progress-dialog" aria-labelledby="{{ goal.progress_title_id }}">
     <span class="sheet-handle" aria-hidden="true"></span>
     <form method="dialog">
       <button class="sheet-close" type="submit" aria-label="Tutup">{% include "habits/components/icon.html" with name="x" %}</button>
     </form>
-    {% include "habits/components/goal_progress_fields.html" with form=progress_form title_id="progress-title" in_dialog=True %}
+    {% include "habits/components/goal_progress_fields.html" with form=progress_form title_id=goal.progress_title_id in_dialog=True %}
   </dialog>
 {% endif %}
 

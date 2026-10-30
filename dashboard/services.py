@@ -143,29 +143,16 @@ def _source_event(user, achievement):
     return None
 
 
-def community_event_id(user, achievement):
-    return f"dashboard-{user.pk}-{achievement.code}"
-
-
 def _share(user, awarded):
     if not shares_achievements(user):
         return
     from community.services import publish_achievement
 
-    name = _display_name(user)
     for award in awarded:
-        achievement = award.achievement
         try:
-            publish_achievement(
-                user=user,
-                event_id=community_event_id(user, achievement),
-                achievement_id=achievement.code,
-                name=f"{name} meraih badge {achievement.name}",
-                description=f"{achievement.description}.",
-                earned_at=award.earned_at,
-            )
+            publish_achievement(user_achievement=award)
         except Exception:
-            logger.exception("Gagal mengirim badge %s ke Komunitas", achievement.code)
+            logger.exception("Gagal mengirim badge %s ke Komunitas", award.achievement.code)
 
 
 def check_and_award(user, today=None):
@@ -515,6 +502,7 @@ def target_list(user, today, limit=24):
 
 
 def api_summary(user, today):
+    ensure_achievements()
     metrics = collect_metrics(user, today)
     rows = badge_rows(user, metrics)
     target = EmissionTarget.objects.filter(user=user, month=today.replace(day=1)).first()

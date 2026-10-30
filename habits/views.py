@@ -1,3 +1,4 @@
+import json
 from datetime import date, datetime, timedelta
 from functools import wraps
 from decimal import Decimal
@@ -25,14 +26,50 @@ GOAL_LOCKED_MESSAGE = "Goal ini sudah selesai dan tercatat di Personal Dashboard
 GOAL_COMPLETED_MESSAGE ="Goal selesai! Pencapaian ini sudah terkirim ke Personal Dashboard."
 
 
-def _redirect_back(request, fallback, *args):
-    """Return to the page that posted the form when it is on this site."""
+def htmx_login_required(view):
+    """Like @login_required, but an htmx request gets an HX-Redirect to the login page.
+
+    A plain redirect would be followed by htmx, which would find no .habits-page
+    in the login page and blank this one.
+    """
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        if not request.user.is_authenticated and request.headers.get("HX-Request"):
+            response = HttpResponse(status=401)
+            back = request.get_full_path() if request.method == "GET" else reverse("habits:index")
+            response["HX-Redirect"] = f"{reverse('accounts:login')}?next={back}"
+            return response
+        return login_required(view)(request, *args, **kwargs)
+    return wrapped
+
+
+def _back_url(request, fallback, *args):
+    """The page that posted the form when it is on this site, else the fallback."""
     target = request.POST.get("next") or request.GET.get("next")
     if target and url_has_allowed_host_and_scheme(
         target, allowed_hosts={request.get_host()}, require_https=request.is_secure()
     ):
-        return redirect(target)
-    return redirect(fallback, *args)
+        return target
+    return reverse(fallback, args=args)
+
+
+def _redirect_back(request, fallback, *args):
+    return redirect(_back_url(request, fallback, *args))
+
+
+def _is_htmx(request):
+    return request.headers.get("HX-Request") == "true"
+
+
+def _finish_form(request, url):
+    """After a saved form: htmx swaps the target page in, closing the dialog with it."""
+    if not _is_htmx(request):
+        return redirect(url)
+    response = HttpResponse()
+    response["HX-Location"] = json.dumps(
+        {"path": url, "target": ".habits-page", "select": ".habits-page", "swap": "outerHTML"}
+    )
+    return response
 
 
 def _habit_row(habit, dates, today):
@@ -87,7 +124,7 @@ def _form_context(form):
     return {"form": form}
 
 
-@login_required
+@htmx_login_required
 def index(request):
     today = services.local_today()
     habits = list(request.user.habits.all())
@@ -136,13 +173,22 @@ def index(request):
     return render(request, "habits/habit/habit_list.html", context)
 
 
-@login_required
+@htmx_login_required
 def habit_create(request):
     if request.method == "POST":
         form = HabitForm(request.POST, instance=Habit(user=request.user))
         if form.is_valid():
             form.save()
-            return redirect("habits:index")
+            return _finish_form(request, reverse("habits:index"))
+        if _is_htmx(request):
+            # The dialog stays open: only its form comes back, with the errors.
+            return render(request, "habits/components/habit_form_fields.html", {
+                **_form_context(form),
+                "action": reverse("habits:habit_create"),
+                "title_id": "habit-create-title",
+                "in_dialog": True,
+                "is_edit": False,
+            })
     else:
         # Suggestions in the empty state link here with a prefilled name and icon.
         initial = {}
@@ -177,24 +223,6 @@ def habit_delete(request, pk):
     return render(request, "habits/habit/habit_confirm_delete.html", {"habit": habit})
 
 
-def htmx_login_required(view):
-    @wraps(view)
-    def wrapped(request, *args, **kwargs):
-        if not request.user.is_authenticated and request.headers.get("HX-Request"):
-            response = HttpResponse(status=401)
-            response["HX-Redirect"] = f"{reverse('accounts:login')}?next={reverse('habits:index')}"
-            return response
-        return login_required(view)(request, *args, **kwargs)
-    return wrapped
-
-
-def _row_partial(request, habit):
-    """Satu baris habit untuk HTMX: hanya <li> ini yang diganti, tanpa reload."""
-    today = services.local_today()
-    dates = set(habit.checkins.values_list("checkin_date", flat=True))
-    return render(request, "habits/components/habit_row.html", {"row": _habit_row(habit, dates, today)})
-
-
 @htmx_login_required
 @require_POST
 def habit_check_in(request, pk):
@@ -208,13 +236,6 @@ def habit_check_in(request, pk):
             # Celebrate the highest milestone when several are crossed at once.
             top = max(events, key=lambda event: event.milestone_days)
             request.session[MILESTONE_SESSION_KEY] = top.pk
-            if request.headers.get("HX-Request"):
-                # Muat ulang penuh supaya dialog milestone tampil.
-                response = HttpResponse()
-                response["HX-Refresh"] = "true"
-                return response
-    if request.headers.get("HX-Request"):
-        return _row_partial(request, habit)
     return _redirect_back(request, "habits:index")
 
 
@@ -223,8 +244,6 @@ def habit_check_in(request, pk):
 def habit_undo_check_in(request, pk):
     habit = get_object_or_404(Habit, pk=pk, user=request.user)
     services.undo_check_in(habit)
-    if request.headers.get("HX-Request"):
-        return _row_partial(request, habit)
     return _redirect_back(request, "habits:index")
 
 
@@ -326,7 +345,7 @@ def _owned_goal(request, pk):
     )
 
 
-@login_required
+@htmx_login_required
 def goal_list(request):
     today = services.local_today()
     services.expire_overdue_goals(request.user.goals.all(), today)
@@ -378,7 +397,7 @@ def goal_list(request):
     return render(request, "habits/goal/goal_list.html", context)
 
 
-@login_required
+@htmx_login_required
 def goal_detail(request, pk):
     today = services.local_today()
     services.expire_overdue_goals(Goal.objects.filter(pk=pk, user=request.user), today)
@@ -412,7 +431,7 @@ def goal_detail(request, pk):
     return render(request, "habits/goal/goal_detail.html", context)
 
 
-@login_required
+@htmx_login_required
 def goal_create(request):
     today = services.local_today()
     if request.method == "POST":
@@ -420,7 +439,15 @@ def goal_create(request):
         if form.is_valid():
             goal = form.save()
             services.refresh_goal_after_edit(goal)
-            return redirect("habits:goal_list")
+            return _finish_form(request, reverse("habits:goal_list"))
+        if _is_htmx(request):
+            return render(request, "habits/components/goal_form_fields.html", {
+                **_goal_form_context(form, today),
+                "action": reverse("habits:goal_create"),
+                "title_id": "goal-create-title",
+                "in_dialog": True,
+                "is_edit": False,
+            })
     else:
         form = GoalForm(initial=_goal_initial(request, today))
     return render(request, "habits/goal/goal_form.html", {**_goal_form_context(form, today), "is_edit": False})
@@ -438,7 +465,7 @@ def goal_edit(request, pk):
     return render(request, "habits/goal/goal_form.html", context)
 
 
-@login_required
+@htmx_login_required
 def goal_log_progress(request, pk):
     goal = _owned_goal(request, pk)
     form = GoalProgressForm(request.POST or None, goal=goal)
@@ -452,9 +479,17 @@ def goal_log_progress(request, pk):
         else:
             if event:
                 messages.success(request, GOAL_COMPLETED_MESSAGE)
-        return _redirect_back(request, "habits:goal_detail", goal.pk)
-    context = {"goal": _goal_card(goal, services.local_today()), "form": form}
-    return render(request, "habits/goal/goal_progress.html", context)
+        return _finish_form(request, _back_url(request, "habits:goal_detail", goal.pk))
+    card = _goal_card(goal, services.local_today())
+    if request.method == "POST" and _is_htmx(request):
+        return render(request, "habits/components/goal_progress_fields.html", {
+            "goal": card,
+            "form": form,
+            "title_id": card["progress_title_id"],
+            "in_dialog": True,
+            "next_url": request.POST.get("next", ""),
+        })
+    return render(request, "habits/goal/goal_progress.html", {"goal": card, "form": form})
 
 
 @login_required
@@ -469,7 +504,7 @@ def goal_delete(request, pk):
     return render(request, "habits/goal/goal_confirm_delete.html", {"goal": goal})
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def goal_checklist_toggle(request, pk, item_pk):
     item = get_object_or_404(
@@ -641,7 +676,7 @@ def _history_hero(period, months, overall, today):
     return {"eyebrow": eyebrow}
 
 
-@login_required
+@htmx_login_required
 def history(request):
     today = services.local_today()
     period = request.GET.get("period")
@@ -729,7 +764,7 @@ def history(request):
     return render(request, "habits/history/history.html", context)
 
 
-@login_required
+@htmx_login_required
 def habit_detail(request, pk):
     habit = get_object_or_404(Habit, pk=pk, user=request.user)
     today = services.local_today()

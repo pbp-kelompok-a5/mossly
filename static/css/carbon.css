@@ -42,7 +42,6 @@
 .carbon-breadcrumb { display: flex; gap: var(--space-3); font: var(--type-body-m); }
 .carbon-breadcrumb a { color: var(--color-text-secondary); }
 .carbon-breadcrumb > span:not(:last-child) { color: var(--color-text-tertiary); }
-.carbon-footer-hills { display: block; inline-size: 100%; margin-inline: auto; }
 /* Riwayat: satu markup menjadi tabel desktop dan kartu mobile. */
 .carbon-hero { position: relative; overflow: hidden; background: var(--color-bg-brand); color: var(--color-text-on-brand); border-radius: var(--radius-2xl); min-block-size: calc(var(--space-30) * 4 + var(--space-20)); padding: var(--space-16) calc(var(--space-16) + var(--space-2)); display: flex; align-items: center; }
 .carbon-hero-copy { display: grid; justify-items: start; gap: var(--space-6); z-index: 1; max-inline-size: calc(var(--space-30) * 4 - var(--space-3)); }

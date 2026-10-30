@@ -83,6 +83,15 @@ class HabitTabTests(FrozenClockMixin, TestCase):
         self.assertContains(response, "day-chip-done is-today")
         self.assertContains(response, "day-chip-upcoming", count=6)
 
+    def test_animations_use_motion_safe_tailwind_classes(self):
+        habit = make_habit(self.user, name="Bawa tumbler")
+        habit.checkins.create(checkin_date=TODAY)
+        response = self.client.get(self.url)
+        self.assertContains(response, '<style type="text/tailwindcss">')
+        for name in ("check-pop", "ring-bump", "flicker", "petal-sway"):
+            with self.subTest(animation=name):
+                self.assertContains(response, f"motion-safe:animate-{name}")
+
     def test_nothing_scheduled_today(self):
         # TODAY is a Monday; this habit only runs on Saturdays.
         make_habit(self.user, name="Bersepeda", frequency_type="weekdays", weekdays=[5])

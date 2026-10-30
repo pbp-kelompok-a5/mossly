@@ -22,7 +22,7 @@
   <circle cx="493" cy="156" r="79" fill="#EADDBF"/>
 
   <!-- Pohon latar dibuat tetap lembut, tetapi bentuknya terbaca jelas -->
-  <g opacity=".68">
+  <g opacity=".68" transform="translate(-91 0) translate(727 523) scale(.85) translate(-727 -523)">
     <path d="M703 523C712 471 708 388 709 294C710 250 714 207 720 171H739C738 217 737 261 738 305C739 393 742 474 752 523H703Z" fill="#AEBE98"/>
     <path d="M723 303C704 275 686 252 661 231" stroke="#AEBE98" stroke-width="17" stroke-linecap="round"/>
     <path d="M730 276C749 244 767 221 788 205" stroke="#AEBE98" stroke-width="16" stroke-linecap="round"/>
@@ -77,7 +77,6 @@
     <use href="#hanging-apple" transform="translate(268 268) scale(.9)"/>
     <use href="#hanging-apple" transform="translate(500 215) scale(.82)"/>
     <use href="#hanging-apple" transform="translate(378 315) scale(.74)"/>
-    <use href="#hanging-apple" transform="translate(555 306) scale(.96)"/>
   </g>
 
   <!-- Rumput dan daun jatuh -->
