@@ -474,16 +474,16 @@
 
 .cta__branch {
   position: absolute;
-  top: -0.5rem;
-  right: 3.4%;
-  width: 11.5rem;
+  top: 0;
+  right: 3%;
+  width: 16rem;
 }
 
 .cta__leaf {
   position: absolute;
-  bottom: 3.5rem;
-  left: 4.5%;
-  width: 3.5rem;
+  bottom: 4.55rem;
+  left: 4.7%;
+  width: 4.8rem;
 }
 
 .cta__wave {
