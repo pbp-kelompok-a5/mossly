@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 
 
@@ -19,7 +20,9 @@ class UserProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile"
     )
+
     display_name = models.CharField(max_length=80)
+    umur = models.PositiveSmallIntegerField(null=True, blank=True, validators=[MinValueValidator(18)])
     avatar = models.CharField(max_length=20, choices=Avatar.choices, default=Avatar.SPROUT)
     is_onboarded = models.BooleanField(default=False)
     onboarded_at = models.DateTimeField(null=True, blank=True)
@@ -27,6 +30,7 @@ class UserProfile(models.Model):
         "carbon.TransportMode", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="user_profiles",
     )
+
     focus_areas = models.JSONField(default=list, blank=True)
     share_achievements = models.BooleanField(default=True)
 
@@ -35,6 +39,9 @@ class UserProfile(models.Model):
             condition=(models.Q(is_onboarded=False, onboarded_at__isnull=True)
                        | models.Q(is_onboarded=True, onboarded_at__isnull=False)),
             name="accounts_onboarding_timestamp_consistent",
+        ), models.CheckConstraint(
+            condition=models.Q(umur__isnull=True) | models.Q(umur__gte=18),
+            name="accounts_minimum_age",
         )]
 
     def clean(self):

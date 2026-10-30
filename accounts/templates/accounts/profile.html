@@ -4,6 +4,7 @@
   <p class="eyebrow text-label-s">PROFIL PRIBADIMU</p>
   <h2 id="login-title">Halo, {{ profile.display_name }}</h2>
   <div class="auth-profile-preview">{% include "accounts/_avatar.html" %}<span class="text-label-m">{{ user.get_username }}</span></div>
+  {% if profile.umur %}<p class="text-body-s auth-age">Umur: {{ profile.umur }} tahun</p>{% endif %}
   <p class="form-description text-body-s">Atur nama tampilan, avatar, dan preferensi yang akan digunakan modul lain.</p>
   <form action="{% url 'accounts:profile' %}" method="post">
     {% csrf_token %}
@@ -11,4 +12,8 @@
     <button class="btn btn-rounded submit-button" type="submit">Simpan profil</button>
   </form>
   <div class="signup text-label-s"><a href="{% url 'dashboard:index' %}">Kembali ke Dashboard</a></div>
+  <div class="auth-account-tools">
+    <a class="text-label-m" href="{% url 'accounts:current_user_json' %}">Lihat data profil dalam JSON</a>
+    <a class="text-label-m auth-danger-link" href="{% url 'accounts:delete' %}">Hapus akun</a>
+  </div>
 {% endblock %}

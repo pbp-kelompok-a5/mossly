@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="{% static 'css/global.css' %}">
     <link rel="stylesheet" href="{% static 'css/components.css' %}">
     <link rel="stylesheet" href="{% static 'css/footer.css' %}">
+    <script src="{% static 'js/vendor/htmx.min.js' %}?v=2.0.4" defer></script>
 
     {% block extra_head %}{% endblock %}
 </head>
@@ -63,8 +64,7 @@
           <ul class="landing-footer__links">
             <li><a href="{% url 'accounts:login' %}">Masuk</a></li>
             <li><a href="{% url 'accounts:register' %}">Daftar gratis</a></li>
-            <li><a href="#">Reset password</a></li>
-            <li><a href="#">Edit profil</a></li>
+            <li><a href="{% url 'accounts:profile' %}">Edit profil</a></li>
           </ul>
         </nav>
       </div>
