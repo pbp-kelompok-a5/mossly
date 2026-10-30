@@ -10,6 +10,7 @@ from .services import publish_achievement
 
 class CommunityTests(TestCase):
     def setUp(self):
+        Thread.objects.all().delete()
         self.owner = get_user_model().objects.create_user(
             username="rara",
             password="test-password",
