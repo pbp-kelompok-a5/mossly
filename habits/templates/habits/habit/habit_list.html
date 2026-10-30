@@ -12,6 +12,7 @@
   {% else %}
     {# Title left, action at the right edge, on a translucent moss panel; the Habit tab's decorations are grass and leaves. #}
     <header class="page-header page-panel">
+      <span class="page-panel-icon">{% include "habits/components/icon.html" with name="leaf" %}</span>
       <h1 class="page-header-title">
         {% if scheduled_today %}
           {{ done_today }} dari {{ scheduled_today }} kebiasaan hijau sudah kamu selesaikan hari ini

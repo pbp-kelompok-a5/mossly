@@ -71,6 +71,7 @@
 {% else %}
   {# Translucent moss panel; the Riwayat tab's decorations are a branch and a flower. #}
   <header class="page-header page-panel">
+    <span class="page-panel-icon">{% include "habits/components/icon.html" with name="calendar-check" %}</span>
     <h1 class="page-header-title">{{ hero.eyebrow }}</h1>
     <a class="btn btn-secondary btn-m" href="{% url 'dashboard:index' %}">
       Lihat di Dashboard {% include "habits/components/icon.html" with name="arrow-up-right" %}

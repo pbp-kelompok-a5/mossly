@@ -14,40 +14,53 @@
     <link rel="stylesheet" href="{% static 'css/components.css' %}">
     <link rel="stylesheet" href="{% static 'css/footer.css' %}">
 
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    {# Apps that never used Tailwind (Carbon) empty this block so its reset does not restyle them. #}
+    {% block tailwind %}<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>{% endblock %}
+    {# app_head: an app's own fonts, styles, and scripts; extra_head: a single page's. #}
+    {% block app_head %}{% endblock %}
     {% block extra_head %}{% endblock %}
 </head>
-<body>
-  <header class="navbar">
+<body class="{% block body_class %}{% endblock %}">
+  {% block body_start %}{% endblock %}
+  <header class="navbar {% block navbar_class %}{% endblock %}">
     <a href="{% url 'main:landing' %}" class="brand">
       <img src="{% static 'img/logo/logo.svg' %}" alt="Mossly" width="197" height="53">
     </a>
-    <nav>
-      <a href="{% url 'community:index' %}">Community</a>
-      <a href="{% url 'carbon:index' %}">Carbon</a>
-      <a href="{% url 'habits:index' %}">Habits</a>
+    <nav aria-label="Navigasi utama">
+      {# Pages may swap these links, e.g. the landing page links to its own sections. #}
+      {% block navbar_links %}
+      {% with app=request.resolver_match.namespace %}
+      <a href="{% url 'community:index' %}"{% if app == "community" %} aria-current="page"{% endif %}>Community</a>
+      <a href="{% url 'carbon:index' %}"{% if app == "carbon" %} aria-current="page"{% endif %}>Carbon</a>
+      <a href="{% url 'habits:index' %}"{% if app == "habits" %} aria-current="page"{% endif %}>Habits</a>
       {% if user.is_authenticated %}
-        <a href="{% url 'dashboard:index' %}">Dashboard</a>
-        <a href="{% url 'accounts:profile' %}">Me</a>
+        <a href="{% url 'dashboard:index' %}"{% if app == "dashboard" %} aria-current="page"{% endif %}>Dashboard</a>
+        <a href="{% url 'accounts:profile' %}"{% if app == "accounts" %} aria-current="page"{% endif %}>Me</a>
         <a href="{% url 'accounts:logout' %}" class="btn btn-secondary btn-m">Logout</a>
       {% else %}
         <a href="{% url 'accounts:login' %}">Login</a>
-        <a href="{% url 'accounts:register' %}" class="btn">Daftar</a>
+        <a href="{% url 'accounts:register' %}" class="btn btn-m">Daftar</a>
       {% endif %}
+      {% endwith %}
+      {% endblock %}
     </nav>
   </header>
 
-  <main class="container">
+  {% block before_main %}{% endblock %}
+  <main {% block main_attrs %}class="container"{% endblock %}>
     {% block content %}{% endblock %}
   </main>
 
   <!-- ===== Footer ===== -->
-  <footer class="landing-footer">
+  <footer class="landing-footer {% block footer_class %}{% endblock %}">
     <div class="container">
       <div class="landing-footer__top">
-        <p class="landing-footer__tagline">
-          Langkah kecil setiap hari,<br>untuk bumi yang lebih hijau.
-        </p>
+        <div class="landing-footer__brand">
+          <a href="{% url 'main:landing' %}" class="landing-footer__logo-link">
+            <img class="landing-footer__logo" src="{% static 'img/logo/logo.svg' %}" alt="Mossly" width="148" height="40">
+          </a>
+          <p class="landing-footer__tagline">Langkah kecil setiap hari, untuk bumi yang lebih hijau.</p>
+        </div>
 
         <nav class="landing-footer__col" aria-label="Jelajahi">
           <h2 class="landing-footer__heading">Jelajahi</h2>
@@ -59,22 +72,24 @@
           </ul>
         </nav>
 
+        {# Only links that exist: guests sign in or up, members reach their profile or leave. #}
         <nav class="landing-footer__col" aria-label="Akun">
           <h2 class="landing-footer__heading">Akun</h2>
           <ul class="landing-footer__links">
-            <li><a href="{% url 'accounts:login' %}">Masuk</a></li>
-            <li><a href="{% url 'accounts:register' %}">Daftar gratis</a></li>
-            <li><a href="#">Reset password</a></li>
-            <li><a href="#">Edit profil</a></li>
+            {% if user.is_authenticated %}
+              <li><a href="{% url 'accounts:profile' %}">Profil saya</a></li>
+              <li><a href="{% url 'accounts:logout' %}">Keluar</a></li>
+            {% else %}
+              <li><a href="{% url 'accounts:login' %}">Masuk</a></li>
+              <li><a href="{% url 'accounts:register' %}">Daftar gratis</a></li>
+            {% endif %}
           </ul>
         </nav>
       </div>
 
-      
-      <img class="landing-footer__logo" src="{% static 'img/logo/logo.svg' %}"
-           alt="Mossly">
-     
+      <p class="landing-footer__copyright">&copy; {% now "Y" %} Mossly. All rights reserved.</p>
     </div>
   </footer>
+  {% block body_end %}{% endblock %}
 </body>
 </html>

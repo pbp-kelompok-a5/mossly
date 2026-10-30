@@ -775,6 +775,11 @@ html {
   overflow-x: clip;
 }
 
+/* Navbar anchors (#carbon, #habit, #hasil, #cara-kerja): stop below the sticky navbar. */
+section[id] {
+  scroll-margin-top: 6.5rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

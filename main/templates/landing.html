@@ -10,6 +10,16 @@
 <link rel="stylesheet" href="{% static 'css/landing-callysta.css' %}">
 {% endblock %}
 
+{# Logged-in users are sent to the dashboard, so this navbar is only ever seen by guests. #}
+{% block navbar_links %}
+  <a href="#carbon">Carbon</a>
+  <a href="#habit">Habit &amp; Goal</a>
+  <a href="#hasil">Dashboard &amp; Komunitas</a>
+  <a href="#cara-kerja">Cara kerja</a>
+  <a href="{% url 'accounts:login' %}">Login</a>
+  <a href="{% url 'accounts:register' %}" class="btn btn-m">Daftar</a>
+{% endblock %}
+
 {% block content %}
 <!-- ===== Hero / Landing Intro ===== -->
 <section class="landing-hero" aria-labelledby="landing-hero-title">

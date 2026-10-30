@@ -19,6 +19,7 @@
   {% if category_empty or active %}
     {# Translucent moss panel; the Goal tab's decorations are a sprout and flowers. #}
     <header class="page-header page-panel">
+      <span class="page-panel-icon">{% include "habits/components/icon.html" with name="target" %}</span>
       <h1 class="page-header-title">
         {% if category_empty and category_has_past %}
           Belum ada goal aktif dengan kategori {{ category_label }}.
