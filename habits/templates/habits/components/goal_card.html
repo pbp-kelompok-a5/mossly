@@ -1,7 +1,7 @@
 {% comment %}Card Goal (active, completed, or expired). Expects goal: a goal card dict.{% endcomment %}
 {% if goal.status == "completed" %}
   {# Completed: title, period, final progress; the summary link is top-right, or under the bar on phones. #}
-  <article class="goal-card goal-heat-{{ goal.heat_level }} is-completed">
+  <article class="goal-card goal-heat-{{ goal.heat_level }} is-completed motion-safe:transition-[translate] motion-safe:duration-200 motion-safe:hover:-translate-y-0.5">
     <div class="goal-card-titles">
       <h3 class="goal-card-title">{{ goal.title }}</h3>
       <p class="goal-card-sub">{{ goal.period_long }}</p>
@@ -16,7 +16,7 @@
     </div>
   </article>
 {% else %}
-  <article class="goal-card goal-heat-{{ goal.heat_level }}">
+  <article class="goal-card goal-heat-{{ goal.heat_level }} motion-safe:transition-[translate] motion-safe:duration-200 motion-safe:hover:-translate-y-0.5">
     <header class="goal-card-head">
       <span class="goal-icon">{% include "habits/components/icon.html" with name="goal" %}</span>
       <div class="goal-card-titles">

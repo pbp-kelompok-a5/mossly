@@ -70,12 +70,12 @@
       <aside class="habits-aside">
         <section class="today-stats" id="today-stats" aria-label="Ringkasan hari ini">
             <div class="focus-streak today-streak">
-              <span class="focus-streak-icon">{% include "habits/components/icon.html" with name="flame" %}</span>
+              <span class="focus-streak-icon">{% include "habits/components/icon.html" with name="flame" class="origin-bottom motion-safe:animate-flicker" %}</span>
               <p class="focus-streak-value">{{ longest_streak }} hari</p>
               <p class="focus-streak-label">Streak terpanjang</p>
             </div>
           {% if scheduled_today %}
-            <div class="progress-ring today-ring" style="--value: {{ done_percent }}" role="img"
+            <div class="progress-ring today-ring motion-safe:animate-ring-bump" style="--value: {{ done_percent }}" role="img"
                  aria-label="{{ done_today }} dari {{ scheduled_today }} selesai">
               <span class="progress-ring-value">{{ done_today }}/{{ scheduled_today }}</span>
               <span class="progress-ring-label">selesai</span>

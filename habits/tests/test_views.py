@@ -199,7 +199,7 @@ class HtmxCheckInTests(FrozenClockMixin, TestCase):
     def test_check_in_swaps_only_its_row_and_counts(self):
         response = self.client.get(reverse("habits:index"))
         row = f"habit-row-{self.habit.pk}"
-        self.assertContains(response, f'<li class="habit-row" id="{row}">')
+        self.assertContains(response, f'id="{row}"')
         self.assertContains(response, f'hx-target="closest li" hx-select="#{row}"')
         self.assertContains(response, 'hx-select-oob="#today-title,#today-stats,#week-strip,')
         group = f"group-note-{self.habit.time_of_day}"

@@ -6,6 +6,6 @@
     <a class="tab" href="{% url 'habits:goal_list' %}" hx-get="{% url 'habits:goal_list' %}" hx-push-url="true" hx-swap="outerHTML transition:true show:window:top"{% if active == "goal" %} aria-current="page"{% endif %}>Goal</a>
     <a class="tab" href="{% url 'habits:history' %}" hx-get="{% url 'habits:history' %}" hx-push-url="true" hx-swap="outerHTML transition:true show:window:top"{% if active == "history" %} aria-current="page"{% endif %}>Riwayat</a>
   </nav>
-  <img class="decor habits-tabs-decor habits-tabs-decor-top" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
-  <img class="decor habits-tabs-decor habits-tabs-decor-bottom" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+  <img class="decor habits-tabs-decor habits-tabs-decor-top motion-safe:animate-petal-sway" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+  <img class="decor habits-tabs-decor habits-tabs-decor-bottom motion-safe:animate-petal-sway" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
 </div>
