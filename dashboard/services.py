@@ -14,7 +14,7 @@ from django.db.models import Count, Sum
 from django.utils import timezone
 
 from carbon.models import Trip
-from community.models import Reply, Thread
+from community.models import Reply, Thread, ThreadLike
 from habits import display
 from habits import services as habit_services
 from habits.models import Goal, GoalProgressLog, SustainabilityEvent
@@ -104,9 +104,9 @@ def collect_metrics(user, today=None):
     last_month = month_total(user, prev_year, prev_month)
     older_month_total = month_total(user, older_year, older_month)
 
-    own_threads = Thread.objects.filter(author=user, achievement_event_id__isnull=True)
-    likes_received = Thread.liked_by.through.objects.filter(
-        thread__author=user, thread__achievement_event_id__isnull=True
+    own_threads = Thread.objects.filter(author=user, is_auto_post=False)
+    likes_received = ThreadLike.objects.filter(
+        thread__author=user, thread__is_auto_post=False
     ).count()
 
     return {
@@ -127,7 +127,7 @@ def collect_metrics(user, today=None):
         "tips": own_threads.filter(category=Thread.Category.TIPS).count(),
         "replies": Reply.objects.filter(author=user).count(),
         "likes_received": likes_received,
-        "likes_given": user.liked_community_threads.count(),
+        "likes_given": ThreadLike.objects.filter(user=user).count(),
     }
 
 
@@ -400,7 +400,7 @@ def community_posts(user):
     threads = (
         Thread.objects.filter(author=user)
         .annotate(
-            like_count=Count("liked_by", distinct=True),
+            like_count=Count("likes", distinct=True),
             reply_count=Count("replies", distinct=True),
         )
         .order_by("-created_at", "pk")[:2]
@@ -412,7 +412,7 @@ def community_posts(user):
             "tag": t.get_category_display(),
             "tone": POST_TONES.get(t.category, "moss"),
             "meta": (
-                f"{'Diposting otomatis' if t.is_automatic else 'Threadmu'}"
+                f"{'Diposting otomatis' if t.is_auto_post else 'Threadmu'}"
                 f" · {t.like_count} like · {t.reply_count} reply"
             ),
         }
@@ -462,7 +462,7 @@ def timeline(user, today, limit=5):
         items.append(
             (log.logged_at, f"Progres goal {log.goal.title} bertambah {display.format_amount(log.amount)}", ACCENT)
         )
-    for t in Thread.objects.filter(author=user, achievement_event_id__isnull=True)[:limit]:
+    for t in Thread.objects.filter(author=user, is_auto_post=False)[:limit]:
         items.append((t.created_at, f"Kamu membuat thread {t.title}", PINK))
     for r in Reply.objects.filter(author=user).select_related("thread")[:limit]:
         items.append((r.created_at, f"Kamu membalas thread {r.thread.title}", PINK))
@@ -590,9 +590,7 @@ def pop_unseen(user):
         return None
     UserAchievement.objects.filter(pk__in=[a.pk for a in unseen]).update(seen=True)
     first = unseen[0]
-    thread = Thread.objects.filter(
-        achievement_event_id=community_event_id(user, first.achievement)
-    ).first()
+    thread = Thread.objects.filter(user_achievement=first).first()
     return {
         "achievement": first.achievement,
         "tone": TONE_BY_CATEGORY.get(first.achievement.category, "moss"),
