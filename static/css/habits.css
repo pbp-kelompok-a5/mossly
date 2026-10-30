@@ -24,6 +24,57 @@ main.container:has(> .habits-page) {
   margin: 0;
 }
 
+/* === Section backgrounds ===
+   Three soft light pools down the page (top, middle, bottom), alternating
+   sides and fading out from a light tint. From lg, one faint decoration sits
+   in the side margins (Habit only on the left).
+   Habit: moss with a warm clay glow. Goal: warm clay. Riwayat: blush and sage. */
+main.container:has(> .habits-page-habit) {
+  background:
+    radial-gradient(42rem 26rem at 6% 6%, color-mix(in srgb, var(--color-moss-100) 40%, transparent), transparent 70%),
+    radial-gradient(38rem 26rem at 96% 45%, color-mix(in srgb, var(--color-clay-100) 30%, transparent), transparent 70%),
+    radial-gradient(44rem 26rem at 8% 95%, color-mix(in srgb, var(--color-moss-100) 35%, transparent), transparent 70%),
+    var(--color-bg-canvas);
+}
+main.container:has(> .habits-page-goal) {
+  background:
+    radial-gradient(42rem 26rem at 94% 6%, color-mix(in srgb, var(--color-clay-100) 45%, transparent), transparent 70%),
+    radial-gradient(38rem 26rem at 4% 48%, color-mix(in srgb, var(--color-moss-100) 30%, transparent), transparent 70%),
+    radial-gradient(44rem 26rem at 92% 95%, color-mix(in srgb, var(--color-clay-100) 35%, transparent), transparent 70%),
+    var(--color-bg-canvas);
+}
+main.container:has(> .habits-page-history) {
+  background:
+    radial-gradient(42rem 26rem at 6% 6%, color-mix(in srgb, var(--color-pink-100) 40%, transparent), transparent 70%),
+    radial-gradient(38rem 26rem at 96% 48%, color-mix(in srgb, var(--color-moss-100) 30%, transparent), transparent 70%),
+    radial-gradient(44rem 26rem at 8% 95%, color-mix(in srgb, var(--color-pink-100) 30%, transparent), transparent 70%),
+    var(--color-bg-canvas);
+}
+
+/* One decoration per side margin: ::before on the left, ::after on the right. */
+.habits-page-habit::before,
+.habits-page-goal::before, .habits-page-goal::after,
+.habits-page-history::before, .habits-page-history::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  display: none;
+  aspect-ratio: 1;
+  pointer-events: none;
+  background: center / contain no-repeat;
+  opacity: .16;
+}
+@media (min-width: 64rem) {
+  .habits-page-habit::before,
+  .habits-page-goal::before, .habits-page-goal::after,
+  .habits-page-history::before, .habits-page-history::after { display: block; }
+}
+.habits-page-habit::before { top: 18%; left: -3rem; width: 8rem; background-image: url("../img/decor/daun.svg"); transform: rotate(-30deg); }
+.habits-page-goal::before { top: 60%; left: -2.5rem; width: 7rem; background-image: url("../img/decor/tunas.svg"); }
+.habits-page-goal::after { top: 14%; right: -2rem; width: 5rem; background-image: url("../img/decor/bunga.svg"); transform: rotate(20deg); }
+.habits-page-history::before { top: 16%; left: -5rem; width: 12rem; background-image: url("../img/decor/ranting.svg"); transform: rotate(-15deg); }
+.habits-page-history::after { top: 72%; right: -1.5rem; width: 5rem; background-image: url("../img/decor/bunga.svg"); transform: rotate(-25deg); }
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -50,7 +101,29 @@ main.container:has(> .habits-page) {
 .habits-page > :not(.decor):not(dialog) { position: relative; z-index: 1; min-width: 0; }
 .habits-layout > * { min-width: 0; }
 
-.habits-tabs { width: fit-content; }
+/* Module tabs: moss pills; the active one in deep moss. */
+.habits-tabs-wrap { position: relative; justify-self: center; width: fit-content; max-width: 100%; }
+.habits-tabs { position: relative; z-index: 1; width: fit-content; background: var(--color-moss-100); }
+.habits-tabs .tab { padding: var(--space-3) var(--space-6); font: var(--type-label-l); color: var(--color-moss-700); }
+.habits-tabs .tab:hover { color: var(--color-moss-800); background: var(--color-moss-200); }
+.habits-tabs .tab[aria-current="page"] {
+  color: var(--color-text-on-brand);
+  background: var(--color-moss-700);
+  box-shadow: var(--shadow-sm);
+}
+/* Flowers behind the top-right and bottom-left corners, half outside the pill. */
+.habits-tabs-decor { width: var(--space-10); opacity: .35; }
+.habits-tabs-decor-top {
+  top: calc(var(--space-4) * -1);
+  right: calc(var(--space-5) * -1);
+  transform: rotate(15deg);
+}
+.habits-tabs-decor-bottom {
+  bottom: calc(var(--space-2) * -1);
+  left: calc(var(--space-3) * -1);
+  width: var(--space-8);
+  transform: rotate(-20deg);
+}
 .habits-tabs .tab[aria-disabled="true"] { cursor: not-allowed; }
 .habits-tabs .tab[aria-disabled="true"]:hover { color: var(--color-text-tertiary); }
 
@@ -96,7 +169,95 @@ main.container:has(> .habits-page) {
   user-select: none;
 }
 
-/* === Focus panel (one per tab) === */
+/* === Page header: one line of text, action on the right === */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-6);
+}
+.page-header-title { flex: 1 1 20rem; font: var(--type-h3); color: var(--color-text-primary); }
+
+/* Header panel: a see-through tint with faint decorations, a different set per tab. */
+.page-panel {
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-6);
+  border-radius: var(--radius-2xl);
+}
+.page-panel > :not(.decor) { position: relative; z-index: 1; }
+/* Phones: title and action stacked and centered. */
+@media (max-width: 47.99rem) {
+  .page-panel { flex-direction: column; justify-content: center; text-align: center; }
+  /* In a column the title's 20rem flex-basis would become a height. */
+  .page-panel .page-header-title { flex: none; }
+}
+/* One moss tint for every tab; only the decorations differ. */
+.page-panel { background: color-mix(in srgb, var(--color-moss-100) 55%, transparent); }
+.page-panel-decor { opacity: .5; }
+/* Habit: grass along the bottom, two leaves drifting near the action. */
+.page-panel-grass { bottom: 0; left: 38%; width: var(--space-16); }
+.page-panel-leaf { top: calc(var(--space-3) * -1); right: var(--space-2); width: var(--space-10); transform: rotate(25deg); }
+.page-panel-leaf-sm { bottom: calc(var(--space-2) * -1); right: 28%; width: var(--space-6); transform: rotate(-30deg); }
+/* Goal: a sprout at the bottom, flowers near the action. */
+.page-panel-sprout { bottom: calc(var(--space-1) * -1); left: 42%; width: var(--space-10); }
+.page-panel-flower { top: calc(var(--space-3) * -1); right: var(--space-3); width: var(--space-10); transform: rotate(15deg); }
+.page-panel-flower-sm { bottom: calc(var(--space-2) * -1); right: 26%; width: var(--space-6); transform: rotate(-20deg); }
+/* Riwayat: a branch reaching in along the bottom, a flower near the action. */
+.page-panel-branch { bottom: calc(var(--space-4) * -1); right: 22%; width: var(--space-24); transform: rotate(-8deg); }
+
+/* Brown pill tabs for in-page choices (goal category, history period),
+   so they read apart from the moss module tabs above. */
+.tabs-clay { background: var(--color-clay-100); }
+.tabs-clay .tab { color: var(--color-clay-700); }
+.tabs-clay .tab:hover { color: var(--color-clay-800); background: color-mix(in srgb, var(--color-clay-300) 30%, transparent); }
+.tabs-clay .tab[aria-current="page"] {
+  color: var(--color-text-on-brand);
+  background: var(--color-clay-700);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Goal category filter: full width, every option the same width. */
+.goal-filter {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(max-content, 1fr);
+  width: 100%;
+}
+.goal-filter .tab { text-align: center; }
+
+/* === Habit tab: today's title, action, and stats === */
+
+.today-stats {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-6);
+  padding-block: var(--space-2);
+}
+/* Done in moss, still to do in clay; the inner circle matches the page. */
+.progress-ring.today-ring {
+  --_size: calc(var(--space-30) + var(--space-12));
+  --_track: var(--space-5);
+  background: conic-gradient(
+    var(--color-bg-brand) calc(var(--value) * 1%),
+    var(--color-clay-300) 0
+  );
+}
+.progress-ring.today-ring::before { background: var(--color-bg-canvas); }
+.today-ring .progress-ring-value { font: var(--type-stat-l); color: var(--color-text-brand); }
+.today-ring .progress-ring-label { color: var(--color-text-tertiary); }
+.focus-streak.today-streak { justify-items: center; text-align: center; }
+.today-streak .focus-streak-icon {
+  width: var(--space-10);
+  height: var(--space-10);
+  margin-bottom: var(--space-1);
+  color: var(--color-text-on-brand);
+  background: var(--color-clay-500);
+}
+.today-streak .focus-streak-value { font: var(--type-h4); color: var(--color-text-accent); }
+
+/* === Focus panel (detail pages and empty states) === */
 .focus-panel {
   position: relative;
   display: grid;
@@ -116,7 +277,6 @@ main.container:has(> .habits-page) {
 .focus-title { font: var(--type-h3); }
 .focus-subtitle { font: var(--type-body-m); color: var(--color-text-primary); }
 .focus-cta { margin-top: var(--space-3); }
-
 .focus-panel-soft {
   color: var(--color-text-primary);
   background: var(--color-bg-brand-soft);
@@ -258,26 +418,6 @@ main.container:has(> .habits-page) {
   outline-offset: 2px;
 }
 
-.day-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-5);
-  margin: 0;
-  padding: 0;
-  font: var(--type-body-s);
-  color: var(--color-text-secondary);
-  list-style: none;
-}
-.day-legend li { display: inline-flex; align-items: center; gap: var(--space-2); }
-.legend-dot {
-  width: var(--space-3);
-  height: var(--space-3);
-  border-radius: var(--radius-full);
-  border: 1.5px solid transparent;
-}
-.legend-dot-done { background: var(--color-bg-brand); }
-.legend-dot-partial { background: var(--color-bg-accent-soft); border-color: var(--color-clay-300); }
-.legend-dot-missed { background: var(--color-bg-subtle); border-color: var(--color-border-default); }
 
 /* === Habit groups and Habit Row === */
 .habit-group { display: grid; gap: var(--space-3); }
@@ -288,6 +428,54 @@ main.container:has(> .habits-page) {
   font: var(--type-h4);
 }
 .habit-group-title .icon { color: var(--color-icon-accent); }
+
+/* Collapsible group: the whole header row is the toggle, a tinted bar that
+   deepens through the day (pagi 50 → kapan saja 200). */
+.habit-groups { display: grid; gap: var(--space-6); align-content: start; }
+.habit-group { --_head-bg: var(--color-moss-50); }
+.habit-group-siang { --_head-bg: var(--color-moss-100); }
+.habit-group-malam { --_head-bg: color-mix(in srgb, var(--color-moss-100), var(--color-moss-200)); }
+.habit-group-kapan_saja { --_head-bg: var(--color-moss-200); }
+.habit-group-off { --_head-bg: var(--color-bg-subtle); }
+.habit-group-head {
+  align-items: center;
+  flex-wrap: nowrap;
+  min-height: calc(var(--space-10) + var(--space-1)); /* 44px touch target */
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  list-style: none;
+  background: var(--_head-bg);
+  border-radius: var(--radius-lg);
+}
+.habit-group-head::-webkit-details-marker { display: none; }
+.habit-group-head:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
+.habit-group-head .habit-group-title { min-width: 0; }
+.habit-group-head .section-note { margin-left: auto; white-space: nowrap; color: var(--color-text-secondary); }
+.habit-group-chevron { flex: none; color: var(--color-text-secondary); transition: transform 150ms ease; }
+.habit-group:not([open]) .habit-group-chevron { transform: rotate(-90deg); }
+
+/* Add-habit card: stacked like .goal-placeholder (same size and rhythm), but in
+   moss with a moss dashed border and a leaf, so the two never read as one. */
+.habit-placeholder {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  text-align: center;
+  background: var(--color-moss-50);
+  border: 1.5px dashed var(--color-moss-300);
+  border-radius: var(--radius-xl);
+}
+.habit-placeholder-icon {
+  display: grid;
+  place-items: center;
+  width: var(--space-12);
+  height: var(--space-12);
+  color: var(--color-text-brand);
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-full);
+}
+.habit-placeholder-text { font: var(--type-body-s); color: var(--color-text-secondary); }
 
 .habit-list,
 .suggestion-list {
@@ -363,36 +551,9 @@ a.habit-row-name:hover { text-decoration: underline; text-underline-offset: .2em
 .side-card-sand { background: var(--color-bg-accent-soft); }
 .side-card-muted { background: var(--color-bg-brand-soft); justify-items: start; }
 
-.side-card-stat { font: var(--type-h1); }
-.side-card-text { font: var(--type-body-m); color: var(--color-text-secondary); }
 .side-card-note { font: var(--type-body-s); color: var(--color-text-secondary); }
 .side-card-title { display: flex; align-items: center; gap: var(--space-3); font: var(--type-h4); }
-.side-card-badge {
-  display: grid;
-  place-items: center;
-  width: var(--space-10);
-  height: var(--space-10);
-  color: var(--color-text-on-brand);
-  background: var(--color-bg-brand);
-  border-radius: var(--radius-full);
-}
 
-.sent-list { display: grid; gap: var(--space-4); margin: var(--space-2) 0; padding: 0; list-style: none; }
-.sent-item { display: flex; align-items: center; gap: var(--space-3); }
-.sent-check {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: var(--space-8);
-  height: var(--space-8);
-  color: var(--color-text-on-brand);
-  background: var(--color-bg-brand);
-  border-radius: var(--radius-full);
-}
-.sent-item-title { display: block; font: var(--type-label-m); }
-.sent-item-date { display: block; font: var(--type-body-s); color: var(--color-text-tertiary); }
-
-.side-decor-sprout { top: var(--space-4); right: var(--space-4); width: var(--space-12); }
 .side-decor-flower { top: var(--space-4); right: var(--space-4); width: var(--space-8); }
 .side-decor-grass { right: var(--space-4); bottom: 0; width: var(--space-16); opacity: .8; }
 
@@ -426,6 +587,9 @@ a.habit-row-name:hover { text-decoration: underline; text-underline-offset: .2em
 }
 @media (prefers-reduced-motion: reduce) {
   .sheet[open] { animation: none; }
+  .habit-group-chevron,
+  .card-checklist-chevron,
+  .goal-fold-chevron { transition: none; }
 }
 
 .sheet-handle {
@@ -685,8 +849,24 @@ html:not(.js) .js-only { display: none; }
 .empty-note { font: var(--type-body-m); color: var(--color-text-secondary); }
 
 /* === Goal list and Card Goal === */
-.goal-section { display: grid; gap: var(--space-4); }
-.goal-grid { display: grid; gap: var(--space-5); }
+/* Content stays at the top when a taller neighbour (the Riwayat sidebar) stretches the row. */
+.goal-section { display: grid; gap: var(--space-4); align-content: start; }
+/* Foldable goal section ("Selesai baru-baru ini"): the heading row is the toggle;
+   title, count, and arrow sit together on the left. */
+.goal-fold-head {
+  justify-content: flex-start;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--radius-sm);
+}
+.goal-fold-head::-webkit-details-marker { display: none; }
+.goal-fold-head:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 4px; }
+.goal-fold-chevron { flex: none; color: var(--color-text-secondary); transition: transform 150ms ease; }
+.goal-fold[open] .goal-fold-chevron { transform: rotate(180deg); }
+
+/* Cards keep their own height, so opening one card's checklist leaves its row-mate alone. */
+.goal-grid { display: grid; gap: var(--space-5); align-items: start; }
 
 .goal-card,
 .goal-placeholder {
@@ -703,8 +883,50 @@ html:not(.js) .js-only { display: none; }
   box-shadow: var(--shadow-sm);
 }
 
+/* Tint by progress, same buckets as the history heatmap but a softer ramp
+   (white → moss-200) so text, bars, and buttons keep their usual colors. */
+.goal-heat-1 { background: var(--color-moss-50); }
+.goal-heat-2 { background: var(--color-moss-100); }
+.goal-heat-3 { background: color-mix(in srgb, var(--color-moss-100), var(--color-moss-200)); }
+.goal-heat-4 { background: var(--color-moss-200); }
+.goal-card:is(.goal-heat-1, .goal-heat-2, .goal-heat-3, .goal-heat-4) { border-color: transparent; }
+/* Moss-on-moss would vanish: the icon and the checklist hover go light instead. */
+.goal-card:is(.goal-heat-1, .goal-heat-2, .goal-heat-3, .goal-heat-4) .goal-icon { background: var(--color-bg-surface); }
+.goal-card:is(.goal-heat-1, .goal-heat-2, .goal-heat-3, .goal-heat-4) .card-checklist-toggle:hover {
+  background: color-mix(in srgb, var(--color-bg-surface) 60%, transparent);
+}
+
 .goal-card-head { display: flex; align-items: flex-start; gap: var(--space-4); }
 .goal-card-head .tag { flex: none; margin-left: auto; }
+/* Ghost link in the top-right corner: pulled out by its padding so the text,
+   not the hit area, lines up with the card's edge and the title. */
+.goal-card-corner {
+  flex: none;
+  margin: calc(var(--space-2) * -1) calc(var(--space-3) * -1) 0 auto;
+}
+/* Completed card: phones put the link under the bar (right-aligned);
+   wider screens put it in the top-right corner, beside the title. */
+.goal-card.is-completed {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "titles" "progress" "link";
+}
+.is-completed > .goal-card-titles { grid-area: titles; }
+.is-completed > .goal-progress { grid-area: progress; }
+.is-completed > .goal-card-corner {
+  grid-area: link;
+  justify-self: end;
+  margin: calc(var(--space-1) * -1) calc(var(--space-3) * -1) calc(var(--space-2) * -1) 0;
+}
+@media (min-width: 48rem) {
+  .goal-card.is-completed {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "titles link" "progress progress";
+  }
+  .is-completed > .goal-card-corner {
+    align-self: start;
+    margin: calc(var(--space-2) * -1) calc(var(--space-3) * -1) 0 0;
+  }
+}
 .goal-icon {
   display: grid;
   place-items: center;
@@ -716,6 +938,8 @@ html:not(.js) .js-only { display: none; }
   border-radius: var(--radius-lg);
 }
 .goal-card-titles { display: grid; gap: var(--space-1); min-width: 0; }
+.goal-card.is-completed { gap: var(--space-3); }
+.is-completed .goal-card-title { font: var(--type-body-l); font-weight: var(--weight-semibold); }
 .goal-card-title { font: var(--type-h4); overflow-wrap: anywhere; }
 .goal-card-sub { font: var(--type-body-s); color: var(--color-text-secondary); }
 
@@ -834,6 +1058,7 @@ html:not(.js) .js-only { display: none; }
 
 /* === Goal detail === */
 .checklist { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.checklist-help { margin-top: calc(var(--space-2) * -1); font: var(--type-body-s); color: var(--color-text-secondary); }
 .checklist-toggle {
   display: flex;
   align-items: center;
@@ -852,6 +1077,50 @@ html:not(.js) .js-only { display: none; }
 .checklist-item.is-done .checklist-toggle { background: var(--color-bg-muted); }
 .checklist-item.is-done .checklist-label { color: var(--color-text-secondary); }
 .checklist-item.is-done .checkbox-box { background: var(--color-bg-brand); border-color: var(--color-bg-brand); }
+
+/* Checklist on a goal card: lighter than the detail page, no boxed rows. */
+.card-checklist { display: grid; gap: var(--space-2); }
+.card-checklist-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font: var(--type-label-m);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--radius-sm);
+}
+.card-checklist-head::-webkit-details-marker { display: none; }
+.card-checklist-head:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
+.card-checklist-count { margin-left: auto; color: var(--color-text-tertiary); }
+.card-checklist-chevron { flex: none; transition: transform 150ms ease; }
+.card-checklist:not([open]) .card-checklist-chevron { transform: rotate(-90deg); }
+.card-checklist-list { display: grid; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.card-checklist-toggle,
+.card-checklist-static {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  /* Hover area reaches past the text by its padding; the text stays on the card's edge. */
+  width: calc(100% + 2 * var(--space-2));
+  padding: var(--space-1) var(--space-2);
+  margin-inline: calc(var(--space-2) * -1);
+  text-align: left;
+  border-radius: var(--radius-sm);
+}
+.card-checklist-toggle {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.card-checklist-toggle:hover { background: var(--color-bg-muted); }
+.card-checklist-toggle:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 0; }
+.card-checklist-item .checkbox-box { width: var(--space-5); height: var(--space-5); }
+.card-checklist-item .checklist-label { font: var(--type-body-s); }
+.card-checklist-item.is-done .checklist-label { text-decoration: line-through; }
+.card-checklist-more { justify-self: start; font: var(--type-label-s); color: var(--color-text-brand); }
 
 .log-list { display: grid; gap: var(--space-5); margin: 0; list-style: none; }
 .log-item { display: flex; align-items: center; gap: var(--space-4); }
@@ -876,9 +1145,6 @@ html:not(.js) .js-only { display: none; }
 .pace-list dd { margin: 0; font: var(--type-h4); }
 .side-card .tag { justify-self: start; }
 
-.finish-list { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; font: var(--type-body-m); }
-.finish-list li { display: flex; align-items: center; gap: var(--space-3); }
-.finish-list .icon { color: var(--color-icon-brand); }
 .finish-actions { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
 
 /* === History: heatmap (Heat Cell L0-L4, Upcoming, Today) === */
@@ -938,9 +1204,7 @@ html:not(.js) .js-only { display: none; }
 .heat-month-name { font: var(--type-label-l); }
 .heat-month-note { font: var(--type-body-s); color: var(--color-text-secondary); }
 
-.heat-year,
-.heat-year-head { display: none; }
-.heat-year-total { font: var(--type-label-l); }
+.heat-year { display: none; }
 
 .heat-legend {
   display: flex;
@@ -954,6 +1218,9 @@ html:not(.js) .js-only { display: none; }
   list-style: none;
 }
 .heat-legend .heat-cell { width: var(--space-3); border-width: 1px; }
+/* Dot + label pairs (habit detail), instead of a scale with words at both ends. */
+.heat-legend-pairs { gap: var(--space-2) var(--space-5); }
+.heat-legend-pairs li { display: inline-flex; align-items: center; gap: var(--space-2); }
 
 /* Habit detail calendar: one habit, so a day is done, missed, or off. */
 .habit-day-done { color: var(--color-text-on-brand); background: var(--color-bg-brand); }
@@ -964,12 +1231,30 @@ html:not(.js) .js-only { display: none; }
 .habit-day-off { border-style: dashed; }
 
 /* === History: activity log and side cards === */
-.activity-card { display: grid; gap: var(--space-3); }
+.activity-card { display: grid; gap: var(--space-3); overflow-y: auto; overscroll-behavior: contain; }
+.activity-card:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
+/* Without JavaScript: roughly six rows of 48px icons plus the day labels. */
+html:not(.js) .activity-card { max-height: calc(6 * (var(--space-12) + var(--space-4)) + var(--space-16)); }
 .activity-day { margin-top: var(--space-2); color: var(--color-text-tertiary); }
 .activity-list { display: grid; gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
 .activity-item { display: flex; align-items: center; gap: var(--space-4); }
 
-.consistent-list { display: grid; gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+/* Riwayat on narrow screens (one column): the sidebar opens up so its cards can
+   sit between the calendar and the log, and the two add cards become one button row. */
+.history-quick-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+@media (max-width: 63.99rem) {
+  .history-layout > .habits-aside { display: contents; }
+  .history-layout > .history-calendar { order: 1; }
+  .history-layout .history-summary { order: 2; }
+  .history-layout .history-consistent { order: 3; }
+  .history-layout .history-quick-actions { order: 4; }
+  .history-layout > .history-log { order: 5; }
+  .history-layout .habit-placeholder,
+  .history-layout .goal-placeholder { display: none; }
+}
+
+/* Full card width: .side-card-muted shrinks its children to their content otherwise. */
+.consistent-list { display: grid; gap: var(--space-4); justify-self: stretch; margin: 0; padding: 0; list-style: none; }
 
 .empty-log-card { justify-items: center; text-align: center; }
 .empty-log-card .side-card-title { justify-content: center; }
@@ -1023,6 +1308,8 @@ html:not(.js) .js-only { display: none; }
 
   .week-card { padding: var(--space-5) var(--space-6); }
 
+  .habits-tabs .tab { padding-inline: var(--space-8); }
+
   .habit-row { padding: var(--space-4) var(--space-5); }
 
   .suggestion-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
@@ -1037,7 +1324,8 @@ html:not(.js) .js-only { display: none; }
   .form-page { padding: var(--space-10) var(--space-12); }
 
   .goal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
-  .goal-card, .goal-placeholder { padding: var(--space-6); }
+  .goal-card, .goal-placeholder, .habit-placeholder { padding: var(--space-6); }
+  .goal-card.is-completed { padding: var(--space-5); }
   .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
   .heat-month-large .heat-cell,
@@ -1057,6 +1345,30 @@ html:not(.js) .js-only { display: none; }
     gap: var(--space-10) var(--space-12);
   }
   .habits-layout > .focus-panel { grid-column: 1 / -1; }
+
+  /* Completed goals are short cards, three to a row. */
+  .goal-grid-compact { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); }
+
+  /* The stats column is only as wide as the ring, so the habit list takes the rest;
+     its right edge lines up with the header button above. */
+  .habits-today-layout { grid-template-columns: minmax(0, 1fr) auto; }
+  .today-stats { justify-self: end; }
+
+  /* Days stack in a narrow column left of the groups. */
+  .habits-today {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+  .habits-today > .week-card {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+    padding: var(--space-3) var(--space-2);
+    border-radius: var(--radius-full);
+  }
+  .habits-today .week-strip { grid-template-columns: none; gap: var(--space-3); }
+  .habits-today .week-day { gap: var(--space-1); }
+  .habits-today > .habit-groups { grid-column: 2; grid-row: 1; }
 
   .focus-panel {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -1104,12 +1416,13 @@ html:not(.js) .js-only { display: none; }
   .history-layout > .history-calendar { grid-column: 1; grid-row: 1; }
   .history-layout > .history-log { grid-column: 1; grid-row: 2; }
   .history-layout > .habits-aside { grid-column: 2; grid-row: 1 / span 2; }
+  .history-quick-actions { display: none; }
+  .goal-detail-layout > .habits-main { grid-column: 1 / -1; }
   .history-year > .history-calendar { grid-column: 1 / -1; }
   .history-year > .habits-aside { grid-row: 2; }
 
   /* The year view switches from twelve small months to one week grid. */
   .heat-months-year { display: none; }
-  .heat-year-head { display: flex; }
   .heat-year {
     display: grid;
     grid-template-rows: auto repeat(7, var(--space-4));

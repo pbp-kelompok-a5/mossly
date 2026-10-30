@@ -1,24 +1,23 @@
 """Indonesian labels and formatting for the habit pages.
 
-The project runs with LANGUAGE_CODE "en-us", so day and month names are kept
-here instead of relying on Django's locale formatting.
+Dates are formatted by Django's "id" locale (date_format). The lists below are
+looked up by weekday or month number, joined into text, and used by the
+Dashboard, so they stay plain strings; they match the locale's names.
 """
 
 from decimal import Decimal
 
 from django.utils import timezone
+from django.utils.formats import date_format
 
 from .models import Goal, Habit
-from .services import STREAK_MILESTONES
 
-DAY_NAMES = ("Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu")
 DAY_SHORT = ("Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min")
-DAY_INITIALS = ("S", "S", "R", "K", "J", "S", "M")
+DAY_INITIALS = ("S", "S", "R", "K", "J", "S", "M")  # calendar headers; no locale equivalent
 MONTH_NAMES = (
     "Januari", "Februari", "Maret", "April", "Mei", "Juni",
     "Juli", "Agustus", "September", "Oktober", "November", "Desember",
 )
-MONTH_SHORT = ("Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des")
 
 # Badge names the Dashboard plans for each streak milestone.
 MILESTONE_BADGES = {3: "Spora", 7: "Tunas", 14: "Lumut Muda", 30: "Hamparan Lumut"}
@@ -86,12 +85,7 @@ def join_names(names):
 
 def day_month_long(day):
     """'18 Oktober'"""
-    return f"{day.day} {MONTH_NAMES[day.month - 1]}"
-
-
-def full_date(day):
-    """'1 Oktober 2026'"""
-    return f"{day.day} {MONTH_NAMES[day.month - 1]} {day.year}"
+    return date_format(day, "j F")
 
 
 def clock(moment):
@@ -105,9 +99,10 @@ def frequency_text(habit):
         return ", ".join(DAY_SHORT[d] for d in sorted(habit.weekday_numbers))
     return "Setiap hari"
 
+
 def day_month(day):
     """'31 Okt'"""
-    return f"{day.day} {MONTH_SHORT[day.month - 1]}"
+    return date_format(day, "j M")
 
 
 def format_amount(value):
@@ -127,8 +122,8 @@ def date_range(start, end, with_year=False):
     """'1–31 Oktober' within a month, otherwise '16 Okt–15 Nov'."""
     year = f" {end.year}" if with_year else ""
     if (start.year, start.month) == (end.year, end.month):
-        return f"{start.day}–{end.day} {MONTH_NAMES[end.month - 1]}{year}"
-    return f"{start.day} {MONTH_SHORT[start.month - 1]}–{end.day} {MONTH_SHORT[end.month - 1]}{year}"
+        return f"{start.day}–{day_month_long(end)}{year}"
+    return f"{day_month(start)}–{day_month(end)}{year}"
 
 
 def relative_date(day, today):
@@ -140,27 +135,11 @@ def relative_date(day, today):
 
 def long_date(day):
     """'Rabu, 21 Oktober 2026'"""
-    return f"{DAY_NAMES[day.weekday()]}, {day.day} {MONTH_NAMES[day.month - 1]} {day.year}"
+    return date_format(day, "l, j F Y")
 
 
 def short_date(day, today):
     """'Hari ini' for today, otherwise '19 Okt'."""
     if day == today:
         return "Hari ini"
-    return f"{day.day} {MONTH_SHORT[day.month - 1]}"
-
-
-def greeting(hour):
-    if 4 <= hour < 11:
-        return "Selamat pagi"
-    if 11 <= hour < 15:
-        return "Selamat siang"
-    if 15 <= hour < 18:
-        return "Selamat sore"
-    return "Selamat malam"
-
-
-def milestone_list_text():
-    """'3, 7, 14, atau 30', built from the milestone constant."""
-    *rest, last = STREAK_MILESTONES
-    return f"{', '.join(str(m) for m in rest)}, atau {last}"
+    return day_month(day)

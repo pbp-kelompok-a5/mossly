@@ -156,13 +156,6 @@ def consistency_percent(done, expected):
     return (done * 200 + expected) // (expected * 2)
 
 
-def consistency_change(current, previous):
-    """Percentage-point change, or None when either period has no data."""
-    if current is None or previous is None:
-        return None
-    return current - previous
-
-
 # --- History: heatmap, periods, per-habit statistics -----------------------------
 
 

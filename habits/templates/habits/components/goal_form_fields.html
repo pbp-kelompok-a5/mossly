@@ -9,7 +9,6 @@ blank row is always offered so the form also works without JavaScript.
 
   <header class="sheet-header">
     <h2 class="sheet-title" id="{{ title_id }}">{% if is_edit %}Edit goal{% else %}Buat goal baru{% endif %}</h2>
-    <p class="sheet-subtitle">Tentukan target yang jelas dan beri batas waktu.</p>
   </header>
 
   {% if form.non_field_errors %}
@@ -86,6 +85,9 @@ blank row is always offered so the form also works without JavaScript.
       <span>Checklist <span class="field-hint">(opsional)</span></span>
       <span class="section-note" data-checklist-count>{{ form.checklist_rows|length }} langkah</span>
     </legend>
+    <p class="field-hint">
+      Langkah persiapan yang cukup dicentang sekali, misalnya "Beli tumbler".
+    </p>
     <ul class="checklist-edit-list" data-checklist-list>
       {% for row in form.checklist_rows %}
         <li class="checklist-edit-row">
@@ -107,15 +109,6 @@ blank row is always offered so the form also works without JavaScript.
       {% include "habits/components/icon.html" with name="plus" class="icon-sm" %}Tambah item
     </button>
   </fieldset>
-
-  {% if not is_edit %}
-    <div class="alert alert-success">
-      <div>
-        <strong>Goal selesai dikirim otomatis</strong>
-        <p class="alert-body">Saat semua target tercapai, pencapaian ini masuk ke Personal Dashboard dan menambah rekap bulananmu.</p>
-      </div>
-    </div>
-  {% endif %}
 
   <div class="sheet-actions">
     {% if in_dialog %}

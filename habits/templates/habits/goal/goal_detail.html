@@ -1,6 +1,7 @@
 {% extends "habits/layout.html" %}
 {% load static %}
 
+{% block page_class %}habits-page-goal{% endblock %}
 {% block title %}{{ goal.title }} · Mossly{% endblock %}
 
 {% block page_top %}
@@ -10,7 +11,8 @@
 {% endblock %}
 
 {% block page %}
-<div class="habits-layout">
+{# No sidebar here: the checklist and progress log use the full width. #}
+<div class="habits-layout goal-detail-layout">
   <section class="focus-panel" aria-labelledby="focus-title">
     <div class="focus-panel-text">
       <p class="eyebrow">Goal · {{ goal.category }}</p>
@@ -18,7 +20,7 @@
       <p class="focus-subtitle">
         Target {{ goal.target_text }}, {{ goal.period_long }}.
         {% if goal.status == "completed" %}
-          {{ goal.completed_text }}, pencapaian ini sudah terkirim ke Personal Dashboard.
+          {{ goal.completed_text }}.
         {% elif goal.status == "expired" %}
           Deadline sudah lewat. Kamu bisa memperpanjangnya lewat Edit goal.
         {% else %}
@@ -70,7 +72,11 @@
     <section class="goal-section" aria-labelledby="checklist-title">
       <div class="section-head">
         <h2 class="section-title" id="checklist-title">Checklist</h2>
-        {% if checklist %}<p class="section-note">{{ goal.checklist_done }} dari {{ goal.checklist_total }} selesai</p>{% endif %}
+        {% if checklist %}<p class="section-note">{{ goal.checklist_done }} dari {{ goal.checklist_total }} selesai</p>
+        <p class="checklist-help">
+        Tiap langkah cukup dicentang sekali. Checklist membantu persiapan, tapi tidak menambah progres; goal selesai saat progres yang dicatat mencapai target.
+        </p>
+        {% endif %}
       </div>
       {% if checklist %}
         <ul class="checklist">
@@ -96,7 +102,6 @@
     <section class="goal-section" aria-labelledby="log-title">
       <div class="section-head">
         <h2 class="section-title" id="log-title">Riwayat progres</h2>
-        <p class="section-note">Tiap catatan menambah hitungan goal</p>
       </div>
       {% if logs %}
         <ul class="card log-list">
@@ -115,23 +120,15 @@
         <p class="empty-note">Belum ada progres. Catatan pertamamu akan muncul di sini.</p>
       {% endif %}
     </section>
-  </div>
 
-  <aside class="habits-aside">
-    <section class="side-card side-card-muted" aria-labelledby="finish-title">
-      <p class="eyebrow" id="finish-title">Saat goal selesai</p>
-      <ul class="finish-list">
-        <li>{% include "habits/components/icon.html" with name="check" class="icon-sm" %}Semua target tercapai</li>
-        <li>{% include "habits/components/icon.html" with name="trophy" class="icon-sm" %}Terkirim ke Personal Dashboard</li>
-        <li>{% include "habits/components/icon.html" with name="award" class="icon-sm" %}Dihitung untuk badge goal di Dashboard</li>
-      </ul>
-      <div class="finish-actions">
-        <a class="btn btn-secondary btn-m" href="{% url 'habits:goal_edit' goal.pk %}">Edit goal</a>
+    <div class="finish-actions">
+      <a class="btn btn-secondary btn-m" href="{% url 'habits:goal_edit' goal.pk %}">Edit goal</a>
+      {# Completed goals count toward Dashboard badges, so they cannot be deleted. #}
+      {% if can_delete %}
         <a class="btn btn-ghost btn-m danger-link" href="{% url 'habits:goal_delete' goal.pk %}" data-dialog-open="goal-delete-dialog">Hapus</a>
-      </div>
-      <img class="decor side-decor-grass" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
-    </section>
-  </aside>
+      {% endif %}
+    </div>
+  </div>
 </div>
 
 {% if goal.status == "active" %}
@@ -144,8 +141,10 @@
   </dialog>
 {% endif %}
 
-<dialog class="sheet sheet-compact" id="goal-delete-dialog" aria-labelledby="goal-delete-title">
-  <span class="sheet-handle" aria-hidden="true"></span>
-  {% include "habits/components/goal_delete_body.html" with goal=goal title_id="goal-delete-title" in_dialog=True %}
-</dialog>
+{% if can_delete %}
+  <dialog class="sheet sheet-compact" id="goal-delete-dialog" aria-labelledby="goal-delete-title">
+    <span class="sheet-handle" aria-hidden="true"></span>
+    {% include "habits/components/goal_delete_body.html" with goal=goal title_id="goal-delete-title" in_dialog=True %}
+  </dialog>
+{% endif %}
 {% endblock %}

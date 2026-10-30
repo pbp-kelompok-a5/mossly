@@ -136,15 +136,19 @@ class GoalListPageTests(FrozenClockMixin, TestCase):
 
         response = self.client.get(self.url)
 
-        self.assertContains(response, "Goal bulan Oktober")
-        self.assertContains(response, "3 goal sedang berjalan, 1 hampir mencapai deadline")
-        self.assertContains(response, "Naik transportasi umum 20 kali tinggal 20 kali lagi dalam 4 hari. Kamu pasti bisa.")
+        self.assertContains(response, "1 goal hampir mencapai deadline, sedikit lagi kamu sampai.")
         self.assertContains(response, "2,5 / 10 kg")
-        self.assertContains(response, "Target 10 kg CO2e")
-        self.assertContains(response, "Selesai baru-baru ini")
+        # Completed goals sit in a section that starts folded, with their count beside the title.
+        self.assertContains(response, '<details class="goal-section goal-fold">')
+        self.assertContains(response, '<span class="section-note">1 goal</span>', html=True)
         self.assertContains(response, "Lewat deadline")
-        self.assertContains(response, "terkirim ke Dashboard")
         self.assertContains(response, 'id="progress-dialog-', count=3)
+
+    def test_header_without_goals_near_deadline(self):
+        make_goal(self.user, deadline=in_days(20))
+        make_goal(self.user, deadline=in_days(25))
+        response = self.client.get(self.url)
+        self.assertContains(response, "2 goal sedang berjalan, sedikit demi sedikit kamu pasti sampai.")
 
     def test_no_active_goal_shows_empty_state_with_history_before_examples(self):
         done = make_goal(self.user, title="Pilah sampah 14 hari", unit=Goal.Unit.HARI, target_value=14)

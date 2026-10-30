@@ -1,6 +1,7 @@
 {% extends "habits/layout.html" %}
 {% load static %}
 
+{% block page_class %}habits-page-habit{% endblock %}
 {% block title %}{{ habit.name }} · Mossly{% endblock %}
 
 {% block page_top %}
@@ -13,9 +14,8 @@
 <div class="habits-layout">
   <section class="focus-panel" aria-labelledby="focus-title">
     <div class="focus-panel-text">
-      <p class="eyebrow">Habit · {{ time_label }}</p>
+      <p class="eyebrow">Habit {{ time_label }}</p>
       <h1 class="focus-title" id="focus-title">{{ habit.name }}</h1>
-      <p class="focus-subtitle">{{ subtitle }}</p>
       {% url 'habits:habit_detail' habit.pk as detail_url %}
       {% if is_done_today %}
         <form method="post" action="{% url 'habits:habit_undo_check_in' habit.pk %}">
@@ -37,16 +37,6 @@
     </div>
 
     <div class="focus-stats">
-      <div class="progress-ring" style="--value: {{ ring_percent }}" role="img"
-           aria-label="{% if target %}{{ streak }} dari {{ target }} hari menuju milestone berikutnya{% else %}Semua milestone tercapai{% endif %}">
-        {% if target %}
-          <span class="progress-ring-value">{{ streak }}/{{ target }}</span>
-          <span class="progress-ring-label">menuju {{ target }} hari</span>
-        {% else %}
-          <span class="progress-ring-value">{{ streak }}</span>
-          <span class="progress-ring-label">semua milestone</span>
-        {% endif %}
-      </div>
       <div class="focus-streak">
         <span class="focus-streak-icon">{% include "habits/components/icon.html" with name="flame" %}</span>
         <p class="focus-streak-value">{{ streak }} hari</p>
@@ -83,11 +73,9 @@
             {% endif %}
           {% endfor %}
         </div>
-        <ul class="heat-legend">
-          <li>Terlewat</li>
-          <li class="heat-cell habit-day-missed" aria-hidden="true"></li>
-          <li class="heat-cell habit-day-done" aria-hidden="true"></li>
-          <li>Check-in</li>
+        <ul class="heat-legend heat-legend-pairs">
+          <li><span class="heat-cell habit-day-missed" aria-hidden="true"></span>Terlewat</li>
+          <li><span class="heat-cell habit-day-done" aria-hidden="true"></span>Check-in</li>
         </ul>
       </div>
     </section>

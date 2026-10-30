@@ -1,6 +1,7 @@
 {% extends "habits/layout.html" %}
 {% load static %}
 
+{% block page_class %}habits-page-history{% endblock %}
 {% block title %}Riwayat · Mossly{% endblock %}
 
 {% block page_top %}{% include "habits/components/tabs.html" with active="history" %}{% endblock %}
@@ -68,37 +69,15 @@
     </svg>
   </section>
 {% else %}
-  <section class="focus-panel" aria-labelledby="focus-title">
-    <div class="focus-panel-text">
-      <p class="eyebrow">{{ hero.eyebrow }}</p>
-      <h1 class="focus-title" id="focus-title">{{ hero.title }}</h1>
-      <a class="btn btn-accent focus-cta" href="{% url 'dashboard:index' %}">
-        Lihat di Dashboard {% include "habits/components/icon.html" with name="arrow-up-right" %}
-      </a>
-    </div>
-
-    <div class="focus-stats">
-      <div class="progress-ring" style="--value: {{ overall.percent|default:0 }}" role="img"
-           aria-label="Konsistensi {{ overall.percent|default:0 }} persen">
-        <img class="progress-ring-seedling" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
-      </div>
-      <div class="focus-streak">
-        <span class="focus-streak-icon">{% include "habits/components/icon.html" with name="calendar-check" %}</span>
-        <p class="focus-streak-value">{{ overall.perfect }} hari</p>
-        <p class="focus-streak-label">Hari sempurna</p>
-      </div>
-    </div>
-
-    <img class="decor focus-decor-leaf" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
-    <img class="decor focus-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
-    <img class="decor focus-decor-leaf-sm" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
-    <img class="decor focus-decor-grass focus-decor-grass-left" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
-    <img class="decor focus-decor-grass focus-decor-grass-right" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
-    <svg class="decor decor-hill focus-decor-hill" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-      <path class="decor-hill-back" d="M0 60C160 10 320 90 520 50C720 10 900 80 1200 30V120H0V60Z"/>
-      <path class="decor-hill-front" d="M0 92C200 52 380 112 600 82C820 52 1000 102 1200 72V120H0V92Z"/>
-    </svg>
-  </section>
+  {# Translucent moss panel; the Riwayat tab's decorations are a branch and a flower. #}
+  <header class="page-header page-panel">
+    <h1 class="page-header-title">{{ hero.eyebrow }}</h1>
+    <a class="btn btn-secondary btn-m" href="{% url 'dashboard:index' %}">
+      Lihat di Dashboard {% include "habits/components/icon.html" with name="arrow-up-right" %}
+    </a>
+    <img class="decor page-panel-decor page-panel-branch" src="{% static 'img/decor/ranting.svg' %}" alt="" aria-hidden="true">
+    <img class="decor page-panel-decor page-panel-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+  </header>
 {% endif %}
 
 {% if not is_empty %}
@@ -108,7 +87,7 @@
         <h2 class="section-title" id="calendar-title">
           {% if period == "month" %}Kalender {{ month_name }}{% elif period == "3m" %}{{ months.0.name }} – {{ months.2.name }}{% else %}Kalender {{ year }}{% endif %}
         </h2>
-        <nav class="tabs-pill" aria-label="Periode riwayat">
+        <nav class="tabs-pill tabs-clay" aria-label="Periode riwayat">
           {% for item in periods %}
             <a class="tab" href="{{ item.url }}"{% if item.key == period %} aria-current="page"{% endif %}>{{ item.label }}</a>
           {% endfor %}
@@ -123,16 +102,11 @@
             {% for month in months %}
               <div class="heat-month-block">
                 <p class="heat-month-name">{{ month.name }}</p>
-                <p class="heat-month-note">{% if month.percent is not None %}{{ month.percent }}% konsistensi{% else %}Belum ada data{% endif %}</p>
                 {% include "habits/components/history_month.html" with cells=month.cells size="small" %}
               </div>
             {% endfor %}
           </div>
         {% else %}
-          <div class="section-head heat-year-head">
-            <p class="heat-year-total">{{ overall.done }} check-in · {{ overall.perfect }} hari sempurna</p>
-            <p class="section-note">Dari 1 Januari sampai hari ini</p>
-          </div>
           <div class="heat-year" role="img" aria-label="Kalender {{ year }}: {{ overall.done }} check-in, {{ overall.perfect }} hari sempurna">
             <span class="heat-year-corner" aria-hidden="true"></span>
             {% for name in day_names %}
@@ -173,7 +147,8 @@
         <h2 class="section-title" id="log-title">Log aktivitas</h2>
         <p class="section-note">Check-in, milestone, dan goal selesai</p>
       </div>
-      <div class="card activity-card">
+      {# Shows six entries; the rest scroll inside the card (habits.js sets the exact height). #}
+      <div class="card activity-card" data-max-rows="6" tabindex="0" role="region" aria-labelledby="log-title">
         {% for group in activity %}
           <p class="eyebrow activity-day">{{ group.label }}</p>
           <ul class="activity-list">
@@ -195,7 +170,7 @@
     </section>
 
     <aside class="habits-aside">
-      <section class="side-card side-card-sand" aria-labelledby="summary-title">
+      <section class="side-card side-card-sand history-summary" aria-labelledby="summary-title">
         <p class="eyebrow eyebrow-accent" id="summary-title">Ringkasan {{ month_name }}</p>
         <dl class="pace-list">
           <div><dt>Total check-in</dt><dd>{{ summary.checkins }}</dd></div>
@@ -206,7 +181,7 @@
         <img class="decor side-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
       </section>
 
-      <section class="side-card side-card-muted" aria-labelledby="consistent-title">
+      <section class="side-card side-card-muted history-consistent" aria-labelledby="consistent-title">
         <p class="eyebrow" id="consistent-title">Paling konsisten</p>
         {% if most_consistent %}
           <ul class="consistent-list">
@@ -223,6 +198,37 @@
         <img class="decor side-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
         <img class="decor side-decor-grass" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
       </section>
+
+      {# Narrow screens: one plain row of buttons instead of the two cards below. #}
+      <div class="history-quick-actions">
+        <a class="btn btn-m" href="{% url 'habits:habit_create' %}">
+          {% include "habits/components/icon.html" with name="plus" class="icon-sm" %}Tambah habit
+        </a>
+        <a class="btn btn-secondary btn-m" href="{% url 'habits:goal_create' %}">
+          {% include "habits/components/icon.html" with name="plus" class="icon-sm" %}Tambah goal
+        </a>
+      </div>
+
+      {# Add-habit card: same shape as the goal card below, but in moss with a moss dashed border. #}
+      <article class="habit-placeholder">
+        <span class="habit-placeholder-icon">{% include "habits/components/icon.html" with name="leaf" %}</span>
+        <h3 class="goal-card-title">Tambah habit baru</h3>
+        <p class="habit-placeholder-text">Pilih satu kebiasaan kecil dan waktunya. Streak dihitung otomatis.</p>
+        <a class="btn btn-secondary btn-m" href="{% url 'habits:habit_create' %}" data-dialog-open="habit-create-dialog">
+          {% include "habits/components/icon.html" with name="plus" class="icon-sm" %}Tambah habit
+        </a>
+      </article>
+
+      <article class="goal-placeholder">
+          <span class="goal-placeholder-icon">{% include "habits/components/icon.html" with name="plus" %}</span>
+          <h3 class="goal-card-title">Buat goal baru</h3>
+          <p class="goal-card-sub">Tentukan target, deadline, dan checklist. Progresnya dipantau otomatis.</p>
+          <a class="btn btn-secondary btn-m" href="{% url 'habits:goal_create' %}" data-dialog-open="goal-create-dialog">
+            {% include "habits/components/icon.html" with name="plus" class="icon-sm" %}Buat goal
+          </a>
+          <img class="decor placeholder-decor-left" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
+          <img class="decor placeholder-decor-right" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
+        </article>
     </aside>
   </div>
 {% endif %}

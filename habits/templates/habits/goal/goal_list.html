@@ -1,87 +1,69 @@
 {% extends "habits/layout.html" %}
 {% load static %}
 
+{% block page_class %}habits-page-goal{% endblock %}
 {% block title %}Goal · Mossly{% endblock %}
 
 {% block page_top %}{% include "habits/components/tabs.html" with active="goal" %}{% endblock %}
 
 {% block page %}
   {% if has_history %}
-    <nav class="tabs tabs-pill goal-filter" aria-label="Filter kategori goal">
+    <nav class="tabs tabs-pill tabs-clay goal-filter" aria-label="Filter kategori goal">
       <a class="tab" href="?"{% if not category %} aria-current="page"{% endif %}>Semua</a>
       {% for value, label in categories %}
         <a class="tab" href="?category={{ value }}"{% if category == value %} aria-current="page"{% endif %}>{{ label }}</a>
       {% endfor %}
     </nav>
   {% endif %}
+  
+  {% if category_empty or active %}
+    {# Translucent moss panel; the Goal tab's decorations are a sprout and flowers. #}
+    <header class="page-header page-panel">
+      <h1 class="page-header-title">
+        {% if category_empty and category_has_past %}
+          Belum ada goal aktif dengan kategori {{ category_label }}.
+        {% elif category_empty %}
+          Belum ada goal dengan kategori {{ category_label }}.
+        {% elif near_count %}
+          {{ near_count }} goal hampir mencapai deadline, sedikit lagi kamu sampai.
+        {% else %}
+          {{ active|length }} goal sedang berjalan, sedikit demi sedikit kamu pasti sampai.
+        {% endif %}
+      </h1>
+      <a class="btn btn-secondary btn-m" href="{% url 'habits:goal_create' %}" data-dialog-open="goal-create-dialog">
+        {% include "habits/components/icon.html" with name="plus" %}Buat goal
+      </a>
+      <img class="decor page-panel-decor page-panel-sprout" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
+      <img class="decor page-panel-decor page-panel-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+      <img class="decor page-panel-decor page-panel-flower-sm" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
+    </header>
+  {% endif %}
   {% if active %}
-    <section class="focus-panel" aria-labelledby="focus-title">
-      <div class="focus-panel-text">
-        <p class="eyebrow">Goal bulan {{ month_name }}</p>
-        <h1 class="focus-title" id="focus-title">{{ active|length }} goal sedang berjalan{% if near_count %}, {{ near_count }} hampir mencapai deadline{% endif %}</h1>
-        <p class="focus-subtitle">{{ nearest.title }} tinggal {{ nearest.remaining_text }} lagi {{ nearest.time_left }}. Kamu pasti bisa.</p>
-        <a class="btn btn-accent focus-cta" href="{% url 'habits:goal_create' %}" data-dialog-open="goal-create-dialog">
-          {% include "habits/components/icon.html" with name="plus" %}Buat goal
-        </a>
-      </div>
-
-      <div class="focus-stats">
-        <div class="progress-ring" style="--value: {{ nearest.percent }}" role="img"
-             aria-label="Goal terdekat {{ nearest.percent }} persen">
-          <img class="progress-ring-seedling" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
-        </div>
-        <div class="focus-streak">
-          <span class="focus-streak-icon">{% include "habits/components/icon.html" with name="calendar" %}</span>
-          <p class="focus-streak-value">{% if nearest.days_left %}{{ nearest.days_left }} hari{% else %}Hari ini{% endif %}</p>
-          <p class="focus-streak-label">Deadline terdekat</p>
-        </div>
-      </div>
-
-      <img class="decor focus-decor-leaf" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
-      <img class="decor focus-decor-flower" src="{% static 'img/decor/bunga.svg' %}" alt="" aria-hidden="true">
-      <img class="decor focus-decor-leaf-sm" src="{% static 'img/decor/daun.svg' %}" alt="" aria-hidden="true">
-      <img class="decor focus-decor-grass focus-decor-grass-left" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
-      <img class="decor focus-decor-grass focus-decor-grass-right" src="{% static 'img/decor/rumput.svg' %}" alt="" aria-hidden="true">
-      <svg class="decor decor-hill focus-decor-hill" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-        <path class="decor-hill-back" d="M0 60C160 10 320 90 520 50C720 10 900 80 1200 30V120H0V60Z"/>
-        <path class="decor-hill-front" d="M0 92C200 52 380 112 600 82C820 52 1000 102 1200 72V120H0V92Z"/>
-      </svg>
-    </section>
-
     <section class="goal-section" aria-labelledby="active-title">
       <div class="section-head">
         <h2 class="section-title" id="active-title">Goal aktif</h2>
-        <p class="section-note">Diurutkan dari deadline terdekat</p>
       </div>
       <div class="goal-grid">
         {% for goal in active %}{% include "habits/components/goal_card.html" %}{% endfor %}
-        <article class="goal-placeholder">
-          <span class="goal-placeholder-icon">{% include "habits/components/icon.html" with name="plus" %}</span>
-          <h3 class="goal-card-title">Buat goal baru</h3>
-          <p class="goal-card-sub">Tentukan target, deadline, dan checklist. Progresnya dipantau otomatis.</p>
-          <a class="btn btn-secondary btn-m" href="{% url 'habits:goal_create' %}" data-dialog-open="goal-create-dialog">
-            {% include "habits/components/icon.html" with name="plus" class="icon-sm" %}Buat goal
-          </a>
-          <img class="decor placeholder-decor-left" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
-          <img class="decor placeholder-decor-right" src="{% static 'img/decor/tunas.svg' %}" alt="" aria-hidden="true">
-        </article>
       </div>
     </section>
-  {% else %}
+  {% elif not category_empty %}
     {# Nothing active: invite a new goal; past goals sit between the hero and the examples. #}
     {% include "habits/components/goal_empty.html" with part="hero" %}
   {% endif %}
 
   {% if completed %}
-    <section class="goal-section" aria-labelledby="completed-title">
-      <div class="section-head">
-        <h2 class="section-title" id="completed-title">Selesai baru-baru ini</h2>
-        <p class="section-note">Otomatis dikirim ke Personal Dashboard</p>
-      </div>
-      <div class="goal-grid">
+    {# Always starts folded; the arrow points down to open, up to close. #}
+    <details class="goal-section goal-fold">
+      <summary class="section-head goal-fold-head">
+        <h2 class="section-title">Selesai baru-baru ini</h2>
+        <span class="section-note">{{ completed|length }} goal</span>
+        {% include "habits/components/icon.html" with name="chevron-down" class="goal-fold-chevron" %}
+      </summary>
+      <div class="goal-grid goal-grid-compact">
         {% for goal in completed %}{% include "habits/components/goal_card.html" %}{% endfor %}
       </div>
-    </section>
+    </details>
   {% endif %}
 
   {% if expired %}
@@ -96,7 +78,7 @@
     </section>
   {% endif %}
 
-  {% if not active %}{% include "habits/components/goal_empty.html" with part="examples" %}{% endif %}
+  {% if not active and not category_empty %}{% include "habits/components/goal_empty.html" with part="examples" %}{% endif %}
 
   {% for goal in active %}
     <dialog class="sheet" id="{{ goal.progress_dialog_id }}" aria-labelledby="{{ goal.progress_title_id }}">

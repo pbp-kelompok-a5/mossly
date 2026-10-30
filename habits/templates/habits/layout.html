@@ -12,7 +12,8 @@ one-time messages. Pages fill "page_top" (tabs, back link) and "page".
 {% endblock %}
 
 {% block content %}
-<div class="habits-page">
+{# page_class picks the tab's background (habits-page-habit / -goal / -history). #}
+<div class="habits-page {% block page_class %}{% endblock %}">
   {% block page_top %}{% endblock %}
 
   {% if messages %}

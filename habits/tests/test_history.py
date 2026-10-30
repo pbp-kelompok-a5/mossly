@@ -124,23 +124,13 @@ class HistoryPageTests(FrozenClockMixin, TestCase):
             habit.checkins.create(checkin_date=date(2026, 10, day))
         return habit
 
-    def test_month_hero_compares_with_last_month(self):
+    def test_month_view(self):
         self.seed_two_months()
         response = self.client.get(self.url)
-        # October: 20 of 26 days (77%); September: 15 of 30 (50%).
-        self.assertContains(response, "Konsistensimu 77% bulan ini, naik 27% dari September")
+        self.assertContains(response, '<h1 class="page-header-title">Oktober 2026</h1>', html=True)
+        self.assertNotContains(response, "focus-panel")
         self.assertContains(response, "Kalender Oktober")
         self.assertContains(response, 'aria-current="page">Bulan ini')
-
-    def test_drop_is_not_called_out(self):
-        habit = make_habit(self.user, start_date=date(2026, 9, 1))
-        for day in range(1, 31):
-            habit.checkins.create(checkin_date=date(2026, 9, day))
-        habit.checkins.create(checkin_date=date(2026, 10, 1))
-        response = self.client.get(self.url)
-        self.assertContains(response, "Konsistensimu 4% bulan ini")
-        self.assertNotContains(response, "naik")
-        self.assertNotContains(response, "turun")
 
     def test_goal_activity_without_habits_invites_a_habit(self):
         services.log_goal_progress(make_goal(self.user), Decimal("3"))
@@ -152,27 +142,26 @@ class HistoryPageTests(FrozenClockMixin, TestCase):
                 self.assertNotContains(response, "progress-ring-value")
                 self.assertContains(response, "Progres: Naik transportasi umum 20 kali")
 
-    def test_habit_without_check_ins_this_month_shows_zero_without_subtitle(self):
+    def test_habit_without_check_ins_this_month_still_shows_period(self):
         make_habit(self.user, start_date=date(2026, 10, 1))
         services.log_goal_progress(make_goal(self.user), Decimal("3"))
         response = self.client.get(self.url)
-        self.assertContains(response, "Konsistensimu 0% bulan ini")
-        self.assertNotContains(response, "focus-subtitle")
+        self.assertContains(response, '<h1 class="page-header-title">Oktober 2026</h1>', html=True)
+        self.assertNotContains(response, "Belum ada habit yang dicatat")
 
     def test_three_month_view(self):
         self.seed_two_months()
         response = self.client.get(self.url, {"period": "3m"})
-        self.assertContains(response, "3 bulan terakhir")
-        self.assertContains(response, "Konsistensimu naik dari 50% ke 77%")
+        self.assertContains(response, '<h1 class="page-header-title">3 bulan terakhir</h1>', html=True)
         self.assertContains(response, "Agustus – Oktober")
-        self.assertContains(response, "Belum ada data")  # August had no habit yet
-        self.assertContains(response, "50% konsistensi")
+        for name in ("Agustus", "September", "Oktober"):
+            self.assertContains(response, f'<p class="heat-month-name">{name}</p>', html=True)
 
     def test_year_view(self):
         self.seed_two_months()
         response = self.client.get(self.url, {"period": "year"})
-        self.assertContains(response, "35 check-in sejak Januari 2026")
-        self.assertContains(response, "35 check-in · 35 hari sempurna")
+        self.assertContains(response, '<h1 class="page-header-title">Tahun 2026</h1>', html=True)
+        self.assertContains(response, 'aria-label="Kalender 2026: 35 check-in, 35 hari sempurna"')
         self.assertContains(response, "Kalender 2026")
 
     def test_unknown_period_falls_back_to_month(self):
@@ -230,11 +219,11 @@ class HabitDetailPageTests(FrozenClockMixin, TestCase):
 
     def test_detail_page(self):
         response = self.client.get(self.url)
-        self.assertContains(response, "Habit · Pagi")
-        self.assertContains(response, "Setiap hari, dimulai 1 Oktober 2026.")
+        self.assertContains(response, "Habit Pagi")
+        self.assertContains(response, "<dd>Setiap hari</dd>")
         self.assertContains(response, "Check-in hari ini")
-        self.assertContains(response, "7/14")
-        self.assertContains(response, "menuju 14 hari")
+        self.assertContains(response, "7 hari")
+        self.assertContains(response, "Streak saat ini")
         self.assertContains(response, "7 dari 26 hari")
         self.assertContains(response, "27%")
         self.assertContains(response, "Senin")
@@ -249,12 +238,13 @@ class HabitDetailPageTests(FrozenClockMixin, TestCase):
         self.assertRedirects(response, self.url, fetch_redirect_response=False)
         page = self.client.get(self.url)
         self.assertContains(page, "Sudah check-in")
-        self.assertContains(page, "Check-in terakhir hari ini pukul")
+        # The detail page's own buttons post back to it, not to the habit list.
+        self.assertContains(page, f'name="next" value="{self.url}"')
 
     def test_weekday_habit_marks_unscheduled_days_off(self):
         habit = make_habit(self.user, name="Bersepeda", frequency_type="weekdays", weekdays=[5], start_date=date(2026, 10, 1))
         response = self.client.get(reverse("habits:habit_detail", args=[habit.pk]))
-        self.assertContains(response, "Setiap Sab, dimulai")
+        self.assertContains(response, "<dd>Sab</dd>")
         self.assertContains(response, "habit-day-off")
         self.assertNotContains(response, "Check-in hari ini")
 
