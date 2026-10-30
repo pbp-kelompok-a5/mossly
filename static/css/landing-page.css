@@ -127,12 +127,29 @@
   min-height: 34rem;
 }
 
-.landing-hero__visual > img {
+.landing-hero__tree {
   position: absolute;
   inset: 50% auto auto 50%;
   width: min(51vw, 47.5rem);
   max-width: none;
   transform: translate(-48%, -50%);
+}
+
+.landing-hero__tree > img:first-child {
+  display: block;
+  width: 100%;
+  max-width: none;
+}
+
+/* Falling apple, placed from the tree's SVG coordinates (760 x 650) so it scales with it.
+   --apple-fall is a share of its own height: down to the ground in the drawing. */
+.landing-hero__apple {
+  --apple-fall: 311%;
+  position: absolute;
+  top: 44.12%;
+  left: 72.02%;
+  width: 7.07%;
+  transform-origin: 54% 4%;
 }
 
 .landing-hero__stat {
@@ -207,7 +224,7 @@
 
   .landing-hero__title { font-size: clamp(3.5rem, 6vw, 4.5rem); }
 
-  .landing-hero__visual > img {
+  .landing-hero__tree {
     width: min(58vw, 43rem);
     transform: translate(-45%, -50%);
   }
@@ -233,8 +250,8 @@
     margin-top: -1rem;
   }
 
-  .landing-hero__visual > img {
-    width: min(47rem, 115vw);
+  .landing-hero__tree {
+    width: min(47rem, 100vw);
     transform: translate(-50%, -50%);
   }
 
@@ -254,7 +271,7 @@
   }
 
   .landing-hero__title {
-    font-size: clamp(3rem, 14vw, 4rem);
+    font-size: clamp(2.5rem, 12vw, 4rem);
     line-height: 1.02;
   }
 
@@ -270,12 +287,13 @@
 
   .landing-hero__button { width: 100%; }
 
+  /* The whole drawing fits the phone width instead of being cut at both sides. */
   .landing-hero__visual {
-    min-height: 29rem;
+    min-height: 23rem;
     margin-top: 0;
   }
 
-  .landing-hero__visual > img { width: 38rem; }
+  .landing-hero__tree { width: 100%; }
 
   .landing-hero__stat {
     bottom: 2.25rem;
@@ -479,6 +497,21 @@
   width: 16rem;
 }
 
+.cta__branch > img:first-child {
+  display: block;
+  width: 100%;
+}
+
+/* Placed from the branch's SVG coordinates; falls to the wave along the section's bottom. */
+.cta__apple {
+  --apple-fall: 8rem;
+  position: absolute;
+  top: 46.06%;
+  left: 47.66%;
+  width: 21.88%;
+  transform-origin: 54% 4%;
+}
+
 .cta__leaf {
   position: absolute;
   bottom: 4.55rem;
@@ -500,6 +533,10 @@
     width: 6.5rem;
     right: 0;
   }
+
+  .cta { padding-top: 6.5rem; }
+
+  .cta__apple { --apple-fall: 18rem; }
 
   .cta__leaf {
     width: 2.5rem;
@@ -837,6 +874,8 @@ section[id] {
     max-width: none;
   }
 
+  .habit__label,
+  .habit__points,
   .habit__cta {
     align-self: flex-start;
   }
@@ -1167,6 +1206,32 @@ section[id] {
   color: var(--color-text-secondary);
 }
 
+/* Appreciation on the sample post: a heart beats beside the count and small ones float up.
+   The floating hearts stay transparent unless their Tailwind animation runs. */
+.post-card__like {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.post-card__heart,
+.post-card__heart-float {
+  color: var(--color-pink-500);
+}
+
+.post-card__heart {
+  display: inline-block;
+}
+
+.post-card__heart-float {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* --------------------------------------------------------------------------
    Responsive
    -------------------------------------------------------------------------- */
@@ -1211,5 +1276,97 @@ section[id] {
 @media (max-width: 420px) {
   .results__stats {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Bagian Carbon pada landing page. Ilustrasi rute asli: Figma 693:4130. */
+.landing-carbon {
+  --landing-map-width: calc(var(--space-30) * 5 + var(--space-20) + var(--space-1));
+  --landing-map-height: calc(var(--space-30) * 4 + var(--space-8) + var(--space-3) / 2);
+  margin-inline: calc(50% - 50vw);
+  padding: var(--space-16) var(--space-6) calc(var(--space-24) - var(--space-1));
+  background: var(--color-bg-canvas);
+  color: var(--color-text-primary);
+  font: var(--type-body-m);
+}
+.landing-carbon__inner {
+  max-inline-size: calc(var(--space-30) * 10 + var(--space-16));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 510fr) minmax(0, 684fr);
+  gap: calc(var(--space-16) + var(--space-3) / 2);
+  align-items: center;
+}
+.landing-carbon__copy { display: grid; justify-items: start; gap: var(--space-6); }
+.landing-carbon__eyebrow {
+  font: var(--type-label-s);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-brand);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+.landing-carbon__copy h2 { font: var(--type-h1); letter-spacing: -.02em; }
+.landing-carbon__description { max-inline-size: calc(var(--space-30) * 4 - var(--space-5)); color: var(--color-text-secondary); }
+.landing-carbon__points { display: grid; gap: var(--space-3); padding: 0; margin: 0; list-style: none; font: var(--type-body-s); font-weight: var(--weight-semibold); color: var(--color-text-brand); }
+.landing-carbon__copy .btn { font: var(--type-label-l); gap: var(--space-2); padding: var(--space-4) var(--space-8); }
+.landing-carbon__preview {
+  position: relative;
+  container-type: inline-size;
+  inline-size: 100%;
+  min-inline-size: 0;
+  aspect-ratio: 684 / 518;
+  overflow: hidden;
+  border-radius: calc(var(--radius-2xl) + var(--space-1));
+  background: var(--color-bg-muted);
+}
+.landing-carbon__map {
+  position: absolute;
+  inset: 0 auto auto 0;
+  inline-size: var(--landing-map-width);
+  block-size: var(--landing-map-height);
+  transform: scale(calc(100cqw / var(--landing-map-width)));
+  transform-origin: top left;
+}
+.landing-carbon__map img { display: block; }
+.landing-carbon__map span { position: absolute; font: var(--type-label-m); color: var(--color-text-primary); }
+.landing-carbon__origin { inset-inline-start: 19.737%; inset-block-start: 24.324%; }
+.landing-carbon__destination { inset-inline-start: 71.345%; inset-block-start: 59.846%; }
+.landing-carbon__map-heading { position: absolute; inset: var(--space-6) var(--space-8) auto; display: grid; gap: var(--space-2); }
+.landing-carbon__map-heading h3 { font: var(--type-h3); }
+.landing-carbon__trip {
+  position: absolute;
+  inset: auto var(--space-8) var(--space-10);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+.landing-carbon__trip .tag { background: var(--color-bg-muted); color: var(--color-text-brand); border: 0; font: var(--type-label-s); }
+.landing-carbon__trip-copy { flex: 1; min-inline-size: 0; display: grid; gap: var(--space-1); font: var(--type-label-l); }
+.landing-carbon__trip-copy p + p { font: var(--type-body-s); color: var(--color-text-secondary); }
+.landing-carbon__emission { font: var(--type-label-l); white-space: nowrap; }
+@media (max-width: 64rem) {
+  .landing-carbon__inner { grid-template-columns: minmax(0, 1fr); max-inline-size: var(--landing-map-width); gap: var(--space-10); }
+  .landing-carbon__copy h2 { font: var(--type-h2); }
+}
+@media (max-width: 40rem) {
+  .landing-carbon { padding: var(--space-12) var(--space-5); }
+  .landing-carbon__preview { min-block-size: calc(var(--space-30) * 3 + var(--space-8)); }
+  .landing-carbon__map { inset-block-start: var(--space-20); }
+  .landing-carbon__map-heading { inset-inline: var(--space-5); }
+  .landing-carbon__map-heading h3 { font: var(--type-h4); }
+  .landing-carbon__trip { inset: auto var(--space-4) var(--space-5); flex-wrap: wrap; gap: var(--space-3); padding: var(--space-4); }
+  .landing-carbon__trip-copy { font: var(--type-label-m); }
+  .landing-carbon__emission { flex-basis: 100%; text-align: end; }
+  .landing-carbon__copy .btn { max-inline-size: 100%; white-space: normal; padding-inline: var(--space-5); }
+}
+
+/* Phones: same 20px side gutter as the full-width sections (main.container alone gives 16px). */
+@media (max-width: 640px) {
+  .results,
+  .steps {
+    padding-inline: .25rem;
   }
 }

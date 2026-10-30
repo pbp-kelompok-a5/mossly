@@ -1,0 +1,14 @@
+<svg width="56" height="70" viewBox="-8 -20 56 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="apple-red" x1="2" y1="3" x2="31" y2="39" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E34B38"/>
+      <stop offset=".55" stop-color="#C92F26"/>
+      <stop offset="1" stop-color="#9F211C"/>
+    </linearGradient>
+  </defs>
+  <path d="M16 8C16 0 17-9 22-17" stroke="#68442A" stroke-width="3" stroke-linecap="round"/>
+  <path d="M20-10C26-17 35-18 40-14C36-6 28-3 20-10Z" fill="#607849"/>
+  <path d="M16 7C10 2 2 4-1 11C-6 22 0 37 12 41C15 42 18 42 20 40C24 42 27 42 30 40C41 35 46 20 40 10C36 3 27 2 20 7C19 8 17 8 16 7Z" fill="url(#apple-red)"/>
+  <path d="M5 11C1 17 2 25 6 29" stroke="#F58E7B" stroke-width="3.2" stroke-linecap="round" opacity=".9"/>
+  <ellipse cx="27" cy="34" rx="3" ry="2" fill="#801B18" opacity=".45"/>
+</svg>
