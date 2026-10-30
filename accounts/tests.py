@@ -171,10 +171,12 @@ class RegistrationAndProfileTests(TestCase):
         self.onboarding_url = reverse("accounts:onboarding")
         self.profile_url = reverse("accounts:profile")
         self.dashboard_url = reverse("dashboard:index")
+        self.initial_user_count = get_user_model().objects.count()
 
     def registration(self, **extra):
         return {
             "username": "new_mossly", "email": "New@example.com",
+            "umur": 18,
             "display_name": "Nama Baru", "password1": "Strong-random-pass-483!",
             "password2": "Strong-random-pass-483!", **extra,
         }
@@ -198,7 +200,7 @@ class RegistrationAndProfileTests(TestCase):
         self.assertEqual(response.status_code, 200)
         for name in self.registration():
             self.assertContains(response, f'name="{name}"')
-        self.assertEqual(get_user_model().objects.count(), 0)
+        self.assertEqual(get_user_model().objects.count(), self.initial_user_count)
 
     def test_register_creates_hashed_user_profile_and_logs_in(self):
         data = self.registration(is_staff="on", is_superuser="on", is_onboarded="on")
@@ -211,6 +213,7 @@ class RegistrationAndProfileTests(TestCase):
         self.assertFalse(user.is_staff)
         self.assertFalse(user.is_superuser)
         self.assertEqual(user.profile.display_name, "Nama Baru")
+        self.assertEqual(user.profile.umur, 18)
         self.assertFalse(user.profile.is_onboarded)
         self.assertIsNone(user.profile.onboarded_at)
         self.assertTrue(user.profile.share_achievements)
@@ -223,7 +226,7 @@ class RegistrationAndProfileTests(TestCase):
                 response = self.client.post(self.register_url, self.registration(**extra))
                 self.assertEqual(response.status_code, 200)
                 self.assertTrue(response.context["form"].errors)
-                self.assertEqual(get_user_model().objects.count(), 1)
+                self.assertEqual(get_user_model().objects.count(), self.initial_user_count + 1)
                 self.assertNotIn(SESSION_KEY, self.client.session)
 
     def test_registration_rejects_missing_invalid_and_weak_values(self):
@@ -236,7 +239,7 @@ class RegistrationAndProfileTests(TestCase):
             with self.subTest(extra=extra):
                 response = self.client.post(self.register_url, self.registration(**extra))
                 self.assertTrue(response.context["form"].errors)
-                self.assertEqual(get_user_model().objects.count(), 0)
+                self.assertEqual(get_user_model().objects.count(), self.initial_user_count)
                 self.assertNotContains(response, 'value="Strong-random-pass-483!"')
         response = self.client.post(self.register_url, {})
         self.assertContains(response, "Bagian ini wajib diisi.")
@@ -397,3 +400,212 @@ class RegistrationAndProfileTests(TestCase):
         self.assertEqual(self.client.get(self.profile_url).status_code, 200)
         self.assertRedirects(self.client.post(reverse("accounts:logout")), reverse("main:landing"))
         self.assertNotIn(SESSION_KEY, self.client.session)
+
+
+@override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
+class AccountsCompletionTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user("accounts_owner", password="Owner-pass-483!")
+        self.other = User.objects.create_user("accounts_other", password="Other-pass-483!")
+        UserProfile.objects.filter(user=self.user).update(
+            display_name="Pemilik", is_onboarded=True, onboarded_at=timezone.now(), umur=18
+        )
+        self.client.force_login(self.user)
+
+    def test_username_checker_is_public_and_case_insensitive(self):
+        client = Client()
+        url = reverse("accounts:check_username")
+        for username, state in [("new_username", "available"), ("ACCOUNTS_OWNER", "taken"),
+                                ("  accounts_owner  ", "taken"), ("", "empty"),
+                                ("   ", "empty"), ("not valid", "invalid"), ("x" * 151, "invalid")]:
+            with self.subTest(username=username):
+                response = client.get(url, {"username": username}, HTTP_HX_REQUEST="true")
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, f'data-username-state="{state}"')
+                self.assertIn("no-store", response["Cache-Control"])
+                self.assertNotContains(response, "Owner-pass-483!")
+        self.assertEqual(client.post(url, {}).status_code, 405)
+
+    def test_username_checker_uses_registration_unicode_normalization(self):
+        response = self.client.get(reverse("accounts:check_username"), {"username": "ａｃｃｏｕｎｔｓ＿ｏｗｎｅｒ"})
+        self.assertContains(response, 'data-username-state="taken"')
+
+    def test_username_checker_does_not_echo_html(self):
+        response = self.client.get(reverse("accounts:check_username"), {"username": "<script>alert(1)</script>"})
+        self.assertContains(response, 'data-username-state="invalid"')
+        self.assertNotContains(response, "<script>alert(1)</script>")
+
+    def test_registration_htmx_only_sends_username_and_loads_library_once(self):
+        self.client.logout()
+        response = self.client.get(reverse("accounts:register"))
+        self.assertContains(response, 'hx-params="username"')
+        self.assertContains(response, 'hx-sync="this:replace"')
+        self.assertContains(response, 'hx-trigger="input changed delay:400ms"')
+        self.assertContains(response, 'id="username-availability"')
+        self.assertContains(response, 'role="status"')
+        self.assertContains(response, 'htmx.min.js', count=1)
+
+    def test_shared_templates_load_htmx_once_and_footer_has_real_profile_link(self):
+        for route in ("main:landing", "dashboard:badges", "community:index", "habits:index"):
+            with self.subTest(route=route):
+                response = self.client.get(reverse(route), follow=True)
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'htmx.min.js', count=1)
+        response = self.client.get(reverse("dashboard:badges"))
+        self.assertContains(response, f'href="{reverse("accounts:profile")}"')
+        self.assertNotContains(response, 'href="#">Reset password')
+        self.assertNotContains(response, 'href="#">Edit profil')
+
+    def test_profile_json_requires_login_and_contains_only_current_user(self):
+        url = reverse("accounts:current_user_json")
+        response = self.client.get(url, {"user_id": self.other.pk})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/json")
+        data = response.json()
+        self.assertEqual(data["id"], self.user.pk)
+        self.assertEqual(data["username"], self.user.username)
+        self.assertEqual(data["display_name"], "Pemilik")
+        self.assertEqual(data["umur"], 18)
+        self.assertNotIn("password", data)
+        self.assertNotIn("email", data)
+        self.assertNotIn("is_staff", data)
+        self.assertNotIn(self.other.username, response.content.decode())
+        self.assertIn("no-store", response["Cache-Control"])
+        anonymous = Client().get(url)
+        self.assertEqual(anonymous.status_code, 401)
+        self.assertIn("error", anonymous.json())
+        self.assertNotIn("Location", anonymous.headers)
+        self.assertEqual(self.client.post(url, {}).status_code, 405)
+
+    def test_profile_json_includes_preferences_and_does_not_create_missing_profile(self):
+        from carbon.models import TransportMode
+        profile = self.user.profile
+        profile.primary_mode = TransportMode.objects.get(code="jalan")
+        profile.focus_areas = ["energi", "makanan"]
+        profile.share_achievements = False
+        profile.save()
+        data = self.client.get(reverse("accounts:current_user_json")).json()
+        self.assertEqual(data["primary_mode"]["code"], "jalan")
+        self.assertEqual(data["focus_areas"], ["energi", "makanan"])
+        self.assertFalse(data["share_achievements"])
+        self.assertIsNotNone(data["onboarded_at"])
+        profile.delete()
+        self.assertEqual(self.client.get(reverse("accounts:current_user_json")).status_code, 404)
+        self.assertFalse(UserProfile.objects.filter(user=self.user).exists())
+
+    def test_delete_requires_login_and_get_does_not_delete(self):
+        url = reverse("accounts:delete")
+        self.assertContains(self.client.get(url), "Hapus akun saya permanen")
+        self.assertTrue(get_user_model().objects.filter(pk=self.user.pk).exists())
+        response = Client().get(url)
+        self.assertRedirects(response, reverse("accounts:login") + "?next=" + url)
+
+    def test_delete_requires_correct_password_and_explicit_confirmation(self):
+        url = reverse("accounts:delete")
+        for payload in [{}, {"password": "wrong", "confirm": "on"}, {"password": "Owner-pass-483!"}]:
+            with self.subTest(payload=payload):
+                response = self.client.post(url, payload)
+                self.assertEqual(response.status_code, 200)
+                self.assertTrue(get_user_model().objects.filter(pk=self.user.pk).exists())
+                self.assertIn(SESSION_KEY, self.client.session)
+                self.assertNotContains(response, 'value="Owner-pass-483!"')
+                self.assertNotContains(response, 'value="wrong"')
+
+    def test_delete_uses_current_user_and_clears_session(self):
+        other_session = Client()
+        other_session.force_login(self.user)
+        response = self.client.post(reverse("accounts:delete"), {
+            "password": "Owner-pass-483!", "confirm": "on", "user_id": self.other.pk
+        })
+        self.assertRedirects(response, reverse("main:landing"))
+        self.assertFalse(get_user_model().objects.filter(pk=self.user.pk).exists())
+        self.assertTrue(get_user_model().objects.filter(pk=self.other.pk).exists())
+        self.assertNotIn(SESSION_KEY, self.client.session)
+        self.assertEqual(other_session.get(reverse("accounts:current_user_json")).status_code, 401)
+        from django.conf import settings
+        self.assertEqual(response.cookies[settings.SESSION_COOKIE_NAME]["max-age"], 0)
+
+    def test_delete_rejects_missing_csrf_and_accepts_valid_token(self):
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.user)
+        url = reverse("accounts:delete")
+        data = {"password": "Owner-pass-483!", "confirm": "on"}
+        self.assertEqual(client.post(url, data).status_code, 403)
+        self.assertTrue(get_user_model().objects.filter(pk=self.user.pk).exists())
+        response = client.get(url)
+        data["csrfmiddlewaretoken"] = response.cookies["csrftoken"].value
+        self.assertEqual(client.post(url, data).status_code, 302)
+        self.assertFalse(get_user_model().objects.filter(pk=self.user.pk).exists())
+
+    def test_delete_cascades_owned_data_but_preserves_other_accounts_and_catalogues(self):
+        from carbon.models import ApiUsage, EmissionFactor, TransportMode, Trip
+        from community.models import Reply, Thread, ThreadLike
+        from dashboard.models import Achievement, EmissionTarget, UserAchievement
+        from habits.models import Goal, GoalChecklistItem, GoalProgressLog, Habit, HabitCheckIn, SustainabilityEvent
+        thread = Thread.objects.create(author=self.user, title="Milik sendiri", body="Isi")
+        other_thread = Thread.objects.create(author=self.other, title="Milik orang lain", body="Isi lain")
+        reply_to_deleted = Reply.objects.create(author=self.other, thread=thread, body="Balasan di thread terhapus")
+        own_reply = Reply.objects.create(author=self.user, thread=other_thread, body="Balasanku")
+        own_like = ThreadLike.objects.create(user=self.user, thread=other_thread)
+        other_like = ThreadLike.objects.create(user=self.other, thread=thread)
+        habit = Habit.objects.create(user=self.user, name="Habit tes")
+        checkin = HabitCheckIn.objects.create(habit=habit, checkin_date=timezone.localdate())
+        goal = Goal.objects.create(user=self.user, title="Goal tes", category="sampah", target_value=1,
+                                   unit="kali", deadline=timezone.localdate())
+        item = GoalChecklistItem.objects.create(goal=goal, label="Checklist")
+        log = GoalProgressLog.objects.create(goal=goal, amount=1)
+        event = SustainabilityEvent.objects.create(user=self.user, goal=goal, event_type="goal_completed", title_snapshot="Goal tes")
+        badge = Achievement.objects.create(code="accounts-delete-test", name="Tes", description="Tes", icon="leaf", category="goal", threshold=1)
+        award = UserAchievement.objects.create(user=self.user, achievement=badge, source_event=event)
+        target = EmissionTarget.objects.create(user=self.user, month=timezone.localdate().replace(day=1), target_kg=10)
+        mode = TransportMode.objects.get(code="jalan")
+        factor = EmissionFactor.objects.filter(mode=mode).first()
+        trip = Trip.objects.create(user=self.user, mode=mode, emission_factor=factor,
+            origin_label="A", origin_lat=-6, origin_lng=106, destination_label="B", destination_lat=-6.1,
+            destination_lng=106.1, distance_km=1, emission_kg=0, traveled_at=timezone.now())
+        usage = ApiUsage.objects.create(user=self.user)
+        owned = [self.user.profile, thread, reply_to_deleted, own_reply, own_like, other_like,
+                 habit, checkin, goal, item, log, event, award, target, trip, usage]
+        references = [(type(obj), obj.pk) for obj in owned]
+        self.client.post(reverse("accounts:delete"), {"password": "Owner-pass-483!", "confirm": "on"})
+        for model, pk in references:
+            with self.subTest(model=model.__name__):
+                self.assertFalse(model.objects.filter(pk=pk).exists())
+        self.assertTrue(Thread.objects.filter(pk=other_thread.pk).exists())
+        self.assertTrue(get_user_model().objects.filter(pk=self.other.pk).exists())
+        self.assertTrue(TransportMode.objects.filter(pk=mode.pk).exists())
+        self.assertTrue(EmissionFactor.objects.filter(pk=factor.pk).exists())
+        self.assertTrue(Achievement.objects.filter(pk=badge.pk).exists())
+
+    def test_registration_age_requires_18_and_persists_value(self):
+        self.client.logout()
+        data = {"username": "age-test", "email": "age@example.com", "display_name": "Umur Tes",
+                "password1": "Strong-random-pass-483!", "password2": "Strong-random-pass-483!"}
+        for age in [None, "", "seventeen", -1, 17]:
+            with self.subTest(age=age):
+                values = {**data, **({"umur": age} if age is not None else {})}
+                response = self.client.post(reverse("accounts:register"), values)
+                self.assertEqual(response.status_code, 200)
+                self.assertIn("umur", response.context["form"].errors)
+                self.assertFalse(get_user_model().objects.filter(username="age-test").exists())
+        response = self.client.post(reverse("accounts:register"), {**data, "umur": 18})
+        self.assertRedirects(response, reverse("accounts:onboarding"))
+        self.assertEqual(get_user_model().objects.get(username="age-test").profile.umur, 18)
+
+    def test_age_constraint_allows_unknown_legacy_age_and_rejects_underage(self):
+        from django.db import IntegrityError, transaction
+        self.assertIsNone(self.other.profile.umur)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            UserProfile.objects.filter(user=self.other).update(umur=17)
+
+    def test_session_cookie_is_httponly_lax_and_removed_on_logout(self):
+        from django.conf import settings
+        client = Client()
+        response = client.post(reverse("accounts:login"), {"username": self.user.username, "password": "Owner-pass-483!"})
+        cookie = response.cookies[settings.SESSION_COOKIE_NAME]
+        self.assertTrue(cookie["httponly"])
+        self.assertEqual(cookie["samesite"], "Lax")
+        response = client.post(reverse("accounts:logout"))
+        self.assertEqual(response.cookies[settings.SESSION_COOKIE_NAME]["max-age"], 0)
+        self.assertNotIn(SESSION_KEY, client.session)

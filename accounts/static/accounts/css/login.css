@@ -60,6 +60,10 @@
 .auth-error { margin-bottom: var(--space-6); }
 .auth-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
 .auth-profile-preview { display: flex; align-items: center; gap: var(--space-4); margin-top: var(--space-6); }
+.auth-age { margin-top: var(--space-3); color: var(--color-text-secondary); }
+.auth-account-tools { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-4); margin-top: var(--space-6); }
+.auth-danger-link { color: var(--color-text-danger); }
+.auth-delete-button { --_bg: var(--color-bg-danger); --_bg-hover: var(--color-bg-danger); --_fg: var(--color-text-on-brand); }
 .auth-fieldset { border: 0; min-width: 0; }
 .auth-choice, .auth-choice-list label { display: flex; align-items: center; gap: var(--space-3); }
 .auth-choice-list { display: grid; gap: var(--space-3); margin-top: var(--space-3); }

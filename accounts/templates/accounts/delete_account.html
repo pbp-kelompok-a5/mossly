@@ -1,0 +1,18 @@
+{% extends "accounts/base_auth.html" %}
+{% load static %}
+{% block title %}Hapus akun · Mossly{% endblock %}
+{% block extra_head %}<script src="{% static 'accounts/js/login.js' %}" defer></script>{% endblock %}
+{% block panel_content %}
+  <p class="eyebrow text-label-s">PENGATURAN AKUN</p>
+  <h2 id="login-title">Hapus akun permanen?</h2>
+  <p class="form-description text-body-s">Akun {{ user.get_username }}, profil, riwayat perjalanan, habit, goal, target emisi, dan achievement milikmu akan dihapus. Tindakan ini tidak bisa dibatalkan.</p>
+  <div class="alert alert-warning auth-error" role="note">
+    <p class="alert-body">Thread milikmu beserta balasan dan like di dalamnya juga ikut terhapus. Balasan dan like milikmu pada thread lain akan dihapus. Thread pengguna lain tetap ada.</p>
+  </div>
+  <form action="{% url 'accounts:delete' %}" method="post">
+    {% csrf_token %}
+    {% include "accounts/_form_fields.html" %}
+    <button class="btn btn-rounded submit-button auth-delete-button" type="submit">Hapus akun saya permanen</button>
+  </form>
+  <div class="signup text-label-s"><a href="{% url 'accounts:profile' %}">Batal, kembali ke profil</a></div>
+{% endblock %}

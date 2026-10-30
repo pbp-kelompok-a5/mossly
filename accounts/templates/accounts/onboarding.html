@@ -9,5 +9,5 @@
     {% include "accounts/_form_fields.html" %}
     <button class="btn btn-rounded submit-button" type="submit">Selesai, mulai perjalanan</button>
   </form>
-  <div class="signup text-label-s"><a href="{% url 'accounts:logout' %}">Keluar dari akun</a></div>
+  <div class="signup text-label-s"><a href="{% url 'accounts:logout' %}">Keluar dari akun</a> · <a href="{% url 'accounts:delete' %}">Hapus akun</a></div>
 {% endblock %}

@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.core.validators import MaxLengthValidator
 from django.db import transaction
+from django.urls import reverse
 
 from carbon.models import TransportMode
 from .models import UserProfile
@@ -30,13 +31,19 @@ class LoginForm(AuthenticationForm):
         )
 
 
+
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(label="Email", max_length=254)
     display_name = forms.CharField(label="Nama tampilan", max_length=80)
+    umur = forms.IntegerField(
+        label="Umur", min_value=18,
+        help_text="Minimal 18 tahun untuk membuat akun.",
+        error_messages={"min_value": "Umur minimal 18 tahun."},
+    )
 
     class Meta(UserCreationForm.Meta):
         model = get_user_model()
-        fields = ("username", "email", "display_name", "password1", "password2")
+        fields = ("username", "email", "umur", "display_name", "password1", "password2")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -45,6 +52,16 @@ class RegisterForm(UserCreationForm):
         self.fields["password1"].label = "Password"
         self.fields["password2"].label = "Konfirmasi password"
         self.fields["username"].widget.attrs["autocomplete"] = "username"
+        self.fields["username"].widget.attrs.update({
+            "hx-get": reverse("accounts:check_username"),
+            "hx-trigger": "input changed delay:400ms",
+            "hx-target": "#username-availability",
+            "hx-swap": "innerHTML",
+            "hx-params": "username",
+            "hx-sync": "this:replace",
+            "hx-indicator": "#username-check-indicator",
+            "aria-describedby": "id_username_helptext id_username_error username-availability",
+        })
         self.fields["email"].widget.attrs["autocomplete"] = "email"
         self.fields["display_name"].widget.attrs["autocomplete"] = "nickname"
         for name in ("password1", "password2"):
@@ -66,7 +83,8 @@ class RegisterForm(UserCreationForm):
             user.save()
             profile, _ = UserProfile.objects.get_or_create(user=user)
             profile.display_name = self.cleaned_data["display_name"]
-            profile.save(update_fields=["display_name"])
+            profile.umur = self.cleaned_data["umur"]
+            profile.save(update_fields=["display_name", "umur"])
         return user
 
 
@@ -112,3 +130,25 @@ class ProfileForm(PreferencesForm):
     class Meta(PreferencesForm.Meta):
         fields = ("display_name", *PreferencesForm.Meta.fields)
         labels = {**PreferencesForm.Meta.labels, "display_name": "Nama tampilan"}
+
+
+class DeleteAccountForm(forms.Form):
+    password = forms.CharField(
+        label="Password saat ini", strip=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+    )
+    confirm = forms.BooleanField(
+        label="Saya memahami bahwa akun dan data terkait akan dihapus permanen.",
+    )
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+        configure_fields(self)
+        self.fields["confirm"].error_messages["required"] = "Centang persetujuan penghapusan akun."
+
+    def clean_password(self):
+        password = self.cleaned_data["password"]
+        if not self.user.check_password(password):
+            raise forms.ValidationError("Password tidak sesuai.")
+        return password
