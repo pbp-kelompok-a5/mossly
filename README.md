@@ -44,46 +44,109 @@ Modul *Carbon Footprint Tracker* akan menggunakan **Geoapify**, layanan API loka
 **Referensi resmi:** [Geoapify](https://www.geoapify.com/) · [Dokumentasi Geocoding API](https://apidocs.geoapify.com/docs/geocoding/) · [Dokumentasi Routing API](https://apidocs.geoapify.com/docs/routing/) · [Routing Playground (uji rute)](https://apidocs.geoapify.com/playground/routing/) · [Kuota dan paket layanan](https://www.geoapify.com/pricing/) · [Ketentuan layanan](https://www.geoapify.com/terms-and-conditions/)
 
 ## 💻 Role User
-- **User**: User dapat melakukan registrasi, login, serta mengelola profil pribadi mereka. Mereka bisa mencatat perjalanan sehari-hari (moda transportasi, titik asal-tujuan) untuk melacak estimasi emisi karbon yang dihasilkan, serta meninjau kembali riwayat perjalanan yang telah dicatat. User dapat membangun kebiasaan berkelanjutan melalui habit tracker harian dan menetapkan target sustainability dengan deadline melalui goal planner. Pada halaman Dashboard, user dapat memantau grafik tren emisi, progres kebiasaan, serta koleksi achievement/badge yang telah diraih. User juga dapat berinteraksi di Sustainability Community dengan membuat thread, membalas, memberi like, serta berbagi tips dan pencapaian dengan pengguna lain.
+- **Pengunjung (belum login)**: Hanya dapat membuka landing page, registrasi, dan login. Halaman lain mengarahkan ke login.
+- **User (sudah login)**: User dapat melakukan registrasi, login, serta mengelola profil pribadi mereka. Mereka bisa mencatat perjalanan sehari-hari (moda transportasi, titik asal-tujuan) untuk melacak estimasi emisi karbon yang dihasilkan, serta meninjau kembali riwayat perjalanan yang telah dicatat. User dapat membangun kebiasaan berkelanjutan melalui habit tracker harian dan menetapkan target sustainability dengan deadline melalui goal planner. Pada halaman Dashboard, user dapat memantau grafik tren emisi, progres kebiasaan, serta koleksi achievement/badge yang telah diraih. User juga dapat berinteraksi di Sustainability Community dengan membuat thread, membalas, memberi like, serta berbagi tips dan pencapaian dengan pengguna lain.
 
 ## 🔗 URL
 - **Figma:** https://www.figma.com/design/xMVSWGoAmsCNbc0IrEX4gX/PBP-LETSGOOO?node-id=1-2&t=x38m96qwHWQtBWqr-1
 - **PWS:** https://tania-ju-mossly.pws.cs.ui.ac.id/
-
-Contoh itu gayanya lebih tenang: menyebut jenis AI-nya, menjelaskan peran AI sebagai asisten, lalu memberi contoh konkret saat saran AI harus dikoreksi. Ini versi Carbon-mu dengan gaya yang sama, tetap menekankan bahwa kamu yang mengarahkan, memeriksa, dan bertanggung jawab:
-
----
-
-## AI Disclosure Carbon Tracker
-
-### 1. Cakupan penggunaan AI dan strategi prompt
-
-AI yang digunakan adalah **ChatGPT Codex**. AI digunakan sebagai asisten pengembangan untuk modul Carbon Footprint Tracker, bukan sebagai pengganti keputusan desain, peninjauan kode, dan pengujian manual. Kebutuhan fitur, tampilan, dan batasan modul ditentukan oleh saya, lalu hasilnya dicoba melalui terminal dan browser.
-
-Strategi prompt dilakukan secara bertahap: PRD, README, ERD kelompok, referensi Figma, screenshot, pesan error, dan hasil pengujian diberikan sebagai konteks. Instruksi menekankan kode yang sederhana dan mudah dipelajari pemula, serta pembatasan perubahan hanya pada modul Carbon dan bagian integrasinya yang sudah disepakati kelompok.
-
-AI membantu sangat besar khususnya pada beberapa pekerjaan berikut:
-
-- Menelaah ERD kelompok dan menyesuaikan model `TransportMode`, `EmissionFactor`, dan `Trip`.
-- Membantu mengembangkan dan meninjau CRUD perjalanan, validasi form, serta pembatasan akses berdasarkan pemilik data.
-- Membantu integrasi Geoapify melalui backend Django untuk pencarian alamat, pencarian berdasarkan koordinat, dan perhitungan rute otomatis.
-- Membantu menyusun perhitungan estimasi emisi CO₂e dari jarak dan faktor emisi yang memiliki sumber serta versi.
+- **ERD (acuan kelompok):** https://drive.google.com/file/d/1DkL8-bK6qUz2xriUFbsEyDq_2KBvmosj/view?usp=sharing
 
 
-Contoh arahan yang diberikan selama pengembangan: mempertahankan empat moda dengan jarak otomatis, mengganti pencarian otomatis menjadi tombol Cari, menggunakan tombol Hitung estimasi, dan menyederhanakan kode tanpa menghilangkan validasi dan keamanan.
+## 🤖 AI Disclosure
 
-### 2. Pengkritisan terhadap AI dan verifikasi manual
+Setiap anggota menuliskan penggunaan AI pada modulnya masing-masing.
 
-Pendapat AI yang diberikan juga tidak langsung dapat di implementasikan pada program. Struktur data dan metrik pada PRD awal perlu disesuaikan dengan keputusan kelompok, yaitu ERD, satuan CO₂e, dan respons `404` untuk perjalanan milik pengguna lain.
+### 1. Login & Onboarding
+Cakupan dan strategi prompt. AI yang digunakan adalah ChatGPT Codex. Bantuan AI bersifat substansial: sebagian besar kode tambahan modul Accounts, test, dan pengujian otomatis ditulis serta dijalankan oleh AI. Prompt diberikan bertahap dengan konteks README, ERD kelompok, referensi desain, aturan CSS bersama, screenshot, dan pesan error. Saya meminta persetujuan sebelum keputusan implementasi, lalu meminta penjelasan kode untuk dipelajari sebagai persiapan demo.
 
-Pilihan teknis AI juga dievaluasi dari sisi kemudahan belajar. Pemasangan build Tailwind menambahkan banyak dependensi di `node_modules`. Setelah diperiksa, folder tersebut dihapus karena CSS hasil build sudah tersedia dan dapat digunakan Django, sementara file sumber CSS dan konfigurasi build yang masih diperlukan tetap dipertahankan.
+AI membantu pada:
+- Tampilan responsif halaman login, registrasi, onboarding, dan profil menggunakan token serta komponen CSS kelompok.
+- Autentikasi dan session bawaan Django, logout melalui POST+CSRF, validasi form, serta redirect setelah login.
+- Model UserProfile, signal pembuatan profil, dan migrasi untuk akun baru maupun akun lama.
+- Registrasi dengan login otomatis, onboarding preferensi, edit profil sendiri, dan validasi umur minimal 18 tahun.
+- Cek ketersediaan username menggunakan HTMX, endpoint JSON profil pengguna aktif, serta hapus akun dengan password dan konfirmasi.
+- Perbaikan konfigurasi CSRF PWS, footer, pemusatan HTMX yang disepakati, serta bantuan Git dan penyusunan pesan PR.
+- Penjelasan MVT, alur request, keamanan, pengujian, dan panduan belajar kode.
+Pengkritisan dan verifikasi. Hasil AI saya coba dan koreksi berdasarkan kebutuhan modul:
+- Tampilan awal belum mengikuti token dan komponen global, sehingga saya memberikan aturan kelompok dan meminta penyesuaian.
+- Tautan JSON sempat ditampilkan di halaman profil. Saya meminta penghapusannya karena bersifat teknis dan tidak diperlukan pengguna; endpoint tetap tersedia.
+- Error 403 di PWS menunjukkan bahwa pengujian lokal belum membuktikan konfigurasi deployment benar. Perbaikan dilakukan pada trusted origin tanpa menonaktifkan CSRF.
+- Validasi email unik masih berada pada jalur registrasi, belum berupa constraint database. Usulan penguatan di database hanya dibahas sebagai contoh kode dan belum diterapkan.
+Verifikasi mencakup test Django, pemeriksaan migrasi, dan percobaan alur lokal. Pada pemeriksaan terakhir, 51 test Accounts lolos. Tiga kegagalan Dashboard pada pengujian proyek juga ditemukan pada salinan main bersih dan dilaporkan tanpa mengubah layanan modul tersebut.
 
-AI juga tidak dapat menggantikan pengujian browser nyata. Masalah peta 403 Access blocked tidak terlihat dari pengujian respons Django, dan baru dapat ditelusuri setelah permintaan gambar peta dan pengaturan referrer diperiksa langsung di browser.
+Karena sebagian besar test berasal dari AI, hasilnya tidak saya anggap sebagai satu-satunya bukti kebenaran. Interaksi HTMX di browser dan perilaku setelah deployment PWS tetap perlu diverifikasi. Penjelasan AI digunakan sebagai bahan belajar, bukan bukti bahwa seluruh kode ditulis mandiri; saya tetap bertanggung jawab untuk meninjau, memahami, dan menjelaskan implementasi yang dikumpulkan.
 
-Verifikasi akhir yang dilakukan:
+### 2. Carbon Footprint Tracker
 
-- Pengujian browser untuk CRUD, filter, dialog, kegagalan API, dan tampilan responsif.
-- Pengujian Geoapify asli untuk geocoding, reverse geocoding, dan empat profil transportasi.
-- Pemeriksaan migrasi dan pengumpulan aset melalui `collectstatic`.
+**Cakupan dan strategi prompt.** AI yang digunakan adalah **ChatGPT Codex**, sebagai asisten pengembangan, bukan pengganti keputusan desain, peninjauan kode, dan pengujian manual. Prompt diberikan bertahap dengan konteks PRD, README, ERD kelompok, referensi Figma, screenshot, pesan error, dan hasil pengujian. Instruksi menekankan kode sederhana dan perubahan yang terbatas pada modul Carbon serta integrasi yang sudah disepakati.
 
-Coverage hanya menjadi indikator jalur kode yang teruji, bukan jaminan bahwa semua kemungkinan masalah sudah ditemukan. Seluruh hasil di atas berasal dari lingkungan lokal, sehingga konfigurasi environment, API key, dan alur Carbon setelah deployment ke PWS tetap harus diverifikasi secara manual. Saya bertanggung jawab untuk meninjau, memahami, dan menjelaskan seluruh implementasi yang dikumpulkan.
+AI membantu pada:
+
+- Penyesuaian model `TransportMode`, `EmissionFactor`, dan `Trip` dengan ERD kelompok.
+- CRUD perjalanan, validasi form, dan pembatasan akses berdasarkan pemilik data.
+- Integrasi Geoapify melalui backend untuk pencarian alamat, koordinat, dan rute otomatis.
+- Perhitungan estimasi emisi CO₂e dari jarak dan faktor emisi yang memiliki sumber serta versi.
+
+**Pengkritisan dan verifikasi.** Saran AI tidak langsung diterapkan:
+
+- Struktur data dan metrik pada PRD awal disesuaikan dengan keputusan kelompok, yaitu ERD, satuan CO₂e, dan respons `404` untuk perjalanan milik pengguna lain.
+- Build Tailwind menambahkan banyak dependensi, sehingga `node_modules` dihapus dan hanya CSS hasil build serta konfigurasi yang diperlukan yang dipertahankan.
+- Masalah peta `403 Access blocked` tidak terlihat dari pengujian Django dan baru ditemukan lewat pemeriksaan permintaan gambar dan pengaturan referrer di browser.
+
+Verifikasi meliputi pengujian browser (CRUD, filter, dialog, kegagalan API, responsif), Geoapify asli untuk geocoding, reverse geocoding, dan empat profil transportasi, serta pemeriksaan migrasi dan `collectstatic`. Coverage hanya indikator jalur kode yang teruji. Hasil ini berasal dari lingkungan lokal, sehingga konfigurasi dan alur setelah deployment ke PWS tetap perlu diverifikasi manual.
+
+### 3. Sustainable Habit & Goal Tracker
+
+**Cakupan dan strategi prompt.** AI yang digunakan adalah **Claude Code**, sebagai asisten pengembangan. Kebutuhan fitur, arah desain, dan keputusan akhir ditentukan oleh saya, lalu hasilnya saya cek di browser. Prompt diberikan bertahap dengan konteks kode, screenshot tampilan, dan pesan error. Untuk perubahan besar, saya meminta penjelasan risiko dan pilihan terlebih dahulu, lalu mengerjakannya per tahap agar mudah ditinjau dan dibatalkan.
+
+AI membantu pada:
+
+- Pengembangan dan penyesuaian fitur Habit, Goal, dan Riwayat.
+- Perbaikan tampilan dan responsivitas halaman.
+- Interaksi tanpa reload menggunakan HTMX.
+- Perapian dan pembersihan kode.
+- Testing: sebagian besar test dan pengujian otomatis ditulis serta dijalankan oleh AI.
+
+**Pengkritisan dan verifikasi.** Hasil AI tetap saya tinjau, coba, dan koreksi:
+
+- Lolos test belum tentu tepat dan nyaman untuk interaksi user, sehingga fitur saya coba langsung di browser dan saya minta perbaikan jika interaksinya kurang sesuai.
+- AI dapat salah memahami instruksi, sehingga batasan dan hasil perubahannya perlu diperiksa sebelum diterima.
+- Tidak semua saran diterima. Keputusan tampilan dan perilaku fitur disesuaikan dengan kebutuhan modul.
+
+Sebagian besar test dibuat oleh AI, jadi tests ini saya anggap sebagai salah satu indikator, bukan jaminan penuh fitur sudah benar. Sebelum deployment ke PWS, perilaku fitur tetap saya cek kembali. Seluruh implementasi yang dikumpulkan menjadi tanggung jawab saya, termasuk meninjau, memahami, dan menjelaskannya.
+
+### 4. Sustainability Community
+
+**Cakupan dan strategi prompt.** AI yang digunakan adalah **ChatGPT Codex (keluarga model GPT-5)**, sebagai asisten pengembangan, bukan pengganti peninjauan kode dan pengujian manual. Prompt diberikan secara iteratif dengan konteks struktur proyek, file yang relevan, tampilan target, traceback, dan hasil browser. Setiap perubahan dibandingkan lagi dengan kebutuhan Community dan dijalankan melalui test Django agar tetap terbatas pada scope modul.
+
+AI membantu pada:
+
+- Penyesuaian model Thread, Reply, dan ThreadLike dengan ERD, serta alur post pencapaian otomatis.
+- Template Community, avatar profil, display name, dan `@username`.
+- Endpoint JSON, filter dan pagination async, reply async, serta like/unlike berbasis HTMX dengan animasi dan rollback saat request gagal.
+- Pemecahan JavaScript menjadi module, query count berbasis subquery, rate limit, dan migration seed 50 tips.
+- Pembacaan traceback, penyusunan test, coverage, dan dokumentasi.
+
+**Pengkritisan dan verifikasi.** Saran AI tidak selalu langsung dapat diterapkan:
+
+- AJAX like awalnya mengirim request ke `[object HTMLInputElement]` karena input bernama `action` menimpa `form.action`. Error ditemukan lewat console browser dan diperbaiki manual dengan `form.getAttribute("action")`.
+- Saat kolom `dashboard_userachievement.seen` tidak ada di SQLite lokal, solusi yang aman adalah migration tambahan, bukan mengubah migration yang sudah diterapkan. Perubahan lintas modul seperti ini perlu dikomunikasikan di Pull Request.
+- Rate limit memakai Django cache, sehingga deployment dengan banyak proses perlu backend bersama seperti Redis agar batasnya konsisten.
+
+Test Django membuktikan respons backend, status `429`, dan struktur HTML, tetapi tidak sepenuhnya membuktikan animasi, perilaku HTMX, cache static file, atau tampilan responsif. Hal tersebut tetap perlu dicek di browser lokal dan setelah deployment ke PWS.
+
+### 5. Personal Sustainability Dashboard
+
+**Cakupan penggunaan AI dan strategi prompt**
+
+Untuk modul Dashboard, saya memakai **Claude (Anthropic)** asisten pengembangan. Ide fitur, alur, dan tampilan berasal dari saya mengikuti spesifikasi tugas dan desain Figma. Saya memberi konteks berupa kebutuhan tugas, file terkait, dan pesan error secara bertahap, lalu mengarahkan revisinya.
+
+AI membantu pada:
+- Pengembangan fitur CRUD target emisi.
+- Pengembangan filter badge dengan HTMX.
+- Pengembangan penanganan dan penelusuran pesan error.
+
+**Pengkritisan terhadap AI dan verifikasi manual**
+
+Jawaban dan saran dari AI tidak saya anggap pasti benar, sehingga setiap usulannya saya pelajari dan uji sendiri melalui runserver dan python manage.py test dashboard. Salah satu contohnya terjadi setelah model Community berubah, sehingga halaman Dashboard menjadi error. AI hanya menunjukkan bagian yang kemungkinan terdampak, sedangkan penyebab pastinya saya telusuri sendiri dengan membaca model baru tersebut dan mengonfirmasinya kepada pemilik modul Community. Penyesuaian pada kode Dashboard kemudian saya lakukan secara mandiri.
