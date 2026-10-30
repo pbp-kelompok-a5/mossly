@@ -6,6 +6,81 @@
  Bumi tidak membutuhkan perubahan yang sempurna, melainkan langkah kecil yang terus bertumbuh. Bersama mossly, setiap kebiasaan kecil menjadi bagian dari perjalanan menuju kehidupan yang lebih berkelanjutan.
 
 
+## 🗂️ Struktur Proyek
+
+```text
+mossly/
+├── mossly/        # Konfigurasi proyek (settings, URL utama, WSGI/ASGI)
+├── main/          # Landing page
+├── accounts/      # Login & Onboarding
+├── carbon/        # Carbon Footprint Tracker
+├── habits/        # Sustainable Habit & Goal Tracker
+│   └── tests/     # Tes modul, dipisah per bagian
+├── community/     # Sustainability Community
+├── dashboard/     # Personal Sustainability Dashboard
+├── templates/     # base.html dan halaman dashboard
+├── static/
+│   ├── css/       # Token desain, gaya global, dan gaya tiap modul
+│   ├── js/        # Skrip halaman dan library vendor (HTMX)
+│   └── img/       # Logo, ikon, dan dekorasi
+├── .github/       # Workflow deployment ke PWS
+├── manage.py
+└── requirements.txt
+```
+
+## 🛠️ Pengembangan Lokal
+
+### 1. Clone repositori
+
+```bash
+git clone https://github.com/pbp-kelompok-a5/mossly.git
+cd mossly
+```
+
+### 2. Buat dan aktifkan virtual environment
+
+```bash
+python -m venv env
+
+# Windows
+env\Scripts\activate
+
+# macOS/Linux
+source env/bin/activate
+```
+
+### 3. Pasang dependensi
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Atur environment variable (opsional)
+
+```env
+# Mode lokal: DEBUG aktif dan database memakai SQLite
+PRODUCTION=False
+
+# Boleh dikosongkan di lokal, wajib diisi jika PRODUCTION=True
+SECRET_KEY=isi_secret_key_kamu
+
+# Dibutuhkan untuk fitur lokasi di Carbon (https://www.geoapify.com/)
+GEOAPIFY_API_KEY=isi_api_key_kamu
+```
+
+### 5. Siapkan database
+
+```bash
+python manage.py migrate
+```
+
+### 6. Jalankan server
+
+```bash
+python manage.py runserver
+```
+
+Buka http://127.0.0.1:8000/.
 
 
 ## 👥 Kelompok A-05
