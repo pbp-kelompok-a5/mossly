@@ -41,6 +41,9 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1", "tania-ju-mossly.pws.cs.ui.ac.id"]
 CSRF_TRUSTED_ORIGINS = [
     "https://tania-ju-mossly.pws.cs.ui.ac.id",
 ]
+if not PRODUCTION:
+    # 10.0.2.2 = alamat laptop dilihat dari emulator Android (untuk aplikasi Flutter).
+    ALLOWED_HOSTS.append("10.0.2.2")
 
 # Application definition
 
@@ -51,12 +54,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Web service untuk aplikasi mobile (Flutter)
+    'rest_framework',
+    'rest_framework.authtoken',
+    'corsheaders',
     'main', 'accounts', 'carbon', 'habits', 'community', 'dashboard',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -163,3 +171,25 @@ LOGOUT_REDIRECT_URL = 'main:landing'
 
 # Geoapify API
 GEOAPIFY_API_KEY = os.getenv('GEOAPIFY_API_KEY', '')
+
+# Django REST Framework — web service untuk aplikasi mobile, semua di bawah /api/v1/.
+# Aplikasi Flutter login sekali, menyimpan token, lalu mengirim header
+# "Authorization: Token <token>" di setiap request. Session tetap diterima agar
+# endpoint bisa dicoba dari browser saat sudah login di situs web.
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    # Default: wajib login. Endpoint publik (login, register) memakai AllowAny.
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        *(['rest_framework.renderers.BrowsableAPIRenderer'] if DEBUG else []),
+    ],
+}
+
+# CORS hanya dibutuhkan saat aplikasi Flutter dijalankan di browser (flutter run -d chrome).
+# Dibuka hanya untuk /api/v1/, yang memakai token dan bukan cookie.
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_URLS_REGEX = r'^/api/v1/.*$'
