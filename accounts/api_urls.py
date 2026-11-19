@@ -1,12 +1,12 @@
-"""Endpoint DRF modul Login & Onboarding. Terpasang di /api/v1/auth/
-
-File ini masih kosong, silakan mulai menambahkan route endpoint modul di urlpatterns di bawah.
-"""
+"""Endpoint Accounts. Awalan /api/v1/auth/ dipasang konfigurasi kelompok."""
 from django.urls import path
 
-from . import api_views  # noqa: F401
+from . import api_views
 
 app_name = "accounts_api"
 urlpatterns = [
-    # path("contoh/", api_views.contoh_list, name="contoh-list"),
+    path("register/", api_views.register, name="register"),
+    path("login/", api_views.login, name="login"),
+    path("logout/", api_views.logout, name="logout"),
+    path("me/", api_views.me, name="me"),
 ]
