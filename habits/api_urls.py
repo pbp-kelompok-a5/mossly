@@ -1,12 +1,9 @@
-"""Endpoint DRF modul Sustainable Habit & Goal Tracker. Terpasang di /api/v1/habits/ dan goals/
-
-File ini masih kosong, silakan mulai menambahkan route endpoint modul di urlpatterns di bawah.
-"""
+"""Endpoint DRF modul Sustainable Habit & Goal Tracker. Terpasang di /api/v1/habits/ dan /api/v1/goals/"""
 from django.urls import path
-
-from . import api_views  # noqa: F401
+from . import api_views
 
 app_name = "habits_api"
 urlpatterns = [
-    # path("contoh/", api_views.contoh_list, name="contoh-list"),
+    path("habits/", api_views.habit_list, name="habit-list"),
+    path("goals/", api_views.goal_list, name="goal-list"),
 ]
