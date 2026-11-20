@@ -2,6 +2,7 @@
 
 from django.core.paginator import EmptyPage, Paginator
 from django.shortcuts import get_object_or_404
+from django.views.decorators.cache import never_cache
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
@@ -10,6 +11,7 @@ from .serializers import ThreadFeedQuerySerializer, ThreadSerializer
 from .views import threads_for
 
 
+@never_cache
 @api_view(["GET"])
 def thread_list(request):
     """Feed bersama, dengan status like sesuai pengguna yang sedang login."""
@@ -41,6 +43,7 @@ def thread_list(request):
     })
 
 
+@never_cache
 @api_view(["GET"])
 def thread_detail(request, pk):
     """Pengguna yang login dapat membaca thread siapa pun di Community."""

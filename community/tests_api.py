@@ -112,6 +112,46 @@ class CommunityReadApiTests(APITestCase):
         self.assertEqual(row["like_count"], 1)
         self.assertIs(row["is_liked"], False)
 
+    def test_personalized_responses_are_not_cacheable_when_switching_accounts(self):
+        ThreadLike.objects.create(thread=self.thread, user=self.user)
+        for user, is_liked in [(self.user, True), (self.other, False)]:
+            self.client.force_authenticate(user=user)
+            for url in [self.list_url, self.detail_url]:
+                with self.subTest(user=user.username, url=url):
+                    response = self.client.get(url)
+                    self.assertEqual(response.status_code, status.HTTP_200_OK)
+                    directives = {
+                        value.strip() for value in response["Cache-Control"].split(",")
+                    }
+                    self.assertTrue({
+                        "private", "no-store", "no-cache", "max-age=0", "must-revalidate",
+                    }.issubset(directives))
+                    self.assertIn("Expires", response)
+                    data = response.json()
+                    row = data["results"][0] if url == self.list_url else data
+                    self.assertIs(row["is_liked"], is_liked)
+
+    def test_error_responses_are_not_cacheable(self):
+        missing_url = reverse(
+            "community_api:thread-detail", args=[self.thread.pk + 1]
+        )
+        for url, params, expected_status in [
+            (self.list_url, {"category": "invalid"}, status.HTTP_400_BAD_REQUEST),
+            (self.list_url, {"page": 2}, status.HTTP_404_NOT_FOUND),
+            (missing_url, {}, status.HTTP_404_NOT_FOUND),
+        ]:
+            with self.subTest(url=url, params=params):
+                response = self.client.get(url, params)
+                self.assertEqual(response.status_code, expected_status)
+                self.assertIn("no-store", response["Cache-Control"])
+
+        self.client.force_authenticate(user=None)
+        for url in [self.list_url, self.detail_url]:
+            with self.subTest(unauthenticated_url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+                self.assertIn("no-store", response["Cache-Control"])
+
     def test_empty_display_name_falls_back_to_username(self):
         self.other.profile.display_name = ""
         self.other.profile.save(update_fields=["display_name"])
