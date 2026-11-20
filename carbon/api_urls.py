@@ -1,12 +1,10 @@
-"""Endpoint DRF modul Carbon Footprint Tracker. Terpasang di /api/v1/carbon/
-
-File ini masih kosong, silakan mulai menambahkan route endpoint modul di urlpatterns di bawah.
-"""
 from django.urls import path
 
-from . import api_views  # noqa: F401
+from . import api_views
 
-app_name = "carbon_api"
+app_name = 'carbon_api'
+
 urlpatterns = [
-    # path("contoh/", api_views.contoh_list, name="contoh-list"),
+    path('modes/', api_views.mode_list, name='mode-list'),
+    path('trips/', api_views.trip_list, name='trip-list'),
 ]
