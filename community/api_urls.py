@@ -1,12 +1,10 @@
-"""Endpoint DRF modul Sustainability Community. Terpasang di /api/v1/community/
-
-File ini masih kosong, silakan mulai menambahkan route endpoint modul di urlpatterns di bawah.
-"""
+"""Endpoint DRF Community di /api/v1/community/."""
 from django.urls import path
 
-from . import api_views  # noqa: F401
+from . import api_views
 
 app_name = "community_api"
 urlpatterns = [
-    # path("contoh/", api_views.contoh_list, name="contoh-list"),
+    path("threads/", api_views.thread_list, name="thread-list"),
+    path("threads/<int:pk>/", api_views.thread_detail, name="thread-detail"),
 ]
